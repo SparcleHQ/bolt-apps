@@ -1,0 +1,5 @@
+{
+  "key": "cleanlist",
+  "label": "Clean a list",
+  "content": "{clipboard|splitcsv|sort|uniq}"
+}

@@ -1,0 +1,18 @@
+schema_version: 1
+runtime: transform
+id: csv2md
+chip: csv2md
+title: CSV to Markdown table
+icon: table
+description: Turn pasted CSV or spreadsheet cells into a Markdown table
+emits: Generic
+placeholder_examples:
+  - "paste CSV after =csv2md"
+
+presentation:
+  widget: detail
+
+transform:
+  pipe:
+    - table
+    - markdown

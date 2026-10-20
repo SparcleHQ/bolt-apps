@@ -1,0 +1,21 @@
+schema_version: 1
+runtime: transform
+id: errors
+chip: errors
+title: Unique errors
+icon: triangle-alert
+description: Keep only the error lines from a pasted log, timestamps removed, each error once
+emits: Generic
+placeholder_examples:
+  - "paste a log after =errors"
+
+presentation:
+  widget: detail
+
+transform:
+  pipe:
+    - lines
+    - filter: { matches: "\\b(ERROR|FATAL|CRITICAL)\\b" }
+    - replace: { from: "^\\S*\\d{2}:\\d{2}:\\d{2}\\S*\\s+", to: "", flags: "gm" }
+    - lines
+    - dedupe

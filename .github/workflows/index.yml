@@ -1,0 +1,70 @@
+# Rebuilds INDEX.json (from the checker) and RANKING.md (reaction counts, no personal
+# data) after every merge to main and once a day. Recognition only.
+# Needs the same checker variable and secret as check.yml, and fails loudly without them.
+name: index
+
+on:
+  push:
+    branches: [main]
+    paths: ["apps/**"]
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+  issues: read
+
+concurrency:
+  group: index
+  cancel-in-progress: false
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checker wired?
+        env:
+          BOLT_APPS_CHECKER_TOKEN: ${{ secrets.BOLT_APPS_CHECKER_TOKEN }}
+          BOLT_APPS_CHECKER_REPO: ${{ vars.BOLT_APPS_CHECKER_REPO }}
+        run: |
+          if [ -z "$BOLT_APPS_CHECKER_TOKEN" ] || [ -z "$BOLT_APPS_CHECKER_REPO" ]; then
+            echo "::error::checker not wired yet: the BOLT_APPS_CHECKER_TOKEN secret or the BOLT_APPS_CHECKER_REPO variable is missing, so INDEX.json cannot be built."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.BOLT_APPS_CHECKER_REPO }}
+          ref: ${{ vars.BOLT_APPS_CHECKER_REF || 'main' }}
+          token: ${{ secrets.BOLT_APPS_CHECKER_TOKEN }}
+          path: _checker
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build INDEX.json
+        run: |
+          (cd _checker && npm ci --ignore-scripts)
+          node _checker/scripts/bolt-apps/cli.mjs index apps --out INDEX.json
+
+      - name: Add counts and build RANKING.md
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GALLERY_COUNTS_URL: ${{ vars.GALLERY_COUNTS_URL }}
+        run: node scripts/build-ranking.mjs
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- INDEX.json RANKING.md && [ -z "$(git status --porcelain -- INDEX.json RANKING.md)" ]; then
+            echo "No change."; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add INDEX.json RANKING.md
+          git commit -m "index: rebuild INDEX.json and RANKING.md"
+          git push

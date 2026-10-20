@@ -1,0 +1,72 @@
+# Runs the Bolt Apps checker on every app a pull request changes. A failure blocks
+# the merge once "check" is a required status check on main (Settings, Branches).
+#
+# The checker is part of Bolt's own code and is not published yet. Until it is,
+# this job fetches it from the repository named in the repository variable
+# BOLT_APPS_CHECKER_REPO (ref BOLT_APPS_CHECKER_REF, default main) with the
+# read-only token in the secret BOLT_APPS_CHECKER_TOKEN. Without them the job fails
+# on purpose with "checker not wired yet", so nothing can merge unchecked.
+# Pull requests from forks never receive secrets, so they also fail here; a
+# published checker is required before contributions open.
+name: check
+
+on:
+  pull_request:
+    paths: ["apps/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Find changed apps
+        id: changed
+        run: |
+          base="${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
+          apps="$(git diff --name-only "$base"...HEAD -- apps/ | cut -d/ -f2 | sort -u | tr '\n' ' ')"
+          echo "apps=$apps" >> "$GITHUB_OUTPUT"
+          echo "Changed apps: ${apps:-none}"
+
+      - name: Checker wired?
+        env:
+          BOLT_APPS_CHECKER_TOKEN: ${{ secrets.BOLT_APPS_CHECKER_TOKEN }}
+          BOLT_APPS_CHECKER_REPO: ${{ vars.BOLT_APPS_CHECKER_REPO }}
+        run: |
+          if [ -z "$BOLT_APPS_CHECKER_TOKEN" ] || [ -z "$BOLT_APPS_CHECKER_REPO" ]; then
+            echo "::error::checker not wired yet: the BOLT_APPS_CHECKER_TOKEN secret or the BOLT_APPS_CHECKER_REPO variable is missing, so bolt-apps check cannot run. Nothing merges unchecked."
+            exit 1
+          fi
+
+      - name: Get the checker
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.BOLT_APPS_CHECKER_REPO }}
+          ref: ${{ vars.BOLT_APPS_CHECKER_REF || 'main' }}
+          token: ${{ secrets.BOLT_APPS_CHECKER_TOKEN }}
+          path: _checker
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install checker dependencies
+        working-directory: _checker
+        run: |
+          test -f scripts/bolt-apps/cli.mjs || { echo "::error::checker not wired yet: scripts/bolt-apps/cli.mjs is not on ${{ vars.BOLT_APPS_CHECKER_REF || 'main' }} of the checker repository."; exit 1; }
+          npm ci --ignore-scripts
+
+      - name: bolt-apps check
+        run: |
+          status=0
+          for id in ${{ steps.changed.outputs.apps }}; do
+            if [ ! -d "apps/$id" ]; then echo "apps/$id removed, nothing to check"; continue; fi
+            node _checker/scripts/bolt-apps/cli.mjs check "apps/$id" || status=1
+          done
+          exit $status

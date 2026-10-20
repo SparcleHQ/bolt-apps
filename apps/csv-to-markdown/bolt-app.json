@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "id": "csv-to-markdown",
+  "title": "CSV to Markdown table",
+  "role": "Anyone pasting spreadsheet data into docs, tickets or chat",
+  "saves": "Hand-typing pipes and dashes to turn a spreadsheet into a table",
+  "summary": "Type =csv2md and paste CSV or copied spreadsheet cells. Copy a ready Markdown table.",
+  "author": {
+    "name": "Sparcle",
+    "link": "https://sparcle.app"
+  },
+  "tier": 2,
+  "permissions": [
+    "copies_to_clipboard",
+    "reads_launcher_input"
+  ],
+  "tests": [
+    {
+      "kind": "transform",
+      "name": "CSV with a header row",
+      "target": "csv2md",
+      "input": "name,team,open tickets\nAsha,Platform,3\nLi,Design,12",
+      "expect": "| name | team     | open tickets |\n|------|----------|--------------|\n| Asha | Platform | 3            |\n| Li   | Design   | 12           |"
+    },
+    {
+      "kind": "transform",
+      "name": "cells copied from a spreadsheet (tabs)",
+      "target": "csv2md",
+      "input": "city\tpopulation\nPune\t3124458\nOslo\t709037",
+      "expect": "| city | population |\n|------|------------|\n| Pune | 3124458    |\n| Oslo | 709037     |"
+    }
+  ]
+}

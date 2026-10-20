@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sparcle.app/schemas/user-app-v1.json",
+  "title": "Bolt User App (utilities/<id>.yaml) v1",
+  "description": "Structure of a User App, matching what the Bolt desktop app accepts as of 2026-10-20. Unknown fields are refused, and so are the admin connector fields. The desktop app also checks rules a JSON Schema cannot express: no shell operators in a command, variables never inside quotes, recognize regexes must compile, per-runtime blocks. The gallery accepts runtime: transform only.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "runtime", "id", "chip", "title", "emits", "presentation"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "runtime": { "enum": ["transform", "http_local", "bridge"] },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$" },
+    "chip": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$", "description": "The key typed after =." },
+    "title": { "type": "string", "minLength": 1 },
+    "icon": { "type": "string" },
+    "description": { "type": "string" },
+    "placeholder_examples": { "type": "array", "items": { "type": "string" } },
+    "emits": { "enum": ["Person", "Issue", "Document", "Event", "File", "Incident", "Account", "Place", "Generic"] },
+    "args": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "from"],
+        "properties": {
+          "name": { "type": "string" },
+          "from": { "type": "string", "pattern": "^query\\.word\\(\\d+\\)$" },
+          "default": {}
+        }
+      }
+    },
+    "presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["widget"],
+      "properties": {
+        "widget": { "enum": ["list", "table", "cards", "detail"] },
+        "title_field": { "type": "string" },
+        "subtitle_field": { "type": "string" },
+        "searchable": { "type": "boolean" },
+        "right_widget": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {
+            "kind": { "enum": ["card", "map", "image", "calc", "color", "weather", "date", "markdown", "entity_preview", "chart", "table", "cards", "detail", "json_tree", "diff", "image_grid"] },
+            "mode": { "enum": ["selected_row", "list_data"] },
+            "bind": {}
+          }
+        }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind"],
+        "properties": {
+          "id": { "type": "string" },
+          "kind": { "enum": ["url", "composer", "utility"] }
+        }
+      }
+    },
+    "dispatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "const": "confirm" },
+        "confirm_label": { "type": "string" },
+        "confirm_hint": { "type": "string" },
+        "choices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "label"],
+            "properties": {
+              "id": { "type": "string" },
+              "label": { "type": "string" },
+              "hint": { "type": "string" },
+              "args": { "type": "object", "additionalProperties": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "detect": {
+      "type": "object",
+      "required": ["binary"],
+      "properties": {
+        "binary": { "type": "string", "pattern": "^[^/\\\\]+$", "description": "A program name on PATH, never a path." },
+        "version_min": { "type": "string" },
+        "auth_check": {},
+        "config_hint": { "type": "array", "items": { "type": "string" } },
+        "refresh": { "enum": ["on_boot", "on_focus", "manual"] },
+        "setup": {}
+      }
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "type", "label"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+          "type": { "enum": ["text", "number", "date", "select", "toggle", "secret"] },
+          "label": { "type": "string" },
+          "required": { "type": "boolean" },
+          "default": {},
+          "placeholder": { "type": "string" },
+          "options": { "type": "array", "items": { "type": "string" } },
+          "min": { "type": "number" },
+          "max": { "type": "number" },
+          "step": { "type": "number" },
+          "max_length": { "type": "integer" },
+          "pattern": { "type": "string", "maxLength": 512 }
+        }
+      }
+    },
+    "submit": { "type": "object" },
+    "recognize": {
+      "type": "object",
+      "required": ["patterns"],
+      "properties": {
+        "patterns": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {
+            "type": "object",
+            "required": ["regex"],
+            "properties": {
+              "regex": { "type": "string", "maxLength": 512 },
+              "flags": { "type": "string" },
+              "priority": { "type": "integer" }
+            }
+          }
+        },
+        "entity": { "type": "string" },
+        "confidence": { "enum": ["ambient", "high"] },
+        "anchors": { "type": "object" },
+        "reps": {
+          "type": "array",
+          "maxItems": 12,
+          "items": {
+            "type": "object",
+            "required": ["label", "template"],
+            "properties": { "label": { "type": "string" }, "template": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "transform": {
+      "type": "object",
+      "required": ["pipe"],
+      "properties": {
+        "pipe": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {
+            "oneOf": [
+              { "enum": ["lines", "sort", "dedupe", "reverse", "trim", "upper", "lower", "title", "camel", "snake", "kebab", "slug", "table", "markdown", "csv", "aligned", "sql", "json", "yaml", "toml", "env", "properties", "transpose", "flatten", "redact_secrets", "sanitize"] },
+              {
+                "type": "object",
+                "minProperties": 1,
+                "maxProperties": 1,
+                "propertyNames": { "enum": ["split", "join", "filter", "head", "tail", "slice", "replace", "prefix", "suffix", "template", "sortcol", "dedupecol", "rename_cols", "pick", "omit"] }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "http": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["port", "request", "parse"],
+      "properties": {
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "host": { "enum": ["127.0.0.1", "::1", "localhost"] },
+        "request": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path"],
+          "properties": { "method": { "enum": ["GET", "POST"] }, "path": { "type": "string" } }
+        },
+        "parse": { "enum": ["json", "lines", "raw"] },
+        "rows_path": { "type": "string" },
+        "timeout_seconds": { "type": "integer", "minimum": 1, "maximum": 60 },
+        "headers": { "type": "object", "additionalProperties": { "type": "string" } }
+      }
+    },
+    "bridge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "parse"],
+      "properties": {
+        "command": {
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "properties": { "macos": { "type": "string" }, "linux": { "type": "string" }, "windows": { "type": "string" } }
+        },
+        "parse": { "enum": ["json", "lines", "raw"] },
+        "timeout_seconds": { "type": "integer", "minimum": 1, "maximum": 60 },
+        "env": {
+          "type": "object",
+          "propertyNames": { "pattern": "^[A-Z_][A-Z0-9_]*$" },
+          "additionalProperties": { "type": "string", "pattern": "^\\$\\{env:[A-Z_][A-Z0-9_]*\\}$" }
+        }
+      }
+    }
+  },
+  "allOf": [
+    { "if": { "properties": { "runtime": { "const": "transform" } } }, "then": { "required": ["transform"], "not": { "anyOf": [{ "required": ["bridge"] }, { "required": ["http"] }] } } },
+    { "if": { "properties": { "runtime": { "const": "http_local" } } }, "then": { "required": ["http"], "not": { "required": ["bridge"] } } },
+    { "if": { "properties": { "runtime": { "const": "bridge" } } }, "then": { "required": ["bridge"], "not": { "required": ["http"] } } }
+  ]
+}

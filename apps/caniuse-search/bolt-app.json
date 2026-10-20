@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "caniuse-search",
+  "title": "Can I use, from the launcher",
+  "role": "Web developers checking browser support",
+  "saves": "Opening the site and finding the search box, many times a week",
+  "summary": "Type ciu and a feature name to open its browser support table on caniuse.com.",
+  "author": { "name": "Sparcle", "link": "https://sparcle.app" },
+  "tier": 1,
+  "permissions": ["opens_links:caniuse.com"],
+  "tests": [
+    { "kind": "search", "name": "one word", "target": "ciu", "query": "dialog", "expect": "https://caniuse.com/?search=dialog" },
+    { "kind": "search", "name": "words and symbols are encoded", "target": "ciu", "query": "css :has()", "expect": "https://caniuse.com/?search=css%20%3Ahas()" }
+  ]
+}

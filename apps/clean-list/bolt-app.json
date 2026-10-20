@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "id": "clean-list",
+  "title": "Clean up a messy list",
+  "role": "Anyone who tidies lists of emails, tags or IDs",
+  "saves": "About two minutes every time you sort and dedupe a list by hand",
+  "summary": "Copy a comma-separated list, type ;cleanlist, get one item per line, sorted, no repeats.",
+  "author": { "name": "Sparcle", "link": "https://sparcle.app" },
+  "tier": 1,
+  "permissions": ["copies_to_clipboard", "reads_clipboard"],
+  "tests": [
+    {
+      "kind": "snippet",
+      "name": "sorts and dedupes a comma list",
+      "target": "cleanlist",
+      "clipboard": "pear, apple, kiwi, apple, banana",
+      "expect": "apple\nbanana\nkiwi\npear"
+    },
+    {
+      "kind": "snippet",
+      "name": "handles stray spaces and a trailing comma",
+      "target": "cleanlist",
+      "clipboard": "  b@example.com,a@example.com ,b@example.com,",
+      "expect": "a@example.com\nb@example.com"
+    }
+  ]
+}

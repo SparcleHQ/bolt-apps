@@ -1,0 +1,40 @@
+name: App idea
+description: Suggest a Bolt App you would use, or one you plan to build.
+labels: ["idea"]
+body:
+  - type: textarea
+    id: job
+    attributes:
+      label: What job does it do?
+      description: One or two sentences. What do you do by hand today?
+    validations:
+      required: true
+  - type: input
+    id: who
+    attributes:
+      label: Who is it for?
+      placeholder: "Support agents who paste ticket exports"
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - Snippet
+        - Search engine
+        - User App (transform)
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Example
+      description: What you would paste or type, and what you want back. Made-up data only.
+  - type: checkboxes
+    id: build
+    attributes:
+      label: Building it
+      options:
+        - label: I plan to build this myself.

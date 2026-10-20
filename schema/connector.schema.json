@@ -1,0 +1,256 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bolt.sparcle.app/schemas/utility-manifest-v1.json",
+  "title": "Bolt Utility Manifest v1",
+  "description": "See https://sparcle.app/docs/extend/connector-spec/. This schema validates structure and enums; deep semantic checks (template paths, type contracts, jq budgets) live in the Rust linter.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "chip", "title", "emits", "scopes", "presentation"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$", "minLength": 2, "maxLength": 40 },
+    "chip": { "type": "string", "pattern": "^=[a-z][a-z0-9_-]*$" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "icon": { "type": "string" },
+    "description": { "type": "string", "maxLength": 240 },
+    "emits": { "$ref": "#/$defs/CanonicalType" },
+    "auth_profile_ref": { "type": "string" },
+    "requires": { "type": "array", "items": { "$ref": "#/$defs/Requirement" } },
+    "scopes": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/Scope" } },
+    "filters": { "type": "array", "items": { "$ref": "#/$defs/Filter" } },
+    "actions": { "type": "array", "items": { "$ref": "#/$defs/Action" } },
+    "presentation": { "$ref": "#/$defs/Presentation" },
+    "cache_ttl_seconds": { "type": "integer", "minimum": 0, "maximum": 86400 }
+  },
+
+  "$defs": {
+    "CanonicalType": {
+      "enum": ["Person", "Issue", "Document", "Event", "File", "Incident", "Account", "Place", "Generic"]
+    },
+
+    "Requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mcp"],
+      "properties": {
+        "mcp": { "type": "string" },
+        "version": { "type": "string" },
+        "tools": { "type": "array", "items": { "type": "string" } },
+        "scopes": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "Scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "label": { "type": "string", "minLength": 1 },
+        "default": { "type": "boolean" },
+        "flow": { "type": "array", "items": { "$ref": "#/$defs/FlowNode" } },
+        "match": { "type": "array", "items": { "$ref": "#/$defs/MatchBranch" } },
+        "response_schema": { "type": "object" }
+      },
+      "anyOf": [
+        { "required": ["flow"] },
+        { "required": ["match"] }
+      ]
+    },
+
+    "MatchBranch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["flow"],
+      "properties": {
+        "regex": { "type": "string" },
+        "text": { "type": "string" },
+        "bind": { "type": "object", "additionalProperties": { "type": "string" } },
+        "flow": { "type": "array", "items": { "$ref": "#/$defs/FlowNode" }, "minItems": 1 }
+      },
+      "oneOf": [
+        { "required": ["regex"] },
+        { "required": ["text"] }
+      ]
+    },
+
+    "FlowNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "call": { "$ref": "#/$defs/CallNode" },
+        "parallel": { "type": "array", "items": { "$ref": "#/$defs/FlowNode" }, "minItems": 1 },
+        "merge": { "$ref": "#/$defs/MergeNode" },
+        "transform": { "type": "string" },
+        "emit": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+          ]
+        },
+        "out": { "type": "string", "pattern": "^[a-z_][a-z0-9_]*$" },
+        "path": { "type": "string", "pattern": "^/" },
+        "as": { "type": "object" },
+        "vars": { "type": "object", "additionalProperties": { "type": "string" } },
+        "response_schema": { "type": "object" },
+        "retry": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "max": { "type": "integer", "minimum": 0, "maximum": 5 },
+            "on": { "type": "array", "items": { "type": "integer" } },
+            "backoff_ms": { "type": "array", "items": { "type": "integer" } }
+          }
+        },
+        "timeout_ms": { "type": "integer", "minimum": 100, "maximum": 60000 },
+        "streaming": { "type": "boolean" },
+        "tolerate_failures": { "type": "boolean" }
+      },
+      "oneOf": [
+        { "required": ["call"] },
+        { "required": ["parallel"] },
+        { "required": ["merge"] },
+        { "required": ["transform"] },
+        { "required": ["emit"] }
+      ]
+    },
+
+    "CallNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "enum": ["mcp", "http"] },
+        "mcp": { "type": "string" },
+        "tool": { "type": "string" },
+        "method": { "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+        "url": { "type": "string" },
+        "query": { "type": "object" },
+        "headers": { "type": "object", "additionalProperties": { "type": "string" } },
+        "body": {},
+        "args": { "type": "object" }
+      }
+    },
+
+    "MergeNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["inputs", "schema"],
+      "properties": {
+        "inputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["from", "tag"],
+            "properties": {
+              "from": { "type": "string" },
+              "path": { "type": "string", "pattern": "^/" },
+              "tag": { "type": "string" }
+            }
+          }
+        },
+        "schema": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          }
+        },
+        "source_tag_field": { "type": "string" },
+        "dedupe_by": { "type": "array", "items": { "type": "string" } },
+        "sort_by": { "type": "string" },
+        "sort_order": { "enum": ["asc", "desc"] }
+      }
+    },
+
+    "Filter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "kind": { "enum": ["enum", "text", "date_range"] },
+        "label": { "type": "string" },
+        "apply": { "enum": ["pre", "post"] },
+        "maps_to": { "type": "string" },
+        "matches_field": { "type": "string" },
+        "static": { "type": "array" },
+        "populate": { "type": "array", "items": { "$ref": "#/$defs/FlowNode" } }
+      }
+    },
+
+    "Action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "target", "label"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "kind": { "enum": ["url", "tool", "utility", "composer"] },
+        "target": { "enum": ["row", "list"] },
+        "label": { "type": "string" },
+        "icon": { "type": "string" },
+        "url_template": { "type": "string" },
+        "confirm": { "type": "string" },
+        "flow": { "type": "array", "items": { "$ref": "#/$defs/FlowNode" } },
+        "target_chip": { "type": "string", "pattern": "^=" },
+        "query_template": { "type": "string" },
+        "insert": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "url" } } },
+          "then": { "required": ["url_template"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "tool" } } },
+          "then": { "required": ["flow", "confirm"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "utility" } } },
+          "then": { "required": ["target_chip"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "composer" } } },
+          "then": { "required": ["insert"] }
+        }
+      ]
+    },
+
+    "Presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["widget"],
+      "properties": {
+        "widget": { "enum": ["list", "table", "cards", "image_grid", "detail"] },
+        "title_field": { "type": "string" },
+        "subtitle_field": { "type": "string" },
+        "image_field": { "type": "string" },
+        "primary_value_field": { "type": "string" },
+        "list_fields": { "type": "array", "items": { "type": "string" } },
+        "table_columns": { "type": "array", "items": { "type": "string" } },
+        "search_fields": { "type": "array", "items": { "type": "string" } },
+        "filter_fields": { "type": "array", "items": { "type": "string" } },
+        "sort_field": { "type": "string" },
+        "sort_order": { "enum": ["asc", "desc"] },
+        "row_key_field": { "type": "string" },
+        "searchable": { "type": "boolean" },
+        "filterable": { "type": "boolean" },
+        "placeholder": { "type": "string", "maxLength": 120 },
+        "right_widget": { "$ref": "#/$defs/RightWidget" }
+      }
+    },
+
+    "RightWidget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": { "enum": ["card", "map", "image", "date", "calc", "color", "entity", "weather"] },
+        "mode": { "enum": ["selected_row", "list_data"] },
+        "bind": { "type": "object" },
+        "links_for_type": { "$ref": "#/$defs/CanonicalType" }
+      }
+    }
+  }
+}

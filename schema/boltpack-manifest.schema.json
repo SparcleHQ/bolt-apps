@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sparcle.app/schemas/boltpack-bundle-v1.json",
+  "title": "Boltpack bundle.json v1",
+  "description": "The signed metadata at the root of a .boltpack (a gzip tar of bundle.json, signature.bin and manifests/). Matches what Bolt's pack verifier reads as of 2026-10-20. signature.bin is a 64-byte Ed25519 signature over the exact bytes of this file, so authors never hand-edit it after signing: a pack tool writes it. Fields marked 'planned' are not read by a released Bolt yet.",
+  "type": "object",
+  "required": [
+    "schema_version", "bundle_version", "signed_by", "signed_at", "min_bolt_api_version",
+    "content_sha256", "manifest_count", "entries", "release_notes"
+  ],
+  "properties": {
+    "schema_version": { "const": 1, "description": "BUNDLE_SCHEMA_VERSION. Any other value is refused." },
+    "bundle_version": { "type": "string", "minLength": 1, "description": "The pack's own version, semver by convention (1.2.0). Not compared by the installer today." },
+    "signed_by": { "type": "string", "description": "Author email or name as written by the signer. Not proof of identity." },
+    "signed_at": { "type": "string", "format": "date-time", "description": "RFC 3339. Must fall inside the key's validity window for an allowlisted key." },
+    "min_bolt_api_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+", "description": "Checked on the admin org-bundle import path only; the personal install path does not check it today." },
+    "max_bolt_api_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+" },
+    "content_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "sha256 over every file under manifests/, sorted by path, each fed as u32-LE path length, path bytes, u64-LE content length, content bytes. No file metadata."
+    },
+    "manifest_count": { "type": "integer", "minimum": 0 },
+    "entries": { "type": "array", "items": { "$ref": "#/$defs/entry" } },
+    "release_notes": { "type": "string" },
+    "release_notes_url": { "type": "string" },
+    "bundle_kind": {
+      "enum": ["util_pack", "manifest_bundle"],
+      "description": "util_pack for a personal Boltpack. Absent (or manifest_bundle) is an admin org bundle, which only an allowlisted key may sign."
+    },
+    "pack": { "$ref": "#/$defs/pack" },
+    "risk": { "$ref": "#/$defs/risk", "description": "Advisory. Bolt recomputes risk from the entries' declared capabilities and uses its own result." },
+    "signer_pubkey": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Ed25519 public key for a self-signed pack. Proves the files were not changed after signing, not who signed them."
+    },
+    "listing": {
+      "$ref": "https://sparcle.app/schemas/bolt-app-v1.json",
+      "description": "Planned: the Bolt Apps gallery listing, the same object as bolt-app.json."
+    }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "required": ["path", "kind", "sha256"],
+      "properties": {
+        "path": { "type": "string", "pattern": "^manifests/", "description": "Path inside the tar. No '..' components." },
+        "kind": {
+          "enum": [
+            "user_utility", "script", "skill", "agent", "snippet", "search_engine", "other",
+            "utility", "auth_profiles", "mcp_aliases", "gallery_categories", "fixture", "catalog_pack"
+          ],
+          "description": "Assigned by folder. Personal packs: utilities/*.yaml = user_utility, scripts/* = script, skills/*.json = skill, agents/*.json = agent; snippets/*.json = snippet and search_engines/*.json = search_engine are planned. Org bundles: builtin/<id>/manifest.yaml = utility, catalog/*.yaml = catalog_pack, and the three config files. Anything else is other and is ignored by every installer."
+        },
+        "id": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "requires_min_schema": { "type": "integer", "minimum": 0 },
+        "capabilities": { "$ref": "#/$defs/capabilities" },
+        "interpreter": { "enum": ["sh", "bash", "python3", "argv"], "description": "script entries only." },
+        "timeout_ms": { "type": "integer", "minimum": 1, "description": "Declared but not read by the installer today." }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "What a script entry declares it touches. Shown on the install review and used for the risk level. NOT enforced at run time today.",
+      "properties": {
+        "network": { "type": "array", "items": { "type": "string" }, "description": "host:port" },
+        "fs_read": { "type": "array", "items": { "type": "string" } },
+        "fs_write": { "type": "array", "items": { "type": "string" } },
+        "exec": { "type": "array", "items": { "type": "string" } },
+        "env": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "pack": {
+      "type": "object",
+      "required": ["pack_id", "name", "author"],
+      "properties": {
+        "pack_id": { "type": "string" },
+        "name": { "type": "string" },
+        "icon": { "type": "string" },
+        "description": { "type": "string" },
+        "author": {
+          "type": "object",
+          "required": ["name"],
+          "properties": {
+            "name": { "type": "string" },
+            "email": { "type": "string" },
+            "kind": { "enum": ["user", "admin", "publisher", ""], "description": "Sets a badge only." }
+          }
+        }
+      }
+    },
+    "risk": {
+      "type": "object",
+      "required": ["level"],
+      "properties": {
+        "level": { "enum": ["low", "medium", "high"] },
+        "reasons": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

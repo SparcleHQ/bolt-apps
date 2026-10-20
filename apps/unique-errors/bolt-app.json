@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "id": "unique-errors",
+  "title": "Unique errors from a log",
+  "role": "Developers and support staff reading long logs",
+  "saves": "Scrolling hundreds of lines to find which errors happened, and how many kinds",
+  "summary": "Type =errors and paste a log. You get each distinct error line once, without timestamps.",
+  "author": { "name": "Sparcle", "link": "https://sparcle.app" },
+  "tier": 2,
+  "permissions": ["copies_to_clipboard", "reads_launcher_input"],
+  "tests": [
+    {
+      "kind": "transform",
+      "name": "keeps errors, drops info and repeats",
+      "target": "errors",
+      "input": "2026-10-20T09:00:01Z INFO server started\n2026-10-20T09:00:02Z ERROR db timeout after 5s\n2026-10-20T09:00:03Z WARN slow request\n2026-10-20T09:00:04Z ERROR db timeout after 5s\n2026-10-20T09:00:05Z FATAL out of memory",
+      "expect": "ERROR db timeout after 5s\nFATAL out of memory"
+    },
+    {
+      "kind": "transform",
+      "name": "a log with no errors gives nothing",
+      "target": "errors",
+      "input": "09:00:01 INFO ok\n09:00:02 DEBUG fine",
+      "expect": ""
+    }
+  ]
+}

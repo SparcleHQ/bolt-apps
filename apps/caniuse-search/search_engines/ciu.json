@@ -1,0 +1,5 @@
+{
+  "id": "ciu",
+  "name": "Can I use",
+  "urlTemplate": "https://caniuse.com/?search={q}"
+}

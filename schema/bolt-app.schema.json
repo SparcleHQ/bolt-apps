@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sparcle.app/schemas/bolt-app-v1.json",
+  "title": "Bolt App listing (bolt-app.json) v1",
+  "description": "The listing and tests for one app under apps/<id>/. The same object travels as `listing` in a Boltpack's bundle.json. Structure only: the checker (CHECKER.md) also recomputes the tier and permissions from the content and runs the tests. Matches the listing Bolt reads from a Boltpack and the checker's rules as of 2026-10-20.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "title", "role", "saves", "author", "tier", "permissions", "tests"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+      "description": "Lowercase letters, digits and dashes. Must equal the folder name."
+    },
+    "title": { "type": "string", "minLength": 1, "maxLength": 80, "description": "Card title." },
+    "role": { "type": "string", "minLength": 1, "description": "Who it is for, in plain words." },
+    "saves": { "type": "string", "minLength": 1, "description": "What it saves the person, in plain words." },
+    "summary": { "type": "string", "description": "Optional one line for the card." },
+    "author": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "link": { "type": "string", "pattern": "^https://", "description": "https only." }
+      }
+    },
+    "derived_from": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+      "description": "Proposed: the id of the app this one was forked from, so the original author keeps credit. Not yet read by the checker or by Bolt."
+    },
+    "tier": {
+      "type": "integer",
+      "enum": [1, 2, 3],
+      "description": "1 data only, 2 acts inside Bolt, 3 touches the system or network. Must not be lower than the tier the checker computes."
+    },
+    "permissions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^(reads_clipboard|reads_launcher_input|copies_to_clipboard|opens_links(:[a-z0-9.-]+)?|runs_commands|network|files|agent_tools)$"
+      },
+      "description": "Exactly what the content needs. The checker fails an undeclared permission and warns on an unneeded one."
+    },
+    "tests": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["kind", "target", "expect"],
+            "properties": {
+              "kind": { "const": "snippet" },
+              "name": { "type": "string" },
+              "target": { "type": "string", "description": "Snippet key." },
+              "clipboard": { "type": "string" },
+              "fields": { "type": "object", "additionalProperties": { "type": "string" } },
+              "now": { "type": "string", "format": "date-time" },
+              "expect": { "type": "string" }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["kind", "target", "query", "expect"],
+            "properties": {
+              "kind": { "const": "search" },
+              "name": { "type": "string" },
+              "target": { "type": "string", "description": "Search prefix." },
+              "query": { "type": "string" },
+              "expect": { "type": "string", "pattern": "^https://" }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["kind", "target", "input", "expect"],
+            "properties": {
+              "kind": { "const": "transform" },
+              "name": { "type": "string" },
+              "target": { "type": "string", "description": "User App id." },
+              "input": { "type": "string" },
+              "expect": { "type": "string" }
+            }
+          },
+          {
+            "type": "object",
+            "required": ["kind", "target", "positive", "negative"],
+            "properties": {
+              "kind": { "const": "recognizer" },
+              "name": { "type": "string" },
+              "target": { "type": "string", "description": "User App id." },
+              "positive": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+              "negative": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+              "expect_rep": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["input", "label", "value"],
+                  "properties": {
+                    "input": { "type": "string" },
+                    "label": { "type": "string" },
+                    "value": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

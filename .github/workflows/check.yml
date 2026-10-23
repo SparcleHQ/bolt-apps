@@ -63,10 +63,28 @@ jobs:
           npm ci --ignore-scripts
 
       - name: bolt-apps check
+        timeout-minutes: 10
+        env:
+          # Passed as an environment variable, never pasted into the script text, so a folder
+          # name cannot be read as shell code.
+          APPS: ${{ steps.changed.outputs.apps }}
         run: |
           status=0
-          for id in ${{ steps.changed.outputs.apps }}; do
+          for id in $APPS; do
+            if ! printf '%s' "$id" | grep -Eq '^[a-z0-9][a-z0-9-]{0,63}$'; then
+              echo "::error::apps/$id is not a valid app folder name"
+              status=1
+              continue
+            fi
             if [ ! -d "apps/$id" ]; then echo "apps/$id removed, nothing to check"; continue; fi
-            node _checker/scripts/bolt-apps/cli.mjs check "apps/$id" || status=1
+            rc=0
+            timeout --kill-after=10s 120s node _checker/scripts/bolt-apps/cli.mjs check "apps/$id" || rc=$?
+            if [ "$rc" = 124 ] || [ "$rc" = 137 ]; then
+              echo "::error file=apps/$id/bolt-app.json::apps/$id: the check did not finish within 120 seconds and was stopped"
+              status=1
+            elif [ "$rc" != 0 ]; then
+              echo "::error file=apps/$id/bolt-app.json::apps/$id: failed or was refused by bolt-apps check (exit $rc); the lines above say why"
+              status=1
+            fi
           done
           exit $status

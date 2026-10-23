@@ -188,7 +188,7 @@
         "parse": { "enum": ["json", "lines", "raw"] },
         "rows_path": { "type": "string" },
         "timeout_seconds": { "type": "integer", "minimum": 1, "maximum": 60 },
-        "headers": { "type": "object", "additionalProperties": { "type": "string" } }
+        "headers": { "type": "object", "propertyNames": { "pattern": "^[A-Za-z0-9-]+$" }, "additionalProperties": { "type": "string", "anyOf": [ { "not": { "pattern": "\\$\\{" } }, { "pattern": "^\\$\\{env:(GH_HOST|GH_REPO|GITLAB_HOST|DOCKER_CONTEXT|DOCKER_TLS_VERIFY|AWS_PROFILE|AWS_REGION|AWS_DEFAULT_REGION|AWS_CA_BUNDLE|AWS_ENDPOINT_URL|CLOUDSDK_CORE_PROJECT|OKTA_CLIENT_ORGURL|SF_TARGET_ORG|SF_ORG_INSTANCE_URL|TWILIO_ACCOUNT_SID|TWILIO_REGION|TWILIO_EDGE|VERCEL_ORG_ID|VERCEL_PROJECT_ID|PGHOST|PGPORT|PGUSER|PGDATABASE|PGSERVICE|PGSSLMODE)\\}$" } ] } }
       }
     },
     "bridge": {
@@ -205,9 +205,22 @@
         "parse": { "enum": ["json", "lines", "raw"] },
         "timeout_seconds": { "type": "integer", "minimum": 1, "maximum": 60 },
         "env": {
+          "description": "Each key is a variable the app may read (the env_passthrough list) and its value is exactly that variable: \"NAME\": \"${env:NAME}\". A gallery app cannot forward a variable under another name. Mirrors env_destination_refusal in bolt-native contract.rs.",
           "type": "object",
-          "propertyNames": { "pattern": "^[A-Z_][A-Z0-9_]*$" },
-          "additionalProperties": { "type": "string", "pattern": "^\\$\\{env:[A-Z_][A-Z0-9_]*\\}$" }
+          "propertyNames": { "pattern": "^[A-Z_][A-Z0-9_]*$", "not": { "anyOf": [ { "enum": ["PATH", "HOME", "USER", "LOGNAME", "TMPDIR", "SHELL", "IFS", "NODE_OPTIONS", "NODE_PATH", "PYTHONPATH", "PYTHONSTARTUP", "PYTHONHOME", "PYTHONINSPECT", "PYTHONUSERBASE", "PERL5OPT", "PERL5LIB", "RUBYOPT", "RUBYLIB", "BASH_ENV", "ENV", "GIT_SSH_COMMAND", "GIT_EXTERNAL_DIFF", "GIT_PAGER", "GIT_ASKPASS", "EDITOR", "VISUAL", "PAGER", "JAVA_TOOL_OPTIONS", "_JAVA_OPTIONS", "CLASSPATH", "GCONV_PATH", "SSLKEYLOGFILE", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY", "COMSPEC", "PATHEXT", "OPENSSL_CONF", "OPENSSL_MODULES"] }, { "pattern": "^(LD_|DYLD_|BOLT_|ANTHROPIC_|OPENAI_|GIT_CONFIG|GIT_TRACE)" } ] } },
+          "properties": { "GH_HOST": { "const": "${env:GH_HOST}" }, "GH_REPO": { "const": "${env:GH_REPO}" }, "GITLAB_HOST": { "const": "${env:GITLAB_HOST}" }, "DOCKER_CONTEXT": { "const": "${env:DOCKER_CONTEXT}" }, "DOCKER_TLS_VERIFY": { "const": "${env:DOCKER_TLS_VERIFY}" }, "AWS_PROFILE": { "const": "${env:AWS_PROFILE}" }, "AWS_REGION": { "const": "${env:AWS_REGION}" }, "AWS_DEFAULT_REGION": { "const": "${env:AWS_DEFAULT_REGION}" }, "AWS_CA_BUNDLE": { "const": "${env:AWS_CA_BUNDLE}" }, "AWS_ENDPOINT_URL": { "const": "${env:AWS_ENDPOINT_URL}" }, "CLOUDSDK_CORE_PROJECT": { "const": "${env:CLOUDSDK_CORE_PROJECT}" }, "OKTA_CLIENT_ORGURL": { "const": "${env:OKTA_CLIENT_ORGURL}" }, "SF_TARGET_ORG": { "const": "${env:SF_TARGET_ORG}" }, "SF_ORG_INSTANCE_URL": { "const": "${env:SF_ORG_INSTANCE_URL}" }, "TWILIO_ACCOUNT_SID": { "const": "${env:TWILIO_ACCOUNT_SID}" }, "TWILIO_REGION": { "const": "${env:TWILIO_REGION}" }, "TWILIO_EDGE": { "const": "${env:TWILIO_EDGE}" }, "VERCEL_ORG_ID": { "const": "${env:VERCEL_ORG_ID}" }, "VERCEL_PROJECT_ID": { "const": "${env:VERCEL_PROJECT_ID}" }, "PGHOST": { "const": "${env:PGHOST}" }, "PGPORT": { "const": "${env:PGPORT}" }, "PGUSER": { "const": "${env:PGUSER}" }, "PGDATABASE": { "const": "${env:PGDATABASE}" }, "PGSERVICE": { "const": "${env:PGSERVICE}" }, "PGSSLMODE": { "const": "${env:PGSSLMODE}" } },
+          "additionalProperties": false
+        },
+        "env_passthrough": {
+          "description": "Environment variables the command reads. Commands start with an empty environment plus a fixed set Bolt chooses; an app may add only these names (hosts, regions, profiles, config paths, public identifiers). Credentials, loader and interpreter settings, proxies and Bolt settings are never forwarded to a gallery app. Mirrors BENIGN_PASSTHROUGH_NAMES in bolt-native contract.rs and bolt-pwa check.ts; keep all three in step.",
+          "type": "array",
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": { "enum": ["GH_HOST", "GH_REPO", "GITLAB_HOST", "DOCKER_CONTEXT", "DOCKER_TLS_VERIFY", "AWS_PROFILE", "AWS_REGION", "AWS_DEFAULT_REGION", "AWS_CA_BUNDLE", "AWS_ENDPOINT_URL", "CLOUDSDK_CORE_PROJECT", "OKTA_CLIENT_ORGURL", "SF_TARGET_ORG", "SF_ORG_INSTANCE_URL", "TWILIO_ACCOUNT_SID", "TWILIO_REGION", "TWILIO_EDGE", "VERCEL_ORG_ID", "VERCEL_PROJECT_ID", "PGHOST", "PGPORT", "PGUSER", "PGDATABASE", "PGSERVICE", "PGSSLMODE"] }
+        },
+        "cwd": {
+          "description": "Working directory. Absent: a fresh private folder per run. home: the user's home folder (needs the files permission).",
+          "enum": ["home"]
         }
       }
     }

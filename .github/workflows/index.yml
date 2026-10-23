@@ -48,9 +48,15 @@ jobs:
           node-version: 22
 
       - name: Build INDEX.json
+        timeout-minutes: 15
         run: |
           (cd _checker && npm ci --ignore-scripts)
-          node _checker/scripts/bolt-apps/cli.mjs index apps --out INDEX.json
+          rc=0
+          timeout --kill-after=10s 600s node _checker/scripts/bolt-apps/cli.mjs index apps --out INDEX.json || rc=$?
+          if [ "$rc" = 124 ] || [ "$rc" = 137 ]; then
+            echo "::error::bolt-apps index did not finish within 600 seconds and was stopped"
+          fi
+          exit $rc
 
       - name: Add counts and build RANKING.md
         env:

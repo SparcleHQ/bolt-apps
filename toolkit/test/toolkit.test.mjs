@@ -72,3 +72,18 @@ test('odd input does not crash lint: null listing, quoted runtime, symlinked bin
 	const link = path.join(d, 'bolt-apps'); fs.symlinkSync(CLI, link);
 	assert.match(spawnSync(process.execPath, [link, 'help'], { encoding: 'utf8' }).stdout, /author toolkit/);
 });
+
+test('lint reports instead of crashing on wrong-typed files', () => {
+	const d = tmp(); run(d, 'new', 'a', '--type', 'snippet');
+	const base = path.join(d, 'apps/a');
+	fs.writeFileSync(path.join(base, 'snippets/a.json'), '[]');
+	const j = path.join(base, 'bolt-app.json'), app = JSON.parse(fs.readFileSync(j, 'utf8'));
+	app.permissions = 'x'; app.tests = [null, 5]; fs.writeFileSync(j, JSON.stringify(app));
+	const r = run(d, 'lint', 'apps/a', '--json'); assert.equal(r.status, 1, r.stderr); assert.match(r.stdout, /bad_json/); assert.match(r.stdout, /must be an array/);
+});
+
+test('numeric-looking ids are quoted in generated YAML and pass lint', () => {
+	const d = tmp(); run(d, 'new', '123', '--type', 'transform');
+	assert.match(fs.readFileSync(path.join(d, 'apps/123/utilities/123.yaml'), 'utf8'), /^id: "123"/m);
+	assert.equal(run(d, 'lint', 'apps/123').status, 0);
+});

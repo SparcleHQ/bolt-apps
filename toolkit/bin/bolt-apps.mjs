@@ -18,6 +18,7 @@ const PERMS = ['reads_clipboard', 'reads_launcher_input', 'copies_to_clipboard',
 const DEFAULT_KEY = path.join(os.homedir(), '.bolt-apps', 'key.pem');
 const die = (m, code = 2) => { console.error(`bolt-apps: ${m}`); process.exit(code); };
 const rd = (f) => fs.readFileSync(f, 'utf8');
+const isObj = (x) => x !== null && typeof x === 'object' && !Array.isArray(x);
 
 // ---------- lint ----------
 export function lintApp(dir) {
@@ -26,7 +27,7 @@ export function lintApp(dir) {
 	const id = path.basename(path.resolve(dir));
 	let app;
 	try { app = JSON.parse(rd(path.join(dir, 'bolt-app.json'))); } catch (e) { E('listing_unreadable', `bolt-app.json is missing or not JSON: ${e.message}`, 'bolt-app.json'); return { id, out, app: null, files: {} }; }
-	if (!app || typeof app !== 'object' || Array.isArray(app)) { E('listing_unreadable', 'bolt-app.json must be a JSON object', 'bolt-app.json'); return { id, out, app: null, files: {} }; }
+	if (!isObj(app)) { E('listing_unreadable', 'bolt-app.json must be a JSON object', 'bolt-app.json'); return { id, out, app: null, files: {} }; }
 	if (app.schema_version !== 1) E('schema_version', 'schema_version must be 1', 'bolt-app.json');
 	if (app.id !== id || !ID.test(String(app.id))) E('id_mismatch', `id must match ${ID} and equal the folder name "${id}"`, 'bolt-app.json');
 	for (const k of ['title', 'role', 'saves']) if (typeof app[k] !== 'string' || !app[k].trim()) E('field_missing', `${k} is required`, 'bolt-app.json');
@@ -36,7 +37,7 @@ export function lintApp(dir) {
 	const files = { snippets: [], search_engines: [], utilities: [] };
 	for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
 		if (ent.isFile() && (ent.name === 'bolt-app.json' || ent.name === 'README.md')) continue;
-		if (ent.isDirectory() && ent.name in files) {
+		if (ent.isDirectory() && Object.hasOwn(files, ent.name)) {
 			for (const f of fs.readdirSync(path.join(dir, ent.name))) {
 				const okExt = ent.name === 'utilities' ? /\.ya?ml$/.test(f) : f.endsWith('.json');
 				if (okExt) files[ent.name].push(f); else E('unknown_file', 'not an allowed file here', `${ent.name}/${f}`);
@@ -48,6 +49,7 @@ export function lintApp(dir) {
 	for (const f of files.snippets) {
 		const p = `snippets/${f}`; tier = Math.max(tier, 1);
 		let s; try { s = JSON.parse(rd(path.join(dir, p))); } catch (e) { E('bad_json', e.message, p); continue; }
+		if (!isObj(s)) { E('bad_json', 'must be a JSON object', p); continue; }
 		if (!KEY.test(s.key || '')) E('snippet_key', `key must match ${KEY}`, p);
 		if (!s.label) E('field_missing', 'label is required', p);
 		if (typeof s.content !== 'string' || !s.content || s.content.length > 10000) E('snippet_content', 'content must be 1 to 10,000 characters', p);
@@ -57,6 +59,7 @@ export function lintApp(dir) {
 	for (const f of files.search_engines) {
 		const p = `search_engines/${f}`; tier = Math.max(tier, 1);
 		let s; try { s = JSON.parse(rd(path.join(dir, p))); } catch (e) { E('bad_json', e.message, p); continue; }
+		if (!isObj(s)) { E('bad_json', 'must be a JSON object', p); continue; }
 		if (!PREFIX.test(s.id || '')) E('search_prefix', `id (the prefix) must match ${PREFIX}`, p);
 		if (!s.name) E('field_missing', 'name is required', p);
 		const u = String(s.urlTemplate || '');
@@ -75,12 +78,13 @@ export function lintApp(dir) {
 	if (!tier) E('empty_app', 'the app holds no snippet, search engine or User App', '.');
 	if (!Number.isInteger(app.tier) || app.tier < 1 || app.tier > 3) E('field_missing', 'tier must be 1, 2 or 3', 'bolt-app.json');
 	else if (app.tier < tier) E('tier_understated', `declares tier ${app.tier} but the content needs tier ${tier}`, 'bolt-app.json');
-	const declared = new Set((app.permissions || []).filter((x) => typeof x === 'string'));
+	if (!Array.isArray(app.permissions)) E('field_missing', 'permissions must be an array', 'bolt-app.json');
+	const declared = new Set((Array.isArray(app.permissions) ? app.permissions : []).filter((x) => typeof x === 'string'));
 	for (const x of declared) if (!PERMS.includes(x) && !/^opens_links:[a-z0-9.-]+$/.test(x)) E('permission_unknown', `unknown permission "${x}"`, 'bolt-app.json');
 	for (const x of perms) if (!declared.has(x)) E('permission_undeclared', `content needs "${x}" but bolt-app.json does not declare it`, 'bolt-app.json');
 	for (const x of declared) if (!perms.has(x) && PERMS.includes(x) && tier < 3) W('permission_unused', `"${x}" is declared but nothing uses it`, 'bolt-app.json');
 	// tests
-	const tests = Array.isArray(app.tests) ? app.tests : [];
+	const tests = (Array.isArray(app.tests) ? app.tests : []).filter(isObj);
 	if (!tests.length) E('no_tests', 'every content file needs at least one test in bolt-app.json', 'bolt-app.json');
 	const covered = new Set();
 	for (const t of tests) {
@@ -115,8 +119,8 @@ function cmdLint(args) {
 const TEMPLATES = {
 	snippet: (id) => { const key = keyOf(id); return { tier: 1, perms: ['copies_to_clipboard'], summary: `Type ;${key}, fill in a name, get a greeting. Replace this with your text.`, files: { [`snippets/${key}.json`]: { key, label: id, content: 'Hello {input:Name=world}' } }, tests: [{ kind: 'snippet', name: 'fills the name', target: key, fields: { Name: 'Bolt' }, expect: 'Hello Bolt' }] }; },
 	search: (id) => { const p = prefixOf(id); return { tier: 1, perms: ['opens_links:example.com'], summary: `Type ${p} and a query to search example.com. Replace the site.`, files: { [`search_engines/${p}.json`]: { id: p, name: id, urlTemplate: 'https://example.com/search?q={q}' } }, tests: [{ kind: 'search', name: 'builds the link', target: p, query: 'hello', expect: 'https://example.com/search?q=hello' }] }; },
-	transform: (id) => ({ tier: 2, perms: ['copies_to_clipboard', 'reads_launcher_input'], summary: `Type =${keyOf(id)}, paste text, get it upper-cased. Replace the pipe steps.`, files: { [`utilities/${id}.yaml`]: `schema_version: 1\nruntime: transform\nid: ${id}\nchip: ${keyOf(id)}\ntitle: ${id}\nicon: wand\ndescription: Trim and upper-case what you paste\nemits: Generic\n\npresentation:\n  widget: detail\n\ntransform:\n  pipe:\n    - trim\n    - upper\n` }, tests: [{ kind: 'transform', name: 'trims and upper-cases', target: id, input: '  hello  ', expect: 'HELLO' }] }),
-	recognizer: (id) => ({ tier: 2, perms: ['copies_to_clipboard', 'reads_launcher_input'], summary: 'Paste a ticket key like TKT-123 and get its link. Replace the pattern and links.', files: { [`utilities/${id}.yaml`]: `schema_version: 1\nruntime: transform\nid: ${id}\nchip: ${keyOf(id)}\ntitle: ${id}\nicon: link\ndescription: Recognize a ticket key and copy its link\nemits: Generic\nplaceholder_examples:\n  - "TKT-123"\n\npresentation:\n  widget: detail\n\ntransform:\n  pipe:\n    - trim\n    - upper\n\nrecognize:\n  patterns:\n    - regex: "(TKT-\\\\d{1,6})"\n  reps:\n    - label: Link\n      template: "https://example.com/tickets/{1}"\n` }, tests: [{ kind: 'recognizer', name: 'recognizes ticket keys and nothing else', target: id, positive: ['TKT-123'], negative: ['TKT', 'TKT-', 'see TKT-123 here'], expect_rep: [{ input: 'TKT-123', label: 'Link', value: 'https://example.com/tickets/TKT-123' }] }] }),
+	transform: (id) => ({ tier: 2, perms: ['copies_to_clipboard', 'reads_launcher_input'], summary: `Type =${keyOf(id)}, paste text, get it upper-cased. Replace the pipe steps.`, files: { [`utilities/${id}.yaml`]: `schema_version: 1\nruntime: transform\nid: "${id}"\nchip: ${keyOf(id)}\ntitle: "${id}"\nicon: wand\ndescription: Trim and upper-case what you paste\nemits: Generic\n\npresentation:\n  widget: detail\n\ntransform:\n  pipe:\n    - trim\n    - upper\n` }, tests: [{ kind: 'transform', name: 'trims and upper-cases', target: id, input: '  hello  ', expect: 'HELLO' }] }),
+	recognizer: (id) => ({ tier: 2, perms: ['copies_to_clipboard', 'reads_launcher_input'], summary: 'Paste a ticket key like TKT-123 and get its link. Replace the pattern and links.', files: { [`utilities/${id}.yaml`]: `schema_version: 1\nruntime: transform\nid: "${id}"\nchip: ${keyOf(id)}\ntitle: "${id}"\nicon: link\ndescription: Recognize a ticket key and copy its link\nemits: Generic\nplaceholder_examples:\n  - "TKT-123"\n\npresentation:\n  widget: detail\n\ntransform:\n  pipe:\n    - trim\n    - upper\n\nrecognize:\n  patterns:\n    - regex: "(TKT-\\\\d{1,6})"\n  reps:\n    - label: Link\n      template: "https://example.com/tickets/{1}"\n` }, tests: [{ kind: 'recognizer', name: 'recognizes ticket keys and nothing else', target: id, positive: ['TKT-123'], negative: ['TKT', 'TKT-', 'see TKT-123 here'], expect_rep: [{ input: 'TKT-123', label: 'Link', value: 'https://example.com/tickets/TKT-123' }] }] }),
 };
 const keyOf = (id) => { let k = id.replace(/[^a-z0-9_-]/g, '').slice(0, 24); return /^[a-z]/.test(k) ? k : `a${k}`.slice(0, 24); };
 const prefixOf = (id) => { let k = id.replace(/[^a-z0-9]/g, '').slice(0, 12); return /^[a-z]/.test(k) ? k : `a${k}`.slice(0, 12); };

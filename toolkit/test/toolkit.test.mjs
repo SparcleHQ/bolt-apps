@@ -1,4 +1,4 @@
-// Run: node --test toolkit/test/
+// Run: node --test toolkit/test/toolkit.test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -6,10 +6,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import zlib from 'node:zlib';
+import { fileURLToPath } from 'node:url';
 import { readPack } from '../bin/bolt-apps.mjs';
 
-const CLI = path.resolve(import.meta.dirname, '../bin/bolt-apps.mjs');
-const REPO = path.resolve(import.meta.dirname, '../..');
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const CLI = path.resolve(HERE, '../bin/bolt-apps.mjs');
+const REPO = path.resolve(HERE, '../..');
 const run = (cwd, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd, encoding: 'utf8' });
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'bolt-apps-'));
 
@@ -57,4 +59,16 @@ test('keygen never overwrites a key; pack without a key says how to make one', (
 	assert.notEqual(run(d, 'keygen', '--out', key).status, 0);
 	run(d, 'new', 'demo-app');
 	assert.match(run(d, 'pack', 'apps/demo-app', '--key', path.join(d, 'none.pem')).stderr, /keygen/);
+});
+
+test('odd input does not crash lint: null listing, quoted runtime, symlinked bin', () => {
+	const d = tmp(); run(d, 'new', 'demo-app', '--type', 'transform');
+	fs.writeFileSync(path.join(d, 'apps/demo-app/bolt-app.json'), 'null');
+	const n = run(d, 'lint', 'apps/demo-app', '--json'); assert.equal(n.status, 1); assert.match(n.stdout, /listing_unreadable/);
+	run(d, 'new', 'q', '--type', 'transform');
+	const f = path.join(d, 'apps/q/utilities/q.yaml');
+	fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace('runtime: transform', 'runtime: "transform"'));
+	assert.equal(run(d, 'lint', 'apps/q').status, 0);
+	const link = path.join(d, 'bolt-apps'); fs.symlinkSync(CLI, link);
+	assert.match(spawnSync(process.execPath, [link, 'help'], { encoding: 'utf8' }).stdout, /author toolkit/);
 });

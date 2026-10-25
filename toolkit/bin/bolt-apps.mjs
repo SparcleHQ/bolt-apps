@@ -11,6 +11,7 @@ import os from 'node:os';
 import path from 'node:path';
 import zlib from 'node:zlib';
 import crypto from 'node:crypto';
+import { fileURLToPath } from 'node:url';
 
 const ID = /^[a-z0-9][a-z0-9-]{0,63}$/, KEY = /^[a-z][a-z0-9_-]{0,23}$/, PREFIX = /^[a-z][a-z0-9]{0,11}$/;
 const PERMS = ['reads_clipboard', 'reads_launcher_input', 'copies_to_clipboard', 'runs_commands', 'network', 'files', 'agent_tools'];
@@ -25,6 +26,7 @@ export function lintApp(dir) {
 	const id = path.basename(path.resolve(dir));
 	let app;
 	try { app = JSON.parse(rd(path.join(dir, 'bolt-app.json'))); } catch (e) { E('listing_unreadable', `bolt-app.json is missing or not JSON: ${e.message}`, 'bolt-app.json'); return { id, out, app: null, files: {} }; }
+	if (!app || typeof app !== 'object' || Array.isArray(app)) { E('listing_unreadable', 'bolt-app.json must be a JSON object', 'bolt-app.json'); return { id, out, app: null, files: {} }; }
 	if (app.schema_version !== 1) E('schema_version', 'schema_version must be 1', 'bolt-app.json');
 	if (app.id !== id || !ID.test(String(app.id))) E('id_mismatch', `id must match ${ID} and equal the folder name "${id}"`, 'bolt-app.json');
 	for (const k of ['title', 'role', 'saves']) if (typeof app[k] !== 'string' || !app[k].trim()) E('field_missing', `${k} is required`, 'bolt-app.json');
@@ -64,7 +66,7 @@ export function lintApp(dir) {
 	}
 	for (const f of files.utilities) {
 		const p = `utilities/${f}`; const y = rd(path.join(dir, p));
-		const rt = /^runtime:\s*(\S+)/m.exec(y)?.[1];
+		const rt = /^runtime:\s*(\S+)/m.exec(y)?.[1]?.replace(/["']/g, '');
 		const yid = /^id:\s*(\S+)/m.exec(y)?.[1]?.replace(/["']/g, '');
 		if (rt !== 'transform') { tier = 3; E('tier3_not_accepted', `runtime "${rt}" runs commands or the network; only runtime: transform is allowed here`, p); continue; }
 		tier = Math.max(tier, 2); need('reads_launcher_input', 'copies_to_clipboard');
@@ -220,7 +222,7 @@ function cmdVerify(args) {
 
 // ---------- main ----------
 const HELP = `bolt-apps: author toolkit for Bolt Apps\n\n  new <id> [--type snippet|search|transform|recognizer]   start from a working template\n  lint [path]                                             offline shape checks\n  keygen [--out file]                                     make your signing key (default ~/.bolt-apps/key.pem)\n  pack <app-folder> [--key file] [--out file]             build and self-sign a .boltpack\n  verify <file.boltpack>                                  check a pack's hash and signature\n\nDocs: https://sparcle.app/docs/extend/`;
-if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('bolt-apps.mjs')) {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))) {
 	const [cmd, ...rest] = process.argv.slice(2);
 	const cmdCheck = () => die('check runs apps through Bolt\'s own engines and is not published yet. Use lint for offline shape checks; Bolt runs the tests when you add the app.');
 	const cmds = { check: cmdCheck, new: cmdNew, lint: cmdLint, keygen: cmdKeygen, pack: cmdPack, verify: cmdVerify };

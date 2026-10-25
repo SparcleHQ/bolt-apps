@@ -36,7 +36,7 @@ A `.boltpack` is a gzip tar of `bundle.json`, `signature.bin` (Ed25519 over the 
 ## Tests
 
 ```
-node --test toolkit/test/
+node --test toolkit/test/toolkit.test.mjs
 ```
 
 Round trip for every template, tamper refusal, tier and permission rules, key handling.

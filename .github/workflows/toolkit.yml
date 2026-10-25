@@ -19,4 +19,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: node --test toolkit/test/
+      - run: node --test toolkit/test/toolkit.test.mjs

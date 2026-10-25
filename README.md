@@ -4,6 +4,8 @@ Small things people add to [Bolt](https://sparcle.app/bolt/) to do their job fas
 snippet that cleans a list, a search prefix for a site you use every day, a launcher key
 that turns pasted CSV into a Markdown table.
 
+> **The gallery is closed.** You can read everything here, use the toolkit and build apps for yourself today.
+>
 > **The gallery is not open yet.**
 > This repository will become the community gallery of Bolt Apps. It opens only when
 > Bolt enforces each app's declared permissions at run time and shows them in plain
@@ -53,6 +55,19 @@ hand:
 - **Search engine:** Settings, Search & Commands, Search Engines, Add engine.
 - **User App:** Settings, Desktop App, User Apps, Open folder; save the `.yaml` there and
   click Reload.
+
+## Toolkit: build your own
+
+The [`toolkit/`](toolkit/) folder holds `bolt-apps`, a small command that scaffolds an app from a
+working template, lints it, signs it and packs it into a `.boltpack` you can drop on Bolt. No
+account and no dependencies; see [toolkit/README.md](toolkit/README.md).
+
+```
+node toolkit/bin/bolt-apps.mjs new my-app --type transform
+node toolkit/bin/bolt-apps.mjs lint apps/my-app
+node toolkit/bin/bolt-apps.mjs keygen
+node toolkit/bin/bolt-apps.mjs pack apps/my-app
+```
 
 ## Contributing
 

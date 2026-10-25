@@ -4,6 +4,8 @@
 
 The checker is part of Bolt's own code, because that is where those engines live. The in-app gallery runs the same check before it lets anyone add an app. The command-line checker is not published yet; it will be before the gallery opens.
 
+Until it is published, `node toolkit/bin/bolt-apps.mjs lint <folder>` runs the offline shape checks (layout, ids, tier, permissions, tests present). It does not run the tests.
+
 ## Run it
 
 Once the checker is published:

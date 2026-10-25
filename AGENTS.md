@@ -81,6 +81,16 @@ Every content file needs a test in `bolt-app.json`:
 Sample data must be made up: `@example.com` emails, `ACME-123` style IDs, no real names,
 no real customer or company data.
 
+## 4a. Start from the toolkit
+
+```
+node toolkit/bin/bolt-apps.mjs new <id> --type snippet|search|transform|recognizer
+node toolkit/bin/bolt-apps.mjs lint apps/<id> --json     # exit 0 before you go on
+node toolkit/bin/bolt-apps.mjs pack apps/<id>            # needs a key: bolt-apps keygen, once
+```
+
+`lint` is the offline shape check; it does not run tests. Never put a signing key (`*.pem`) in this repository.
+
 ## 5. Check
 
 ```

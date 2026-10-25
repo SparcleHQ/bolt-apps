@@ -1,0 +1,11 @@
+{
+  "name": "bolt-apps-toolkit",
+  "version": "0.1.0",
+  "description": "Author toolkit for Bolt Apps: scaffold, lint, sign and verify a .boltpack. No dependencies.",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "bin": { "bolt-apps": "bin/bolt-apps.mjs" },
+  "engines": { "node": ">=18" },
+  "scripts": { "test": "node --test test/" }
+}

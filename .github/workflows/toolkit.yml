@@ -1,0 +1,22 @@
+# Tests the author toolkit. No secrets, runs on pull requests from anyone.
+name: toolkit
+
+on:
+  pull_request:
+    paths: ["toolkit/**", "apps/**", "schema/**"]
+  push:
+    branches: [main]
+    paths: ["toolkit/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node --test toolkit/test/

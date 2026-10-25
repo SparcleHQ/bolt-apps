@@ -14,6 +14,13 @@ that turns pasted CSV into a Markdown table.
 
 ## What a Bolt App is
 
+Bolt Apps extend what Bolt can do. Start with a snippet or a search prefix. Add a YAML file to
+reshape or recognize what you paste. Go further with a command or script that returns rows, a
+skill or agent for AI, or a connector to company systems. Every app has a safety tier, so you know what it can reach before you add it. Company admins can also add detectors and
+compliance packs that change what Bolt masks.
+
+In this repository:
+
 A Bolt App is a folder under [`apps/`](apps/) holding one or more of the things Bolt can
 load, plus a `bolt-app.json` that describes it and carries its tests. It can be packed
 into a **Boltpack** (`.boltpack`), the signed file Bolt installs.

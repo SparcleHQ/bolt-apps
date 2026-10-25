@@ -16,8 +16,7 @@ that turns pasted CSV into a Markdown table.
 
 Bolt Apps extend what Bolt can do. Start with a snippet or a search prefix. Add a YAML file to
 reshape or recognize what you paste. Go further with a command or script that returns rows, a
-skill or agent for AI, or a connector to company systems. Every app declares what it touches,
-and Bolt shows that in plain words when you install a pack. Company admins can also add detectors and
+skill or agent for AI, or a connector to company systems. Every app has a safety tier, so you know what it can reach before you add it. Company admins can also add detectors and
 compliance packs that change what Bolt masks.
 
 In this repository:

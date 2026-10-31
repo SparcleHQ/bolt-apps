@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "system-glance",
+  "title": "System glance",
+  "role": "Anyone who wants to see the machine at a glance",
+  "saves": "Opening three tools to check disk, load and open ports",
+  "summary": "Type =glance to see disk use, load and listening ports.",
+  "author": { "name": "Sparcle", "link": "https://sparcle.app" },
+  "tier": 3,
+  "permissions": ["runs_commands"],
+  "platforms": ["macos", "linux"],
+  "requires": [{ "interpreter": "python", "min_version": "3.9" }],
+  "tests": []
+}

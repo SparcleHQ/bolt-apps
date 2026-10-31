@@ -1,0 +1,23 @@
+{
+  "script": "scripts/system-glance.py",
+  "interpreter": "python3",
+  "manifest_actions": 1,
+  "kit": "scripts/bolt_app_kit",
+  "cases": [
+    { "name": "macos overview", "os": "macos", "args": ["overview"], "golden": "golden/macos-overview.json" },
+    { "name": "macos disk view", "os": "macos", "args": ["disk"], "golden": "golden/macos-disk.json" },
+    { "name": "linux overview, disk nearly full", "os": "linux", "args": ["overview"], "golden": "golden/linux-overview.json",
+      "expect": { "text_present": ["FULL"] } },
+    { "name": "exit 1 with nothing listed is an answer, not a failure", "os": "macos", "args": ["overview"],
+      "stubs": { "lsof": { "rc": 1, "stdout": "" } }, "expect": { "text_present": ["0 listening ports"], "text_absent": ["Ports: not read"] } },
+    { "name": "a failed probe is unread, never zero or all clear", "os": "linux", "args": ["overview"],
+      "stubs": { "ss": { "rc": 2, "stdout": "" } },
+      "expect": { "text_present": ["Not all sections read: ports", "Ports: not read"], "text_absent": ["All clear"] } },
+    { "name": "missing command is unread", "os": "linux", "args": ["overview"], "stubs": { "uptime": { "missing": true } },
+      "expect": { "text_present": ["Load not read"], "text_absent": ["All clear"] } },
+    { "name": "hostile process names", "os": "macos", "args": ["overview"], "hostile": true },
+    { "name": "every command hangs", "os": "macos", "args": ["overview"], "hang": ["df", "uptime", "lsof"],
+      "expect": { "max_seconds": 19, "text_present": ["Not all sections read"], "text_absent": ["All clear"] } },
+    { "name": "windows is refused in plain words", "os": "windows", "args": ["overview"], "expect": { "text_present": ["Not available on this system"] } }
+  ]
+}

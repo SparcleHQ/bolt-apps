@@ -3,10 +3,10 @@ name: toolkit
 
 on:
   pull_request:
-    paths: ["toolkit/**", "apps/**", "schema/**"]
+    paths: ["toolkit/**", "apps/**", "schema/**", "kit/**", "docs/**"]
   push:
     branches: [main]
-    paths: ["toolkit/**"]
+    paths: ["toolkit/**", "kit/**"]
 
 permissions:
   contents: read
@@ -19,4 +19,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: node --test toolkit/test/toolkit.test.mjs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+      - run: node --test toolkit/test/
+      - run: python -m unittest discover -s tests
+        working-directory: kit/python

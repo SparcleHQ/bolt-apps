@@ -7,5 +7,5 @@
   "type": "module",
   "bin": { "bolt-apps": "bin/bolt-apps.mjs" },
   "engines": { "node": ">=18" },
-  "scripts": { "test": "node --test test/toolkit.test.mjs" }
+  "scripts": { "test": "node --test test/" }
 }

@@ -69,6 +69,8 @@ node toolkit/bin/bolt-apps.mjs keygen
 node toolkit/bin/bolt-apps.mjs pack apps/my-app
 ```
 
+For apps that run a script (not accepted in the gallery), the [authoring kit](kit/) and its [design](docs/kit-design.md) take care of formatting, row structure and JSON output.
+
 ## Contributing
 
 Not open yet (see the note at the top). When it opens:

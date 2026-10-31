@@ -45,6 +45,23 @@
       },
       "description": "Exactly what the content needs. The checker fails an undeclared permission and warns on an unneeded one."
     },
+    "platforms": {
+      "description": "Operating systems the app runs on. Omitted means all three. A proposal for the runtime: the launcher could hide the app elsewhere and say why. Bolt does not read this field yet; bolt-apps lint and check validate it.",
+      "type": "array", "minItems": 1, "maxItems": 3, "uniqueItems": true,
+      "items": { "enum": ["macos", "linux", "windows"] }
+    },
+    "requires": {
+      "description": "Interpreters the app's scripts need, so install can check them. A proposal for the runtime: Bolt does not read this field yet. min_version is a dotted number such as 3.9.",
+      "type": "array", "maxItems": 8,
+      "items": {
+        "type": "object", "required": ["interpreter"], "additionalProperties": false,
+        "properties": {
+          "interpreter": { "enum": ["python", "node", "sh", "powershell"] },
+          "min_version": { "type": "string", "pattern": "^\\d+(\\.\\d+){0,2}$" },
+          "platforms": { "type": "array", "items": { "enum": ["macos", "linux", "windows"] } }
+        }
+      }
+    },
     "tests": {
       "type": "array",
       "minItems": 1,

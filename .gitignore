@@ -4,3 +4,5 @@ _checker/
 *.boltpack
 *.pem
 *.key
+__pycache__/
+*.pyc

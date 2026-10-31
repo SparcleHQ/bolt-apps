@@ -1,0 +1,94 @@
+[
+  {
+    "title": "1 to look at",
+    "subtitle": "3 of 3 sections read",
+    "icon": "activity",
+    "body": "",
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "CHECK",
+    "copy_text": ""
+  },
+  {
+    "title": "Disk 90% used",
+    "subtitle": "410 GB of 456 GB",
+    "icon": "hard-drive",
+    "body": "",
+    "nav": {
+      "view": "disk"
+    },
+    "actions": [],
+    "pane": "disk",
+    "kpi_label": "Disk",
+    "kpi_value": 90,
+    "kpi_unit": "%",
+    "kpi_max": 100,
+    "kpi_note": "46 GB free",
+    "kpi_foot": "",
+    "kpi_badge": "FULL",
+    "copy_text": ""
+  },
+  {
+    "title": "Load 0.5",
+    "subtitle": "1 minute average",
+    "icon": "cpu",
+    "body": "",
+    "actions": [],
+    "kpi_label": "Load",
+    "kpi_value": 0.5,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- Load 0.5 - 1 minute average"
+  },
+  {
+    "title": "2 listening ports",
+    "subtitle": "TCP listeners on this machine",
+    "icon": "network",
+    "body": "",
+    "actions": [
+      {
+        "id": "lsof",
+        "kind": "composer",
+        "label": "Copy command",
+        "insert": "ss -ltnH",
+        "target": "row"
+      }
+    ],
+    "kpi_label": "Ports",
+    "kpi_value": 2,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- 2 listening ports - TCP listeners on this machine"
+  },
+  {
+    "title": "Scan again",
+    "subtitle": "Enter to refresh",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "overview",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "overview",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

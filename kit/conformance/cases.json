@@ -377,6 +377,34 @@
     26
    ],
    "…secure-verify.github.io"
+  ],
+  [
+   [
+    "https://xn--80ak6aa92e.com",
+    12
+   ],
+   "(host too long)"
+  ],
+  [
+   [
+    "https://a.b.xn--80ak6aa92e.com",
+    20
+   ],
+   "…xn--80ak6aa92e.com"
+  ],
+  [
+   [
+    "https://xn--aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.com",
+    20
+   ],
+   "(host too long)"
+  ],
+  [
+   [
+    "https://www.paypal.com.xn--verify-account-5xa.example.org",
+    30
+   ],
+   "…example.org"
   ]
  ],
  "clean_text": [
@@ -816,6 +844,159 @@
        "kind": "composer",
        "label": "c",
        "insert": "y"
+      }
+     ]
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "url_template javascript:alert(1)",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "url",
+       "label": "Open",
+       "url_template": "javascript:alert(1)"
+      }
+     ]
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "url_template data:text/html,x",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "url",
+       "label": "Open",
+       "url_template": "data:text/html,x"
+      }
+     ]
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "url_template file:///etc/passwd",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "url",
+       "label": "Open",
+       "url_template": "file:///etc/passwd"
+      }
+     ]
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "url_template {{x}}://evil",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "url",
+       "label": "Open",
+       "url_template": "{{x}}://evil"
+      }
+     ]
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "url_template https://{{host}}/",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "url",
+       "label": "Open",
+       "url_template": "https://{{host}}/"
+      }
+     ]
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "url_template https://ok.example/{{path}}",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "url",
+       "label": "Open",
+       "url_template": "https://ok.example/{{path}}"
+      }
+     ]
+    }
+   ],
+   "valid": true
+  },
+  {
+   "name": "url_template https://ok.example:8443/a?q={{q}}",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "url",
+       "label": "Open",
+       "url_template": "https://ok.example:8443/a?q={{q}}"
+      }
+     ]
+    }
+   ],
+   "valid": true
+  },
+  {
+   "name": "url_template https://ok.example",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "url",
+       "label": "Open",
+       "url_template": "https://ok.example"
+      }
+     ]
+    }
+   ],
+   "valid": true
+  },
+  {
+   "name": "url_template http://{{h}}.example.com/",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "url",
+       "label": "Open",
+       "url_template": "http://{{h}}.example.com/"
       }
      ]
     }

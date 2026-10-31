@@ -34,7 +34,7 @@ Why: the same defects keep coming back when each app reimplements these things. 
 | Row | `title` (required, 160), `subtitle` (200), `body` (markdown, 8000), `icon`, `pane`, `category`, `url` (http/https), `copy_text` | Free extra fields are scalars (string, number, boolean) a manifest binds as `{{row.x}}`. |
 | Tile | `kpi_label`, `kpi_value`, `kpi_unit` (4), `kpi_max`, `kpi_note`, `kpi_foot` (80), `kpi_badge` | `kpi_value` and `kpi_max` are a JSON number or `""`. A tile with a label but no number is invalid. |
 | Badges | `badges`: up to 4 of `{label, tone}` | |
-| Actions | `actions`: kinds `url`, `composer`, `utility` | Up to 3 in the schema; a row adds at most `3 - manifest actions` (2 when the manifest declares Copy). `label` 1 to 14 characters. |
+| Actions | `actions`: kinds `url`, `composer`, `utility`. A `url_template` must start with `http://` or `https://` and a literal host, so a placeholder never supplies the scheme or host | Up to 3 in the schema; a row adds at most `3 - manifest actions` (2 when the manifest declares Copy). `label` 1 to 14 characters. |
 | Nav | `{"back": true}` or `{"view": token, "arg": token}` | Tokens match the launcher's `NAV_ARG_RE`. A nav row carries no actions. |
 | Icon | one of the launcher's icon names | See below. |
 
@@ -58,7 +58,7 @@ Pure standard library, Python 3.9+, no environment-driven behaviour. CI tests 3.
 
 **Defaults that fail safe.** `probe()` treats empty output as unread unless `require_output=False`; `run()` with no deadline and no timeout still uses a 14 s budget; output over `max_bytes` is a failure, not a truncated success. `validate_rows` (used by `emit`) also enforces the rules a schema cannot say: a tile with text needs a number, the footer count including the manifest's actions, and a nav row has no actions.
 
-**Hosts.** `host_label` has no full public-suffix list: it knows common two-part suffixes (`co.uk`, `com.au`) and a short list of hosting suffixes (`github.io`, `pages.dev`, ...). Punycode (`xn--`) hosts are shown whole and raw. Scheme and port are not shown, so do not use it where the scheme or port is the point.
+**Hosts.** `host_label` never cuts inside a label: it shows the whole host, or drops whole leading labels, or returns `(host too long)` (show `host_full()` next to it). It has no full public-suffix list: it knows common two-part suffixes (`co.uk`, `com.au`) and a short list of hosting suffixes (`github.io`, `pages.dev`, ...). Punycode (`xn--`) hosts are shown raw and never cut. Scheme and port are not shown, so do not use it where the scheme or port is the point.
 
 **Known limits.** Text limits count code points, the launcher counts UTF-16 units. Removing unassigned characters depends on the Python Unicode version. Brace neutralising is ASCII only. The windows tree kill needs `taskkill` on PATH or in `C:\Windows\System32`.
 
@@ -136,7 +136,7 @@ Not absorbed: the Windows OEM code page for some console tools (decode with `enc
 6. **Golden snapshots**: the rows must equal `golden/<name>.json`. `--update-golden` writes it; review the diff.
 7. **Schema validation** of every output, and the label (14), footer (3 minus manifest actions, `manifest_actions` in `check.json`) and numeric-tile rules.
 8. Expectations per case: `text_present`, `text_absent`, `max_seconds`, `exit`.
-9. **Kit guard**: the `bolt_app_kit` beside the script must match its lock (`kit_modified`), and match this toolkit's kit when the versions are equal (`kit_diverged`). An older pinned version is an error (`kit_outdated`) unless `check.json` sets `allow_outdated_kit` after the older kit was reviewed. The hash covers the `.py` and `.json` files. The lock is not signed, so this catches accidents and unreviewed edits, not an author who rewrites the lock and the version on purpose; the pack signature (future, section 6) is what binds the kit to a release.
+9. **Kit guard**: the `bolt_app_kit` beside the script must match its lock (`kit_modified`), and match this toolkit's kit when the versions are equal (`kit_diverged`). An older pinned version is an error (`kit_outdated`) unless `check.json` sets `allow_outdated_kit` after the older kit was reviewed. The kit directory must hold exactly the kit's files: a symlink, a subdirectory, a `.so`, `.pyd` or `.pyc`, or any extra file fails `kit_modified` (only `__pycache__` contents are ignored). Paths in `check.json` may not pass through a symlink, and `kit vendor` only replaces a real directory named `bolt_app_kit` inside the app folder. The lock is not signed, so this catches accidents and unreviewed edits, not an author who rewrites the lock and the version on purpose; the pack signature (future, section 6) is what binds the kit to a release.
 
 **Built in v0.1:** all of the above, on macOS or Linux hosts, for Python scripts.
 
@@ -152,7 +152,7 @@ Not absorbed: the Windows OEM code page for some console tools (decode with `enc
 
 ## 6. How an app gets the kit
 
-`bolt-apps kit vendor <app>` copies the kit (`*.py` and the schema) into the app's `scripts/bolt_app_kit/` and writes `scripts/bolt_app_kit.lock.json`: `{ "name", "version", "sha256" }`, where the hash covers the path and content of every `.py` and `.json` file. Python puts the script's own directory on `sys.path`, so `import bolt_app_kit` just works with no install.
+`bolt-apps kit vendor <app>` copies the kit (`*.py` and the schema) into the app's `scripts/bolt_app_kit/` and writes `scripts/bolt_app_kit.lock.json`: `{ "name", "version", "sha256" }`, where the hash covers the path and content of every file in the kit directory. Python puts the script's own directory on `sys.path`, so `import bolt_app_kit` just works with no install.
 
 **The signature covers the kit** because the vendored files are ordinary files inside the pack. **Divergence guard:** `check` fails `kit_modified` if the vendored files differ from the lock (edited by hand), `kit_diverged` if the lock claims this toolkit's version but the files differ from it, and warns `kit_outdated` if the app is pinned to an older version.
 

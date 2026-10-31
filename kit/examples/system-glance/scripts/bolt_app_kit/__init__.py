@@ -8,7 +8,7 @@ from .probe import Deadline, Probe, RunResult, os_name, probe, run, run_parallel
 from .rows import (Headline, KitError, action_chain, action_copy, action_url, back_row, chips, emit, error_row,
                    headline, kv_fields, refresh_row, row, tile, unsupported_row)
 from .schema import validate_rows
-from .text import (clean_lines, clean_text, copy_ok, elide_end, elide_left, host_label, neutralise_braces,
+from .text import (clean_lines, clean_text, copy_ok, elide_end, elide_left, host_full, host_label, neutralise_braces,
                    safe_copy, safe_text, text)
 
 __version__ = "0.1.0"

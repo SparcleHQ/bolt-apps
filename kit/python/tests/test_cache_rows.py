@@ -160,6 +160,20 @@ class RowTests(unittest.TestCase):
         self.assertIn("secure-verify.github.io", h)
         self.assertEqual(k.host_label("https://xn--pypal-4ve.com", 30), "xn--pypal-4ve.com")
 
+    def test_host_never_cut_mid_label(self):
+        for host, n in (("xn--80ak6aa92e.com", 12), ("xn--" + "a" * 40 + ".com", 20), ("a.b.c.d.e.example-long-name.co.uk", 10)):
+            h = k.host_label("https://" + host, n)
+            self.assertTrue(h == k.host_full(host) and len(h) <= n or h == "(host too long)" or (h.startswith("\u2026") and host.endswith(h[1:])), h)
+            self.assertLessEqual(len(h), max(n, len("(host too long)")))
+        self.assertEqual(k.host_full("https://U:p@XN--80AK6AA92E.com:81/x"), "xn--80ak6aa92e.com")
+
+    def test_action_url_template_literal_host(self):
+        for ok in ("https://ok.example/{{path}}", "http://ok.example:8080/a"):
+            k.action_url("a", "Open", ok)
+        for bad in ("javascript:alert(1)", "data:text/html,x", "file:///etc/passwd", "{{x}}://evil", "https://{{host}}/", "https://a.com@{{h}}/"):
+            with self.assertRaises(k.KitError):
+                k.action_url("a", "Open", bad)
+
     def test_copy_text_strips_fillers(self):
         self.assertEqual(k.safe_text("a\u3164b"), "a b")
 

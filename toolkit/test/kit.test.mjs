@@ -173,6 +173,32 @@ test('kit guard: an old version label does not hide an edit, and the kit beside 
 	assert.ok(codes((await checkApp(d, { only: 'macos disk' })).findings).includes('kit_not_beside_script'));
 });
 
+test('kit guard: extra files, binaries, pyc and symlinks inside the kit directory are flagged, never skipped', async () => {
+	const add = async (mut) => { const d = tmpCopy(); mut(path.join(d, 'scripts', 'bolt_app_kit')); return codes((await checkApp(d, { only: 'macos disk' })).findings); };
+	assert.ok((await add((k) => fs.writeFileSync(path.join(k, 'evil.so'), 'x'))).includes('kit_modified'));
+	assert.ok((await add((k) => fs.writeFileSync(path.join(k, 'evil.pyd'), 'x'))).includes('kit_modified'));
+	assert.ok((await add((k) => fs.writeFileSync(path.join(k, 'extra.py'), 'x = 1'))).includes('kit_modified'));
+	assert.ok((await add((k) => fs.writeFileSync(path.join(k, 'fmt.cpython-313.pyc'), 'x'))).includes('kit_modified'));
+	assert.ok((await add((k) => fs.symlinkSync('/etc/hosts', path.join(k, 'link.py')))).includes('kit_modified'));
+	assert.ok((await add((k) => { fs.rmSync(path.join(k, 'fmt.py')); fs.symlinkSync(path.join(k, 'text.py'), path.join(k, 'fmt.py')); })).includes('kit_modified'));
+	assert.ok((await add((k) => { fs.mkdirSync(path.join(k, 'sub')); fs.writeFileSync(path.join(k, 'sub', 'a.py'), ''); })).includes('kit_modified'));
+	assert.ok(!(await add((k) => { fs.mkdirSync(path.join(k, '__pycache__'), { recursive: true }); fs.writeFileSync(path.join(k, '__pycache__', 'x.pyc'), 'x'); })).includes('kit_modified'));
+});
+
+test('symlinks inside the app folder cannot redirect kit vendor or check outside it', async () => {
+	const out = fs.mkdtempSync(path.join(os.tmpdir(), 'outside-'));
+	fs.mkdirSync(path.join(out, 'bolt_app_kit')); fs.writeFileSync(path.join(out, 'bolt_app_kit', 'keep.txt'), 'precious');
+	const a = tmpCopy(); fs.rmSync(path.join(a, 'scripts'), { recursive: true }); fs.symlinkSync(out, path.join(a, 'scripts'));
+	assert.throws(() => vendorKit(a), /symlink|outside/);
+	assert.ok(fs.existsSync(path.join(out, 'bolt_app_kit', 'keep.txt')));
+	const b = tmpCopy(); fs.rmSync(path.join(b, 'scripts', 'bolt_app_kit'), { recursive: true }); fs.symlinkSync(path.join(out, 'bolt_app_kit'), path.join(b, 'scripts', 'bolt_app_kit'));
+	assert.throws(() => vendorKit(b), /symlink|outside/);
+	assert.ok(fs.existsSync(path.join(out, 'bolt_app_kit', 'keep.txt')));
+	assert.ok(codes((await checkApp(a, { only: 'macos disk' })).findings).includes('path_outside_app'));
+	const c = tmpCopy(); const cfg = JSON.parse(fs.readFileSync(path.join(c, 'check.json'), 'utf8')); cfg.kit = 'scripts/other'; fs.writeFileSync(path.join(c, 'check.json'), JSON.stringify(cfg));
+	assert.throws(() => vendorKit(c), /bolt_app_kit/);
+});
+
 test('the vendored example kit equals the kit in this repo', () => {
 	assert.equal(treeHash(path.join(EXAMPLE, 'scripts', 'bolt_app_kit')), treeHash(KIT_PY));
 });

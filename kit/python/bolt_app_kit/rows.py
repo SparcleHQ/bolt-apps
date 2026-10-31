@@ -68,6 +68,8 @@ def action_chain(id, label, target_chip, query=""):
 def action_url(id, label, url_template):
     if not isinstance(url_template, str) or clean_text(url_template) != url_template.strip() or len(url_template) > 2048:
         raise KitError("url_template must be clean text up to 2048 characters")
+    if not re.match(r"^https?://[A-Za-z0-9.-]+([:/?#].*)?\Z", url_template):
+        raise KitError("url_template must start with http:// or https:// and a literal host: a placeholder may never supply the scheme or host")
     return _action(id, "url", label, url_template=url_template)
 
 

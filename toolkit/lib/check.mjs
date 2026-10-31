@@ -70,23 +70,53 @@ export function platformFindings(app) {
 
 // ---- kit vendoring and the divergence guard ----
 const sha = (b) => crypto.createHash('sha256').update(b).digest('hex');
-export function treeHash(dir) {
-	const files = [];
-	const walk = (d, rel) => { for (const e of fs.readdirSync(d, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) { if (e.name === '__pycache__' || e.isSymbolicLink() || (!e.isDirectory() && !/\.(py|json)$/.test(e.name))) continue; const r = rel ? `${rel}/${e.name}` : e.name; if (e.isDirectory()) walk(path.join(d, e.name), r); else files.push(r); } };
+// Every entry is hashed or reported; nothing is skipped silently. __pycache__ contents are ignored by design.
+function walkKit(dir) {
+	const files = [], problems = [];
+	const walk = (d, rel) => {
+		for (const e of fs.readdirSync(d, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
+			const r = rel ? `${rel}/${e.name}` : e.name;
+			if (e.isSymbolicLink()) { problems.push(`${r}: symlink`); files.push(`L:${r}`); continue; }
+			if (e.isDirectory()) { if (e.name === '__pycache__') continue; problems.push(`${r}: unexpected directory`); walk(path.join(d, e.name), r); continue; }
+			if (!e.isFile()) { problems.push(`${r}: not a regular file`); continue; }
+			if (!/\.(py|json)$/.test(e.name)) problems.push(`${r}: unexpected file type`);
+			files.push(r);
+		}
+	};
 	walk(dir, '');
-	return sha(files.map((f) => `${f}\0${sha(fs.readFileSync(path.join(dir, f)))}\n`).join(''));
+	return { files, problems };
+}
+export function treeHash(dir) {
+	return sha(walkKit(dir).files.map((f) => (f.startsWith('L:') ? `${f}\n` : `${f}\0${sha(fs.readFileSync(path.join(dir, f)))}\n`)).join(''));
+}
+export function kitTreeProblems(dir) {
+	const { files, problems } = walkKit(dir);
+	const expected = new Set(walkKit(KIT_PY).files);
+	for (const f of files) if (!f.startsWith('L:') && !expected.has(f)) problems.push(`${f}: not part of the kit`);
+	return [...new Set(problems)];
 }
 export const kitVersion = () => /__version__\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(KIT_PY, '__init__.py'), 'utf8'))[1];
-// A path named in check.json must stay inside the app folder and never be the folder itself.
-export function inside(appDir, rel) {
+// A path named in check.json must stay inside the app folder, never be the folder itself, and no component of it
+// (below the app folder) may be a symlink. `name` pins the final component.
+export function inside(appDir, rel, name) {
 	const base = path.resolve(appDir), p = path.resolve(base, String(rel));
 	if (p === base || !p.startsWith(base + path.sep)) throw new Error(`"${rel}" in check.json points outside the app folder`);
+	if (name && path.basename(p) !== name) throw new Error(`"${rel}" must end in ${name}`);
+	let cur = base;
+	for (const part of path.relative(base, p).split(path.sep)) {
+		cur = path.join(cur, part);
+		let st; try { st = fs.lstatSync(cur); } catch { break; }
+		if (st.isSymbolicLink()) throw new Error(`"${rel}" goes through a symlink (${part}); refusing`);
+	}
+	let anc = p; while (!fs.existsSync(anc)) anc = path.dirname(anc);
+	const realBase = fs.realpathSync(base), realAnc = fs.realpathSync(anc);
+	if (realAnc !== realBase && !realAnc.startsWith(realBase + path.sep)) throw new Error(`"${rel}" resolves outside the app folder`);
 	return p;
 }
 export function vendorKit(appDir) {
 	const cfg = JSON.parse(fs.readFileSync(path.join(appDir, 'check.json'), 'utf8'));
-	const dest = inside(appDir, cfg.kit || 'scripts/bolt_app_kit');
-	fs.rmSync(dest, { recursive: true, force: true });
+	const dest = inside(appDir, cfg.kit || 'scripts/bolt_app_kit', 'bolt_app_kit');
+	if (fs.existsSync(dest)) { if (!fs.lstatSync(dest).isDirectory()) throw new Error('the kit path is not a directory; refusing'); fs.rmSync(dest, { recursive: true }); }
 	fs.mkdirSync(dest, { recursive: true });
 	for (const f of fs.readdirSync(KIT_PY)) if (f.endsWith('.py') || f.endsWith('.json')) fs.copyFileSync(path.join(KIT_PY, f), path.join(dest, f));
 	const lock = { name: 'bolt_app_kit', version: kitVersion(), sha256: treeHash(dest) };
@@ -96,11 +126,13 @@ export function vendorKit(appDir) {
 export function kitGuard(appDir, cfg) {
 	const out = [], E = (code, message) => out.push({ level: 'error', code, message, path: cfg.kit || 'scripts/bolt_app_kit' });
 	let dest;
-	try { dest = inside(appDir, cfg.kit || 'scripts/bolt_app_kit'); } catch (e) { E('path_outside_app', e.message); return out; }
+	try { dest = inside(appDir, cfg.kit || 'scripts/bolt_app_kit', 'bolt_app_kit'); } catch (e) { E('path_outside_app', e.message); return out; }
 	if (path.join(path.dirname(path.resolve(appDir, cfg.script || '')), 'bolt_app_kit') !== dest) { E('kit_not_beside_script', 'the kit that runs is the bolt_app_kit next to the script; check.json kit must name that folder'); return out; }
 	if (!fs.existsSync(dest) || !fs.existsSync(`${dest}.lock.json`)) { E('kit_not_vendored', 'the kit is not vendored: run bolt-apps kit vendor <app>'); return out; }
 	let lock; try { lock = JSON.parse(fs.readFileSync(`${dest}.lock.json`, 'utf8')); } catch { E('kit_lock_unreadable', 'bolt_app_kit.lock.json is not JSON'); return out; }
-	if (treeHash(dest) !== lock.sha256) E('kit_modified', 'the vendored kit differs from its lock (someone edited it). Re-vendor, do not edit');
+	const tp = kitTreeProblems(dest);
+	if (tp.length) E('kit_modified', `the kit directory holds entries that are not the kit: ${tp.slice(0, 4).join('; ')}`);
+	else if (treeHash(dest) !== lock.sha256) E('kit_modified', 'the vendored kit differs from its lock (someone edited it). Re-vendor, do not edit');
 	else if (lock.version === kitVersion() && lock.sha256 !== treeHash(KIT_PY)) E('kit_diverged', `the vendored kit says ${lock.version} but differs from this repo's ${lock.version}`);
 	else if (lock.version !== kitVersion()) out.push({ level: cfg.allow_outdated_kit === true ? 'warning' : 'error', code: 'kit_outdated', message: `app is pinned to kit ${lock.version}; this toolkit has ${kitVersion()}. Re-vendor, or set allow_outdated_kit in check.json after reviewing the older kit`, path: cfg.kit });
 	return out;

@@ -226,7 +226,8 @@
             },
             "url_template": {
               "type": "string",
-              "maxLength": 2048
+              "maxLength": 2048,
+              "pattern": "^https?://[A-Za-z0-9.-]+([:/?#].*)?$"
             },
             "primary": {
               "type": "boolean"

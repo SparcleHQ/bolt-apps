@@ -103,30 +103,38 @@ def _host_of(raw):
     return re.sub(r":\d*$", "", s).rstrip(".")
 
 
+HOST_TOO_LONG = "(host too long)"
+
+
+def host_full(origin):
+    """The whole cleaned host, for a tooltip or a separate field next to a shortened host_label."""
+    return _host_of(origin)
+
+
 def host_label(origin, max_len=32):
-    """A host or origin for display, within max_len. Never cut from the end: whole labels are dropped from
-    the LEFT and the registrable domain (example.com, example.co.uk) is always kept, so
-    `login.example.com.evil.net` can never read as `login.example.com...`. Userinfo, scheme, port and path are
-    removed. An address (IPv4 or [v6]) is elided from the left."""
+    """A host or origin for display, within max_len. Never cut inside a label: the whole host if it fits, else
+    whole leading labels are dropped (marked with an ellipsis) and the registrable domain (example.com,
+    example.co.uk, owner.github.io) is always kept whole. If even that does not fit, the fixed marker
+    "(host too long)" is returned and the caller shows host_full() elsewhere. So `login.example.com.evil.net`
+    can never read as `login.example.com...`, and a punycode or look-alike host is never cut mid-label.
+    Userinfo, scheme, port and path are removed."""
     h = _host_of(origin)
     if not h:
         return ""
     if len(h) <= max_len:
         return h
     if _V4.match(h) or h.startswith("["):
-        return elide_left(h, max_len)
+        return HOST_TOO_LONG
     labels = h.split(".")
     keep = 3 if len(labels) >= 3 and ((len(labels[-1]) == 2 and labels[-2] in _SLD) or ".".join(labels[-2:]) in _PRIVATE_SUFFIX) else 2
-    if any(l.startswith("xn--") for l in labels):
-        return elide_left(h, max_len)  # punycode is shown raw, whole, so a look-alike cannot hide
-    reg = ".".join(labels[-keep:])
     cur = labels
     while len(cur) > keep:
         cur = cur[1:]
         cand = ELLIPSIS + ".".join(cur)
         if len(cand) <= max_len:
             return cand
-    return elide_left(reg, max_len)
+    reg = ".".join(labels[-keep:])
+    return reg if len(reg) <= max_len else HOST_TOO_LONG
 
 
 # ---- text that is copied to the clipboard (port of bolt_safenet.safe_text / copy_value / copy_ok) ----

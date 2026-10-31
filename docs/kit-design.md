@@ -42,7 +42,7 @@ Why: the same defects keep coming back when each app reimplements these things. 
 
 ## 3. The Python library: `bolt_app_kit`
 
-Pure standard library, Python 3.9+, no environment-driven behaviour. Located at `kit/python/bolt_app_kit/`.
+Pure standard library, Python 3.9+, no environment-driven behaviour. CI tests 3.9 (the minimum, on ubuntu-22.04, because the newest runner image has no 3.9) and 3.13. Located at `kit/python/bolt_app_kit/`.
 
 | Area | API |
 |---|---|

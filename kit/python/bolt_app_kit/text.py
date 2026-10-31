@@ -62,8 +62,10 @@ def neutralise_braces(s):
 
 
 def text(s, limit=None):
-    """clean_text + neutralise_braces: the default for any string that goes into a row."""
-    return neutralise_braces(clean_text(s, limit))
+    """clean_text + neutralise_braces: the default for any string that goes into a row. Braces are broken
+    first and the limit applied after, so the result never exceeds `limit`."""
+    t = neutralise_braces(clean_text(s))
+    return elide_end(t, limit) if limit is not None else t
 
 
 def elide_end(s, n):
@@ -85,6 +87,9 @@ def elide_left(s, n):
 
 
 _SLD = frozenset(("co", "com", "org", "net", "gov", "edu", "ac", "or", "ne", "go"))
+# Hosting suffixes where the next label to the left is the owner (not a full public suffix list).
+_PRIVATE_SUFFIX = frozenset(("github.io", "pages.dev", "blogspot.com", "herokuapp.com", "vercel.app", "netlify.app",
+                             "workers.dev", "appspot.com", "azurewebsites.net", "cloudfront.net", "web.app", "firebaseapp.com"))
 _V4 = re.compile(r"^\d{1,3}(\.\d{1,3}){3}$")
 
 
@@ -111,7 +116,9 @@ def host_label(origin, max_len=32):
     if _V4.match(h) or h.startswith("["):
         return elide_left(h, max_len)
     labels = h.split(".")
-    keep = 3 if len(labels) >= 3 and len(labels[-1]) == 2 and labels[-2] in _SLD else 2
+    keep = 3 if len(labels) >= 3 and ((len(labels[-1]) == 2 and labels[-2] in _SLD) or ".".join(labels[-2:]) in _PRIVATE_SUFFIX) else 2
+    if any(l.startswith("xn--") for l in labels):
+        return elide_left(h, max_len)  # punycode is shown raw, whole, so a look-alike cannot hide
     reg = ".".join(labels[-keep:])
     cur = labels
     while len(cur) > keep:
@@ -137,7 +144,7 @@ def safe_text(s, cap=300):
     the ASCII space and . , : _ - / @ + % ' " # ? * = ~ ^ [ ]. Parentheses and braces become brackets.
     Everything else (; | & < > $ ! backslash, backtick, every control, format and bidi character) becomes
     a space. A word starting with = is stripped (zsh expands it). Whitespace collapses."""
-    s = unicodedata.normalize("NFKC", str(s)).translate(_BRACKETS)
+    s = unicodedata.normalize("NFKC", clean_text(str(s))).translate(_BRACKETS)
     keep = "".join(ch if _copy_char_ok(ch) else " " for ch in s)
     keep = re.sub(r"(^|(?<= ))=+", "", keep)
     return " ".join(keep.split())[:cap].strip()

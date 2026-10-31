@@ -370,6 +370,13 @@
     ""
    ],
    ""
+  ],
+  [
+   [
+    "https://login.paypal.com.secure-verify.github.io",
+    26
+   ],
+   "…secure-verify.github.io"
   ]
  ],
  "clean_text": [
@@ -743,6 +750,76 @@
    "rows": {
     "title": "x"
    },
+   "valid": false
+  },
+  {
+   "name": "tile label without number",
+   "rows": [
+    {
+     "title": "x",
+     "kpi_label": "Disk",
+     "kpi_value": ""
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "nav with actions",
+   "rows": [
+    {
+     "title": "x",
+     "nav": {
+      "back": true
+     },
+     "actions": [
+      {
+       "id": "a",
+       "kind": "composer",
+       "label": "a",
+       "insert": "y"
+      }
+     ]
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "id with trailing newline",
+   "rows": [
+    {
+     "title": "x",
+     "id": "abc\n"
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "three actions leave no room for Copy",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "composer",
+       "label": "a",
+       "insert": "y"
+      },
+      {
+       "id": "b",
+       "kind": "composer",
+       "label": "b",
+       "insert": "y"
+      },
+      {
+       "id": "c",
+       "kind": "composer",
+       "label": "c",
+       "insert": "y"
+      }
+     ]
+    }
+   ],
    "valid": false
   }
  ]

@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+import re
 import stat
 import time
 
@@ -25,6 +26,8 @@ class Cache(object):
         if not callable(shape):
             raise TypeError("Cache needs a shape(value) check")
         self.ttl, self.shape, self.max_entries, self._clock = float(ttl), shape, int(max_entries), clock
+        if root is None and (not isinstance(app, str) or not re.match(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}\Z", app) or ".." in app):
+            raise ValueError("cache app name must be a plain name")
         self.root = root or default_root(app)
         self.enabled = self._prepare()
 
@@ -34,7 +37,7 @@ class Cache(object):
             os.makedirs(parent, 0o700, exist_ok=True)
             if not os.path.lexists(self.root):
                 os.mkdir(self.root, 0o700)
-            for d in (self.root,):
+            for d in (parent, self.root):
                 st = os.lstat(d)
                 if stat.S_ISLNK(st.st_mode) or not stat.S_ISDIR(st.st_mode):
                     return False
@@ -70,7 +73,7 @@ class Cache(object):
                 return None
             val = doc.get("value")
             return val if val is not None and self.shape(val) else None
-        except (OSError, ValueError, UnicodeDecodeError, TypeError):
+        except Exception:  # a stale or hostile file (or a shape check that trips on it) is a miss
             return None
 
     def age(self, key):
@@ -95,13 +98,15 @@ class Cache(object):
             tmp = os.path.join(self.root, ".tmp-%d-%s" % (os.getpid(), os.urandom(6).hex()))
             fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | _NOFOLLOW, 0o600)
             try:
-                os.write(fd, blob)
+                view = memoryview(blob)
+                while view:
+                    view = view[os.write(fd, view):]
             finally:
                 os.close(fd)
             os.replace(tmp, self._path(key))
             self.prune()
             return True
-        except (OSError, ValueError, TypeError):
+        except Exception:
             return False
 
     def prune(self):

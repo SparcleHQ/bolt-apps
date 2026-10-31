@@ -124,6 +124,54 @@ class RowTests(unittest.TestCase):
         self.assertTrue(k.headline({"a": ok}).all_clear)
         self.assertFalse(k.headline({"a": ok}, findings=2).all_clear)
 
+    def test_empty_headline_is_not_all_clear(self):
+        self.assertFalse(k.headline({}).all_clear)
+
+    def test_brace_flood_stays_within_limit(self):
+        r = k.row("{{" * 100)
+        self.assertLessEqual(len(r["title"]), 160)
+        self.assertEqual(k.validate_rows([r]), [])
+        self.assertNotIn("{{", k.tile("x", 1, "{{")["unit"])
+
+    def test_trailing_newline_tokens_rejected(self):
+        for bad in ({"view": "disk\n"}, {"view": "disk", "arg": "a\n"}):
+            with self.assertRaises(k.KitError):
+                k.row("x", nav=bad)
+
+    def test_validate_rows_has_the_tile_footer_nav_rules(self):
+        self.assertTrue(k.validate_rows([{"title": "x", "kpi_label": "Disk", "kpi_value": ""}]))
+        self.assertTrue(k.validate_rows([{"title": "x", "nav": {"back": True}, "actions": [k.action_copy("a", "A", "t")]}]))
+
+    def test_url_with_bidi_or_braces_rejected(self):
+        for u in ("https://a.com/\u202e", "https://a.com/{{x}}", "https://a.com/ b"):
+            with self.assertRaises(k.KitError):
+                k.row("x", url=u)
+
+    def test_fmt_num_agrees_with_tile(self):  # defect 9
+        for x in (0.25, 0.35, 1.45, 2.675):
+            self.assertEqual(float(k.fmt_num(x, 1)), k.tile("x", x)["value"])
+
+    def test_bytes_carry_and_time_overflow(self):
+        self.assertEqual(k.fmt_bytes(1023.7 * 1024), "1 MB")
+        self.assertEqual(k.fmt_time(1e20, mode="clock"), "unknown")
+
+    def test_private_suffix_keeps_owner_label(self):
+        h = k.host_label("https://login.paypal.com.secure-verify.github.io", 24)
+        self.assertIn("secure-verify.github.io", h)
+        self.assertEqual(k.host_label("https://xn--pypal-4ve.com", 30), "xn--pypal-4ve.com")
+
+    def test_copy_text_strips_fillers(self):
+        self.assertEqual(k.safe_text("a\u3164b"), "a b")
+
+    def test_cache_name_cannot_traverse(self):
+        with self.assertRaises(ValueError):
+            k.Cache("../../x", 5, shape)
+
+    def test_shape_that_raises_is_a_miss(self):
+        c = k.Cache("t", 45, lambda v: v["missing"], root=os.path.join(tempfile.mkdtemp(), "c"))
+        self.assertFalse(c.put("a", {"n": 1}))
+        self.assertIsNone(c.get("a"))
+
     def test_emit_compact_valid(self):
         s = k.emit([k.row("x")], exit=False)
         self.assertNotIn(" ", s.replace('"', "")[:0]); self.assertEqual(json.loads(s)[0]["title"], "x")

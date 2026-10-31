@@ -49,7 +49,7 @@ def read_all(deadline, cache):
         hit = cache.get("disk")
         if hit is not None:
             return kit.Probe("disk", True, hit)
-        p = kit.probe("disk", ["df", "-k", "/"], parse_disk, deadline=deadline, require_output=True)
+        p = kit.probe("disk", ["df", "-kP", "/"], parse_disk, deadline=deadline, require_output=True)
         cache.put("disk", p.value, ok=p.ok)
         return p
 
@@ -57,7 +57,7 @@ def read_all(deadline, cache):
         "disk": disk,
         "load": lambda: kit.probe("load", ["uptime"], parse_load, deadline=deadline, require_output=True),
         # lsof exits 1 with no output when nothing is listening: that is an answer, not a failure
-        "ports": lambda: kit.probe("ports", COMMANDS[OS]["ports"], parse_ports, deadline=deadline, empty_ok_rcs=(1,)),
+        "ports": lambda: kit.probe("ports", COMMANDS[OS]["ports"], parse_ports, deadline=deadline, empty_ok_rcs=(1,), require_output=False),
     }, deadline)
 
 
@@ -92,7 +92,7 @@ def main(argv):
         kit.row(head.text, "%d of 3 sections read" % sum(1 for p in probes.values() if p.ok), icon="activity",
                 badge="" if head.all_clear else "CHECK", copy=False),
         disk_row(d),
-        kit.row("Load %s" % (("%.1f" % load.value["load1"]) if load.ok else "not read"), "1 minute average", icon="cpu",
+        kit.row("Load %s" % (kit.fmt_num(load.value["load1"], 1) if load.ok else "not read"), "1 minute average", icon="cpu",
                 tile=kit.tile("Load", load.value["load1"] if load.ok else None, "", None)),
         kit.row(kit.fmt_count(ports.value["count"], "listening port") if ports.ok else "Ports: not read",
                 ("TCP listeners: " + kit.chips(ports.value["names"])) if ports.ok and ports.value["names"] else "TCP listeners on this machine", icon="network",

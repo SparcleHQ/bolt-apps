@@ -14,9 +14,9 @@ from .text import clean_lines, clean_text, neutralise_braces, safe_copy, text
 LABEL_MAX = 14
 FOOTER_MAX = 3
 UNIT_MAX = 4
-_ID = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
-_NAV = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}$")
-_FIELD = re.compile(r"^[a-z][a-z0-9_]{0,31}$")
+_ID = re.compile(r"^[A-Za-z0-9_-]{1,64}\Z")
+_NAV = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}\Z")
+_FIELD = re.compile(r"^[a-z][a-z0-9_]{0,31}\Z")
 _RESERVED = frozenset(("id", "title", "subtitle", "description", "icon", "body", "pane", "category", "url", "copy_text",
                        "copy_value", "nav", "actions", "badges", "kpi_label", "kpi_value", "kpi_unit", "kpi_max",
                        "kpi_note", "kpi_foot", "kpi_badge"))
@@ -42,7 +42,7 @@ def tile(label, value, unit="", max=None, note="", foot=""):
     n = plain_number(value)
     if n is None:
         raise KitError("tile value must be a finite number or None, got %r" % (value,))
-    unit = clean_text(unit)
+    unit = text(unit)
     if len(unit) > UNIT_MAX:
         raise KitError("tile unit %r is longer than %d characters (the launcher cuts it)" % (unit, UNIT_MAX))
     t = {"label": text(label, 40), "value": n, "unit": unit, "max": "", "note": text(note, 80), "foot": text(foot, 80)}
@@ -66,6 +66,8 @@ def action_chain(id, label, target_chip, query=""):
 
 
 def action_url(id, label, url_template):
+    if not isinstance(url_template, str) or clean_text(url_template) != url_template.strip() or len(url_template) > 2048:
+        raise KitError("url_template must be clean text up to 2048 characters")
     return _action(id, "url", label, url_template=url_template)
 
 
@@ -96,7 +98,7 @@ def chips(items, sep=", ", limit=400):
 
 
 def row(title, subtitle="", icon=DEFAULT_ICON, body="", nav=None, actions=None, tile=None, badge="", copy=True,
-        pane=None, category=None, url=None, id=None, manifest_actions=1, **fields):
+        badges=None, pane=None, category=None, url=None, id=None, manifest_actions=1, **fields):
     """One row. Every string is cleaned (control, bidi, zero-width, tag characters out; `{{` broken). `copy`
     True copies "title - subtitle" through safe_copy, a string/list copies that, False/nav rows copy nothing.
     A nav row has no actions. A row has at most 3 - manifest_actions footer buttons."""
@@ -119,14 +121,16 @@ def row(title, subtitle="", icon=DEFAULT_ICON, body="", nav=None, actions=None, 
         if len(set(ids)) != len(ids):
             raise KitError("duplicate action ids")
         r["actions"] = acts
+    if badges:
+        r["badges"] = [{"label": text(b[0], 24), "tone": text(b[1], 16) if len(b) > 1 else ""} for b in badges[:4]]
     if pane:
-        if not _NAV.match(pane):
+        if not _NAV.match(pane) or ".." in pane:
             raise KitError("pane %r is not a valid view name" % pane)
         r["pane"] = pane
     if category:
         r["category"] = text(category, 64)
     if url:
-        if not re.match(r"^https?://", url) or len(url) > 2048 or re.search(r"[\s\x00-\x1f\x7f]", url):
+        if not re.match(r"^https?://[\x21-\x7e]+\Z", url) or len(url) > 2048 or "{" in url or "}" in url:
             raise KitError("url must be a clean http(s) link")
         r["url"] = url
     tl = tile or {}
@@ -148,7 +152,7 @@ def _nav(nav):
     if nav == {"back": True}:
         return {"back": True}
     if isinstance(nav, dict) and set(nav) <= set(("view", "arg")) and isinstance(nav.get("view"), str) and _NAV.match(nav["view"]) \
-            and (nav.get("arg") is None or (isinstance(nav["arg"], str) and _NAV.match(nav["arg"]) and ".." not in nav["arg"])):
+            and (nav.get("arg") is None or (isinstance(nav["arg"], str) and _NAV.match(nav["arg"]) and ".." not in nav["arg"])) and ".." not in nav["view"]:
         return dict((k, v) for k, v in nav.items() if v is not None)
     raise KitError("nav must be {'back': True} or {'view': name, 'arg': token}")
 
@@ -177,6 +181,8 @@ class Headline(object):
 
 
 def headline(probes, findings=0, ok_text="All clear", subject="sections"):
+    if not probes:
+        return Headline("Nothing was read", "warn", False, [])
     """`probes` is {name: Probe} (or {name: bool ok}). Unread sections come first: "Not all read: ports, net".
     Findings next. Only when everything was read and nothing was found does it say ok_text."""
     unread = sorted(n for n, p in probes.items() if not (p if isinstance(p, bool) else p.ok))

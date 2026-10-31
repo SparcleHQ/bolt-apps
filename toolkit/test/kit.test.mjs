@@ -7,7 +7,7 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseIconKeys } from '../../kit/schema/gen-icons.mjs';
-import { checkApp, checkRows, platformFindings, schemaCheck, treeHash, vendorKit, KIT_ROOT, KIT_PY } from '../lib/check.mjs';
+import { checkApp, checkRows, inside, platformFindings, schemaCheck, treeHash, vendorKit, KIT_ROOT, KIT_PY } from '../lib/check.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const EXAMPLE = path.join(root, 'kit', 'examples', 'system-glance');
@@ -41,7 +41,7 @@ test('packaged Python schema equals the schema', () => {
 
 test('conformance: every validate case gives the same answer in the JS validator', () => {
 	const cases = JSON.parse(fs.readFileSync(path.join(KIT_ROOT, 'conformance', 'cases.json'), 'utf8')).validate;
-	for (const c of cases) assert.equal(schemaCheck(c.rows, JSON.parse(fs.readFileSync(path.join(KIT_ROOT, 'schema', 'row.schema.json'), 'utf8'))).length === 0, c.valid, c.name);
+	for (const c of cases) assert.equal(checkRows(c.rows).length === 0, c.valid, c.name);
 });
 
 test('checkRows: numeric tile rule, footer and label limits, text safety', () => {
@@ -151,6 +151,26 @@ test('kit guard: edited, missing and outdated vendored kits are caught', async (
 	vendorKit(d);
 	const lock = path.join(d, 'scripts', 'bolt_app_kit.lock.json'); const l = JSON.parse(fs.readFileSync(lock, 'utf8')); l.version = '0.0.1'; fs.writeFileSync(lock, JSON.stringify(l));
 	assert.ok(codes((await checkApp(d, { only: 'macos disk' })).findings).includes('kit_outdated'));
+});
+
+test('paths in check.json cannot leave the app folder (kit vendor never deletes outside it)', () => {
+	const d = tmpCopy();
+	for (const bad of ['.', '..', '../../x', '/etc']) assert.throws(() => inside(d, bad), /outside the app folder/);
+	fs.writeFileSync(path.join(d, 'check.json'), JSON.stringify({ script: 'scripts/system-glance.py', interpreter: 'python3', kit: '..', cases: [] }));
+	assert.throws(() => vendorKit(d), /outside/);
+	assert.ok(fs.existsSync(path.join(d, 'scripts')));
+});
+
+test('kit guard: an old version label does not hide an edit, and the kit beside the script is the one guarded', async () => {
+	const d = tmpCopy();
+	fs.appendFileSync(path.join(d, 'scripts', 'bolt_app_kit', 'fmt.py'), '\n# edit\n');
+	const lock = path.join(d, 'scripts', 'bolt_app_kit.lock.json');
+	fs.writeFileSync(lock, JSON.stringify({ name: 'bolt_app_kit', version: '0.0.1', sha256: treeHash(path.join(d, 'scripts', 'bolt_app_kit')) }));
+	const r = await checkApp(d, { only: 'macos disk' });
+	assert.ok(codes(r.findings).includes('kit_outdated') && r.findings.find((x) => x.code === 'kit_outdated').level === 'error');
+	const c = JSON.parse(fs.readFileSync(path.join(d, 'check.json'), 'utf8')); c.kit = 'elsewhere/bolt_app_kit';
+	fs.writeFileSync(path.join(d, 'check.json'), JSON.stringify(c));
+	assert.ok(codes((await checkApp(d, { only: 'macos disk' })).findings).includes('kit_not_beside_script'));
 });
 
 test('the vendored example kit equals the kit in this repo', () => {

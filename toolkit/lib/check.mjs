@@ -72,14 +72,20 @@ export function platformFindings(app) {
 const sha = (b) => crypto.createHash('sha256').update(b).digest('hex');
 export function treeHash(dir) {
 	const files = [];
-	const walk = (d, rel) => { for (const e of fs.readdirSync(d, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) { if (e.name === '__pycache__' || e.name.endsWith('.pyc') || e.isSymbolicLink()) continue; const r = rel ? `${rel}/${e.name}` : e.name; if (e.isDirectory()) walk(path.join(d, e.name), r); else files.push(r); } };
+	const walk = (d, rel) => { for (const e of fs.readdirSync(d, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) { if (e.name === '__pycache__' || e.isSymbolicLink() || (!e.isDirectory() && !/\.(py|json)$/.test(e.name))) continue; const r = rel ? `${rel}/${e.name}` : e.name; if (e.isDirectory()) walk(path.join(d, e.name), r); else files.push(r); } };
 	walk(dir, '');
 	return sha(files.map((f) => `${f}\0${sha(fs.readFileSync(path.join(dir, f)))}\n`).join(''));
 }
 export const kitVersion = () => /__version__\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(KIT_PY, '__init__.py'), 'utf8'))[1];
+// A path named in check.json must stay inside the app folder and never be the folder itself.
+export function inside(appDir, rel) {
+	const base = path.resolve(appDir), p = path.resolve(base, String(rel));
+	if (p === base || !p.startsWith(base + path.sep)) throw new Error(`"${rel}" in check.json points outside the app folder`);
+	return p;
+}
 export function vendorKit(appDir) {
 	const cfg = JSON.parse(fs.readFileSync(path.join(appDir, 'check.json'), 'utf8'));
-	const dest = path.join(appDir, cfg.kit || 'scripts/bolt_app_kit');
+	const dest = inside(appDir, cfg.kit || 'scripts/bolt_app_kit');
 	fs.rmSync(dest, { recursive: true, force: true });
 	fs.mkdirSync(dest, { recursive: true });
 	for (const f of fs.readdirSync(KIT_PY)) if (f.endsWith('.py') || f.endsWith('.json')) fs.copyFileSync(path.join(KIT_PY, f), path.join(dest, f));
@@ -89,18 +95,20 @@ export function vendorKit(appDir) {
 }
 export function kitGuard(appDir, cfg) {
 	const out = [], E = (code, message) => out.push({ level: 'error', code, message, path: cfg.kit || 'scripts/bolt_app_kit' });
-	const dest = path.join(appDir, cfg.kit || 'scripts/bolt_app_kit');
+	let dest;
+	try { dest = inside(appDir, cfg.kit || 'scripts/bolt_app_kit'); } catch (e) { E('path_outside_app', e.message); return out; }
+	if (path.join(path.dirname(path.resolve(appDir, cfg.script || '')), 'bolt_app_kit') !== dest) { E('kit_not_beside_script', 'the kit that runs is the bolt_app_kit next to the script; check.json kit must name that folder'); return out; }
 	if (!fs.existsSync(dest) || !fs.existsSync(`${dest}.lock.json`)) { E('kit_not_vendored', 'the kit is not vendored: run bolt-apps kit vendor <app>'); return out; }
 	let lock; try { lock = JSON.parse(fs.readFileSync(`${dest}.lock.json`, 'utf8')); } catch { E('kit_lock_unreadable', 'bolt_app_kit.lock.json is not JSON'); return out; }
 	if (treeHash(dest) !== lock.sha256) E('kit_modified', 'the vendored kit differs from its lock (someone edited it). Re-vendor, do not edit');
 	else if (lock.version === kitVersion() && lock.sha256 !== treeHash(KIT_PY)) E('kit_diverged', `the vendored kit says ${lock.version} but differs from this repo's ${lock.version}`);
-	else if (lock.version !== kitVersion()) out.push({ level: 'warning', code: 'kit_outdated', message: `app is pinned to kit ${lock.version}; this toolkit has ${kitVersion()}`, path: cfg.kit });
+	else if (lock.version !== kitVersion()) out.push({ level: cfg.allow_outdated_kit === true ? 'warning' : 'error', code: 'kit_outdated', message: `app is pinned to kit ${lock.version}; this toolkit has ${kitVersion()}. Re-vendor, or set allow_outdated_kit in check.json after reviewing the older kit`, path: cfg.kit });
 	return out;
 }
 
 // ---- stubs and the process ----
 const SH_QUOTE = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`;
-const HOSTILE = 'a\u202eb\u200bc{{x}}\u{E0041}d\u2028e\u0007f';
+const HOSTILE = 'a\u202eb\u200bc{{x}}\u{E0041}d\u2028e\u0007f\u3164g\u2800h';
 function makeStubs(dir, appDir, osName, kase, files) {
 	const stubs = {};
 	const base = path.join(appDir, 'fixtures', osName);
@@ -144,7 +152,7 @@ function runScript(py, script, osName, args, env, cwd) {
 	});
 }
 
-const BAD_TEXT = /[\p{Cc}\p{Cf}\p{Cs}\p{Co}\u2028\u2029]/u;
+const BAD_TEXT = /[\p{Cc}\p{Cf}\p{Cs}\p{Co}\u2028\u2029\u115f\u1160\u3164\uffa0\u2800\u034f]/u;
 function strings(v, p, out) { if (typeof v === 'string') out.push([p, v]); else if (Array.isArray(v)) v.forEach((x, i) => strings(x, `${p}[${i}]`, out)); else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) strings(x, `${p}.${k}`, out); return out; }
 const deepEq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
@@ -184,7 +192,7 @@ export async function checkApp(appDir, opts = {}) {
 	if (host === 'windows') { top('error', 'host_unsupported', 'check v0.1 needs a POSIX host (sh stubs); run it on macOS or Linux', '.'); return report; }
 	const py = cfg.interpreter ? whichSync(cfg.interpreter) : null;
 	if (!py) { top('error', 'interpreter_missing', `${cfg.interpreter || 'interpreter'} was not found on this machine`, 'check.json'); return report; }
-	const script = path.resolve(appDir, cfg.script);
+	let script; try { script = inside(appDir, cfg.script); } catch (e) { top('error', 'path_outside_app', e.message, 'check.json'); return report; }
 	if (!fs.existsSync(script)) { top('error', 'script_missing', `${cfg.script} does not exist`, 'check.json'); return report; }
 	let cases = cfg.cases || [];
 	if (opts.os) { cases = cases.filter((c) => (c.os || host) === opts.os); if (!cases.length) { top('error', 'no_cases_for_os', `check.json has no case for ${opts.os}`, 'check.json'); return report; } }
@@ -216,7 +224,8 @@ export async function checkApp(appDir, opts = {}) {
 				for (const t of ex.text_absent || []) if (flat.includes(t)) E('forbidden_text_present', `output contains "${t}"`);
 				if (kase.golden) {
 					const gp = path.join(appDir, kase.golden);
-					if (opts.updateGolden) { fs.mkdirSync(path.dirname(gp), { recursive: true }); fs.writeFileSync(gp, JSON.stringify(rows, null, 2) + '\n'); }
+					if (opts.updateGolden && f.some((x) => x.level === 'error')) E('golden_not_written', 'not writing a golden from a failing run');
+					else if (opts.updateGolden) { fs.mkdirSync(path.dirname(gp), { recursive: true }); fs.writeFileSync(gp, JSON.stringify(rows, null, 2) + '\n'); }
 					else if (!fs.existsSync(gp)) E('golden_missing', `${kase.golden} does not exist (run with --update-golden once, then review it)`);
 					else if (!deepEq(JSON.parse(fs.readFileSync(gp, 'utf8')), rows)) E('golden_mismatch', `output differs from ${kase.golden}`);
 				}

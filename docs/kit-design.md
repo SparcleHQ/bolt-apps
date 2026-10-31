@@ -21,7 +21,7 @@ Why: the same defects keep coming back when each app reimplements these things. 
 | 9 | Rounding differs between display, thresholds and badges | `rnd()` = floor(x+0.5), used by every formatter | `test_rounding_one_rule` |
 | 10 | Cache: unchecked shape, symlinks, temp files, no pruning | `Cache`: shape check, `lstat`-checked directory, `O_EXCL|O_NOFOLLOW`, pruning | `CacheTests` |
 | 11 | Origins and hosts truncated generically | `host_label` elides from the left and keeps the registrable domain | `test_origin_never_through_generic_truncation` |
-| 12 | Env-driven test hooks in a shipped script | None exist; a test fails if the kit reads any named variable | `test_no_env_driven_hooks` |
+| 12 | Env-driven test hooks in a shipped script | None exist; a source scan test fails if the kit names an environment variable (it does not catch every possible indirect hook) | `test_no_env_driven_hooks` |
 
 **Non-goals (v0.1).** Enforcing an app's permissions at run time (that is the runtime's job). The gallery or its index. A JavaScript or shell kit (described in section 8, not built). Changing Bolt's manifest format. Running the real launcher.
 
@@ -47,14 +47,20 @@ Pure standard library, Python 3.9+, no environment-driven behaviour. Located at 
 | Area | API |
 |---|---|
 | Output | `emit(rows)` validates against the schema, prints compact ASCII JSON, exits without waiting for stray threads. An invalid payload prints one error row and exits 3. `validate_rows(rows)` returns the problems. |
-| Builders | `row`, `tile`, `back_row`, `refresh_row`, `error_row`, `unsupported_row`, `action_copy`, `action_chain`, `action_url`, `kv_fields`, `chips`. Contract violations raise `KitError` at build time. |
-| Formatters | `rnd`, `fmt_pct`, `fmt_bytes`, `fmt_duration`, `fmt_count`, `fmt_time`. One rounding rule: `floor(x + 0.5)`. A missing value is the word `unknown`, never `0`. |
+| Builders | `row` (with `badges`), `tile`, `back_row`, `refresh_row`, `error_row`, `unsupported_row`, `action_copy`, `action_chain`, `action_url`, `kv_fields`, `chips`. Contract violations raise `KitError` at build time. |
+| Formatters | `rnd`, `fmt_num`, `fmt_pct`, `fmt_bytes`, `fmt_duration`, `fmt_count`, `fmt_time`. One rounding rule: `floor(x + 0.5)`. A missing value is the word `unknown`, never `0`. |
 | Text | `clean_text` (control, format, bidi, zero-width, tag, surrogate, private-use, line separators, blank fillers removed; stacked marks capped), `clean_lines`, `neutralise_braces`, `text`, `elide_end`, `elide_left`, `host_label`, `safe_text`, `safe_copy`, `copy_ok`. |
 | Probes | `Deadline`, `run`, `probe`, `Probe`, `run_parallel`, `os_name`, `which`. |
 | Cache | `Cache(app, ttl, shape)` with `get`, `put`, `prune`. |
-| Headline | `headline(probes, findings)` returns text, tone and `all_clear`. |
+| Headline | `headline(probes, findings)` returns text, tone and `all_clear`; an empty probe set is never all clear. |
 
 **Probes.** `run(cmd, deadline=None, timeout=None, dirs=None, ok_rcs=(0,), empty_ok_rcs=())` takes an argv list only (a string is a `TypeError`: there is no shell). It returns `(ok, rc, out)` and never raises for a missing program, a bad exit or a timeout; `.timed_out` and `.missing` say why. `dirs` resolves the program only in those directories, ignoring PATH. The child runs in its own session so a timeout kills the whole tree. By default the child gets the parent environment with `LC_ALL=C` so output is not translated; pass `env={}` for an empty one. `probe(name, cmd, parse)` returns a `Probe` that is **unread** when the command failed, timed out, produced nothing when output is required, or the parser returned `None` or raised. Its `value` is then `None`: there is nothing to fake.
+
+**Defaults that fail safe.** `probe()` treats empty output as unread unless `require_output=False`; `run()` with no deadline and no timeout still uses a 14 s budget; output over `max_bytes` is a failure, not a truncated success. `validate_rows` (used by `emit`) also enforces the rules a schema cannot say: a tile with text needs a number, the footer count including the manifest's actions, and a nav row has no actions.
+
+**Hosts.** `host_label` has no full public-suffix list: it knows common two-part suffixes (`co.uk`, `com.au`) and a short list of hosting suffixes (`github.io`, `pages.dev`, ...). Punycode (`xn--`) hosts are shown whole and raw. Scheme and port are not shown, so do not use it where the scheme or port is the point.
+
+**Known limits.** Text limits count code points, the launcher counts UTF-16 units. Removing unassigned characters depends on the Python Unicode version. Brace neutralising is ASCII only. The windows tree kill needs `taskkill` on PATH or in `C:\Windows\System32`.
 
 **Headline.** `headline({"disk": p1, "ports": p2}, findings=0)` says `Not all sections read: ports` when any probe is unread, then the finding count, and only then `All clear`.
 
@@ -118,6 +124,8 @@ Not absorbed: the Windows OEM code page for some console tools (decode with `enc
 
 `bolt-apps check <app> [--json] [--os macos|linux|windows] [--update-golden]` runs when the app folder has a `check.json`. (Snippet, search and transform apps still go through Bolt's own engines, which are not published; `check` on them says so.)
 
+**Run it only on code you have read.** `check` executes the app's script and interpreter on your machine. The empty environment, temp HOME and stub PATH make the result repeatable; they are not a sandbox. A script can still read your real home directory, call tools by absolute path and use the network. Paths named in `check.json` must stay inside the app folder (`kit vendor` refuses anything else).
+
 **What it does, per case:**
 
 1. Builds a temp directory with a **stub command** for each recorded output (`fixtures/<os>/<cmd>.out`, optional `<cmd>.rc`) and a temp HOME.
@@ -128,7 +136,7 @@ Not absorbed: the Windows OEM code page for some console tools (decode with `enc
 6. **Golden snapshots**: the rows must equal `golden/<name>.json`. `--update-golden` writes it; review the diff.
 7. **Schema validation** of every output, and the label (14), footer (3 minus manifest actions, `manifest_actions` in `check.json`) and numeric-tile rules.
 8. Expectations per case: `text_present`, `text_absent`, `max_seconds`, `exit`.
-9. **Kit guard**: the vendored kit must match its lock, and the lock must match this toolkit's kit of the same version.
+9. **Kit guard**: the `bolt_app_kit` beside the script must match its lock (`kit_modified`), and match this toolkit's kit when the versions are equal (`kit_diverged`). An older pinned version is an error (`kit_outdated`) unless `check.json` sets `allow_outdated_kit` after the older kit was reviewed. The hash covers the `.py` and `.json` files. The lock is not signed, so this catches accidents and unreviewed edits, not an author who rewrites the lock and the version on purpose; the pack signature (future, section 6) is what binds the kit to a release.
 
 **Built in v0.1:** all of the above, on macOS or Linux hosts, for Python scripts.
 
@@ -144,7 +152,7 @@ Not absorbed: the Windows OEM code page for some console tools (decode with `enc
 
 ## 6. How an app gets the kit
 
-`bolt-apps kit vendor <app>` copies the kit (`*.py` and the schema) into the app's `scripts/bolt_app_kit/` and writes `scripts/bolt_app_kit.lock.json`: `{ "name", "version", "sha256" }`, where the hash covers every file path and content. Python puts the script's own directory on `sys.path`, so `import bolt_app_kit` just works with no install.
+`bolt-apps kit vendor <app>` copies the kit (`*.py` and the schema) into the app's `scripts/bolt_app_kit/` and writes `scripts/bolt_app_kit.lock.json`: `{ "name", "version", "sha256" }`, where the hash covers the path and content of every `.py` and `.json` file. Python puts the script's own directory on `sys.path`, so `import bolt_app_kit` just works with no install.
 
 **The signature covers the kit** because the vendored files are ordinary files inside the pack. **Divergence guard:** `check` fails `kit_modified` if the vendored files differ from the lock (edited by hand), `kit_diverged` if the lock claims this toolkit's version but the files differ from it, and warns `kit_outdated` if the app is pinned to an older version.
 

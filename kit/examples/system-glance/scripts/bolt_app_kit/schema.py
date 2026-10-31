@@ -53,7 +53,7 @@ def check(value, schema, root, path="$"):
             errs.append("%s: shorter than %d" % (path, schema["minLength"]))
         if "maxLength" in schema and len(value) > schema["maxLength"]:
             errs.append("%s: longer than %d characters" % (path, schema["maxLength"]))
-        if "pattern" in schema and not re.search(schema["pattern"], value):
+        if "pattern" in schema and not re.search(schema["pattern"].replace("$", "\\Z") if schema["pattern"].endswith("$") else schema["pattern"], value):
             errs.append("%s: does not match %s" % (path, schema["pattern"]))
     if isinstance(value, list):
         if "maxItems" in schema and len(value) > schema["maxItems"]:
@@ -78,6 +78,22 @@ def check(value, schema, root, path="$"):
     return errs
 
 
-def validate_rows(rows):
+def validate_rows(rows, manifest_actions=1):
+    """Schema check plus the rules a JSON Schema cannot say: a tile with text needs a number, the footer count
+    including the manifest's actions, and a nav row carries no actions. Same rules as `bolt-apps check`."""
     root = load_schema()
-    return check(rows, root, root)
+    errs = check(rows, root, root)
+    if isinstance(rows, list):
+        for i, r in enumerate(rows):
+            if not isinstance(r, dict):
+                continue
+            acts = r.get("actions") if isinstance(r.get("actions"), list) else []
+            if len(acts) > 3 - manifest_actions:
+                errs.append("$[%d]: %d footer buttons; the footer shows 3 including the manifest's %d" % (i, len(acts), manifest_actions))
+            if r.get("nav") and acts:
+                errs.append("$[%d]: a row with nav must not carry actions" % i)
+            tile_text = any(r.get(k) not in (None, "") for k in ("kpi_label", "kpi_unit", "kpi_max", "kpi_note", "kpi_foot"))
+            v = r.get("kpi_value")
+            if tile_text and (isinstance(v, bool) or not isinstance(v, (int, float))):
+                errs.append("$[%d]: a tile needs a numeric kpi_value" % i)
+    return errs

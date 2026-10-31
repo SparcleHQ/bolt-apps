@@ -78,7 +78,7 @@ def _kill_tree(proc, os_):
     leader). Windows: taskkill /T /F, then proc.kill() as a fallback."""
     try:
         if os_ == "windows":
-            tk = which("taskkill", os_="windows")
+            tk = which("taskkill", os_="windows") or which("taskkill.exe", dirs=["C:\\Windows\\System32"], os_="windows")
             if tk:
                 try:
                     subprocess.run([tk, "/PID", str(proc.pid), "/T", "/F"], stdin=subprocess.DEVNULL,
@@ -112,6 +112,8 @@ def run(cmd, deadline=None, timeout=None, dirs=None, cwd=None, env=None, ok_rcs=
     """
     if isinstance(cmd, (str, bytes)) or not cmd:
         raise TypeError("run() takes an argv list, not a string")
+    if deadline is None and timeout is None:
+        timeout = DEFAULT_BUDGET  # a call can never wait forever
     osn = os_ or os_name()
     exe = which(cmd[0], dirs, osn)
     if exe is None:
@@ -143,7 +145,9 @@ def run(cmd, deadline=None, timeout=None, dirs=None, cwd=None, env=None, ok_rcs=
         except Exception:
             raw = b""
         return RunResult(False, None, (raw or b"")[:max_bytes].decode(encoding, "replace"), timed_out=True, reason="timed out")
-    out = (raw or b"")[:max_bytes].decode(encoding, "replace")
+    if raw and len(raw) > max_bytes:
+        return RunResult(False, proc.returncode, raw[:max_bytes].decode(encoding, "replace"), reason="output too large")
+    out = (raw or b"").decode(encoding, "replace")
     rc = proc.returncode
     if rc in ok_rcs:
         return RunResult(True, rc, out)
@@ -171,9 +175,12 @@ class Probe(object):
         return "Probe(%r, ok=%r)" % (self.name, self.ok)
 
 
-def probe(name, cmd=None, parse=None, fn=None, deadline=None, require_output=False, **run_kw):
+def probe(name, cmd=None, parse=None, fn=None, deadline=None, require_output=True, **run_kw):
     """Read one thing. Give `cmd` (argv) and an optional `parse(text)`, or `fn()` returning the value.
-    parse returning None, or raising, means unread. require_output makes empty output unread."""
+    parse returning None, or raising, means unread. Empty output is unread unless require_output=False (use that
+    only when "nothing" is a real answer, for example a list that can be empty)."""
+    if fn is None and (isinstance(cmd, (str, bytes)) or not cmd):
+        raise TypeError("probe() takes an argv list")
     try:
         if fn is not None:
             v = fn()
@@ -187,8 +194,6 @@ def probe(name, cmd=None, parse=None, fn=None, deadline=None, require_output=Fal
         if v is None:
             return Probe(name, False, reason="could not parse")
         return Probe(name, True, v)
-    except TypeError:
-        raise
     except Exception as e:  # a parser bug must not become a clean zero
         return Probe(name, False, reason="error: %s" % e.__class__.__name__)
 

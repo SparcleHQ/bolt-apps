@@ -46,6 +46,9 @@ def fmt_bytes(n):
     while f >= 1024 and i < len(_UNITS) - 1:
         f /= 1024.0
         i += 1
+    if i < len(_UNITS) - 1 and rnd(f) >= 1024:
+        f /= 1024.0
+        i += 1
     if i == 0:
         return "%d B" % rnd(f)
     if rnd(f * 10) < 100:
@@ -91,13 +94,26 @@ def fmt_time(ts, now=None, mode="relative"):
     if f is None:
         return UNKNOWN
     if mode == "clock":
-        return _time.strftime("%Y-%m-%d %H:%M UTC", _time.gmtime(f))
+        try:
+            return _time.strftime("%Y-%m-%d %H:%M UTC", _time.gmtime(f))
+        except (OverflowError, OSError, ValueError):
+            return UNKNOWN
     age = (_time.time() if now is None else float(now)) - f
     if age < 0:
         return "in the future"
     if age < 5:
         return "just now"
     return fmt_duration(age) + " ago"
+
+
+def fmt_num(x, decimals=1):
+    """A plain number with a fixed number of decimals by rnd(), so row text and tile agree. `unknown` if missing."""
+    f = _num(x)
+    if f is None:
+        return UNKNOWN
+    k = 10 ** max(0, decimals)
+    v = rnd(f * k) / float(k)
+    return ("%." + str(max(0, decimals)) + "f") % v
 
 
 def plain_number(x):

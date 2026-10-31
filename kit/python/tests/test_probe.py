@@ -116,12 +116,29 @@ class ProbeTests(unittest.TestCase):
         d = tempfile.mkdtemp()
         stub(d, "c", "true")
         self.assertTrue(k.probe("n", ["c"], dirs=[d], require_output=True).unread)
-        self.assertTrue(k.probe("n", ["c"], dirs=[d]).ok)
+        self.assertTrue(k.probe("n", ["c"], dirs=[d], require_output=False).ok)
 
     def test_run_parallel_marks_slow_task_unread(self):
         dl = k.Deadline(0.5)
         res = k.run_parallel({"fast": lambda: k.Probe("fast", True, 1), "slow": lambda: (time.sleep(5), k.Probe("slow", True, 2))[1]}, dl)
         self.assertTrue(res["fast"].ok); self.assertTrue(res["slow"].unread and res["slow"].timed_out)
+
+    def test_empty_output_is_unread_by_default(self):  # a clean zero from nothing
+        d = tempfile.mkdtemp(); stub(d, "c", "true")
+        self.assertTrue(k.probe("n", ["c"], parse=lambda t: len(t.splitlines()), dirs=[d]).unread)
+
+    def test_parser_type_error_is_unread_not_a_crash(self):
+        d = tempfile.mkdtemp(); stub(d, "c", "x")
+        self.assertTrue(k.probe("n", ["c"], parse=lambda t: int(None), dirs=[d]).unread)
+
+    def test_oversize_output_is_not_ok(self):
+        d = tempfile.mkdtemp(); stub(d, "c", "yes | head -c 5000")
+        self.assertFalse(k.run(["c"], dirs=[d], max_bytes=100).ok)
+
+    def test_no_deadline_still_bounded(self):
+        import inspect
+        self.assertEqual(P.DEFAULT_BUDGET, 14.0)
+        self.assertIn("DEFAULT_BUDGET", inspect.getsource(P.run))
 
     def test_os_name(self):
         self.assertIn(k.os_name(), ("macos", "linux", "windows", "other"))

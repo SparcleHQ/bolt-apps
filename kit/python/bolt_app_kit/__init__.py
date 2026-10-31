@@ -3,7 +3,7 @@
 Authors write data and wiring; the kit does formatting, row structure, JSON output, text safety, probes
 and caching. The contract it targets is kit/schema/row.schema.json; see docs/kit-design.md."""
 from .cache import Cache
-from .fmt import UNKNOWN, fmt_bytes, fmt_count, fmt_duration, fmt_pct, fmt_time, rnd
+from .fmt import UNKNOWN, fmt_bytes, fmt_count, fmt_duration, fmt_num, fmt_pct, fmt_time, rnd
 from .probe import Deadline, Probe, RunResult, os_name, probe, run, run_parallel, which
 from .rows import (Headline, KitError, action_chain, action_copy, action_url, back_row, chips, emit, error_row,
                    headline, kv_fields, refresh_row, row, tile, unsupported_row)

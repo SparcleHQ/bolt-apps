@@ -1,0 +1,94 @@
+[
+  {
+    "title": "All clear",
+    "subtitle": "3 of 3 sections read",
+    "icon": "activity",
+    "body": "",
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Disk 40% used",
+    "subtitle": "186 GB of 466 GB",
+    "icon": "hard-drive",
+    "body": "",
+    "nav": {
+      "view": "disk"
+    },
+    "actions": [],
+    "pane": "disk",
+    "kpi_label": "Disk",
+    "kpi_value": 40,
+    "kpi_unit": "%",
+    "kpi_max": 100,
+    "kpi_note": "279 GB free",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Load 1.5",
+    "subtitle": "1 minute average",
+    "icon": "cpu",
+    "body": "",
+    "actions": [],
+    "kpi_label": "Load",
+    "kpi_value": 1.5,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- Load 1.5 - 1 minute average"
+  },
+  {
+    "title": "3 listening ports",
+    "subtitle": "TCP listeners: node, plainname, rapportd",
+    "icon": "network",
+    "body": "",
+    "actions": [
+      {
+        "id": "lsof",
+        "kind": "composer",
+        "label": "Copy command",
+        "insert": "lsof -nP -iTCP -sTCP:LISTEN",
+        "target": "row"
+      }
+    ],
+    "kpi_label": "Ports",
+    "kpi_value": 3,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- 3 listening ports - TCP listeners: node, plainname, rapportd"
+  },
+  {
+    "title": "Scan again",
+    "subtitle": "Enter to refresh",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "overview",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "overview",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

@@ -1,0 +1,4 @@
+COMMAND   PID USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+rapportd  400 alex    8u  IPv4 0x1      0t0  TCP *:49152 (LISTEN)
+node     5123 alex   21u  IPv4 0x2      0t0  TCP 127.0.0.1:3000 (LISTEN)
+@@HOSTILE@@  1 alex   9u  IPv6 0x3      0t0  TCP [::1]:631 (LISTEN)

@@ -1,0 +1,38 @@
+# Example Bolt App built with the kit (a tier 3 script app: not for the gallery, which accepts runtime: transform only).
+schema_version: 1
+runtime: bridge
+id: glance
+chip: glance
+title: "System glance"
+icon: activity
+description: "Disk, load and listening ports at a glance. Read-only, local."
+emits: Generic
+args:
+  - { name: view, from: "query.word(0)", default: overview }
+bridge:
+  command:
+    macos: "python3 {{scripts_dir}}/system-glance.py {{view}}"
+    linux: "python3 {{scripts_dir}}/system-glance.py {{view}}"
+  parse: json
+  timeout_seconds: 20
+presentation:
+  widget: list
+  title_field: title
+  subtitle_field: subtitle
+  view_arg: view
+  views:
+    overview: {}
+    disk: {}
+  right_widget:
+    kind: cards
+    mode: list_data
+    bind:
+      layout: tiles
+      title: "{{row.kpi_label}}"
+      value: "{{row.kpi_value}}"
+      unit: "{{row.kpi_unit}}"
+      max: "{{row.kpi_max}}"
+      subtitle: "{{row.kpi_note}}"
+      badge: "{{row.kpi_badge}}"
+actions:
+  - { id: copy, kind: composer, target: row, label: Copy, insert: "{{row.copy_text}}" }

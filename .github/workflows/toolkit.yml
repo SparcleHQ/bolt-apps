@@ -3,20 +3,32 @@ name: toolkit
 
 on:
   pull_request:
-    paths: ["toolkit/**", "apps/**", "schema/**"]
+    paths: ["toolkit/**", "apps/**", "schema/**", "kit/**", "docs/**"]
   push:
     branches: [main]
-    paths: ["toolkit/**"]
+    paths: ["toolkit/**", "kit/**"]
 
 permissions:
   contents: read
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # 3.9 is the kit's stated minimum. The newest runner image has no 3.9, so it runs on 22.04.
+          - { os: ubuntu-22.04, python: "3.9" }
+          - { os: ubuntu-latest, python: "3.13" }
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: node --test toolkit/test/toolkit.test.mjs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: node --test toolkit/test/
+      - run: python -m unittest discover -s tests
+        working-directory: kit/python

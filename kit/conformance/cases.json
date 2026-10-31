@@ -1,0 +1,1007 @@
+{
+ "_doc": "Language-neutral conformance cases. Every kit implementation must produce `expect` for each `args`. Function names match the Python kit; other languages map snake_case to their own style.",
+ "fmt_pct": [
+  [
+   [
+    0
+   ],
+   "0%"
+  ],
+  [
+   [
+    0.5
+   ],
+   "1%"
+  ],
+  [
+   [
+    1.5
+   ],
+   "2%"
+  ],
+  [
+   [
+    2.5
+   ],
+   "3%"
+  ],
+  [
+   [
+    41.49
+   ],
+   "41%"
+  ],
+  [
+   [
+    99.5
+   ],
+   "100%"
+  ],
+  [
+   [
+    12.345,
+    1
+   ],
+   "12.3%"
+  ],
+  [
+   [
+    12.35,
+    1
+   ],
+   "12.4%"
+  ],
+  [
+   [
+    null
+   ],
+   "unknown"
+  ],
+  [
+   [
+    "__nan__"
+   ],
+   "unknown"
+  ],
+  [
+   [
+    "x"
+   ],
+   "unknown"
+  ],
+  [
+   [
+    true
+   ],
+   "unknown"
+  ]
+ ],
+ "fmt_bytes": [
+  [
+   [
+    0
+   ],
+   "0 B"
+  ],
+  [
+   [
+    512
+   ],
+   "512 B"
+  ],
+  [
+   [
+    1536
+   ],
+   "1.5 KB"
+  ],
+  [
+   [
+    2048
+   ],
+   "2 KB"
+  ],
+  [
+   [
+    10240
+   ],
+   "10 KB"
+  ],
+  [
+   [
+    12582912
+   ],
+   "12 MB"
+  ],
+  [
+   [
+    1319413953331.2
+   ],
+   "1.2 TB"
+  ],
+  [
+   [
+    -1
+   ],
+   "unknown"
+  ],
+  [
+   [
+    null
+   ],
+   "unknown"
+  ]
+ ],
+ "fmt_duration": [
+  [
+   [
+    0
+   ],
+   "0 s"
+  ],
+  [
+   [
+    45
+   ],
+   "45 s"
+  ],
+  [
+   [
+    89
+   ],
+   "89 s"
+  ],
+  [
+   [
+    90
+   ],
+   "2 min"
+  ],
+  [
+   [
+    180
+   ],
+   "3 min"
+  ],
+  [
+   [
+    7500
+   ],
+   "2 h 5 min"
+  ],
+  [
+   [
+    7200
+   ],
+   "2 h"
+  ],
+  [
+   [
+    273600
+   ],
+   "3 d 4 h"
+  ],
+  [
+   [
+    -5
+   ],
+   "unknown"
+  ]
+ ],
+ "fmt_count": [
+  [
+   [
+    0
+   ],
+   "0"
+  ],
+  [
+   [
+    12345
+   ],
+   "12,345"
+  ],
+  [
+   [
+    1234567
+   ],
+   "1,234,567"
+  ],
+  [
+   [
+    1,
+    "port"
+   ],
+   "1 port"
+  ],
+  [
+   [
+    3,
+    "port"
+   ],
+   "3 ports"
+  ],
+  [
+   [
+    2,
+    "entry",
+    "entries"
+   ],
+   "2 entries"
+  ],
+  [
+   [
+    null
+   ],
+   "unknown"
+  ]
+ ],
+ "fmt_time": [
+  [
+   [
+    1000,
+    "__now:1002"
+   ],
+   "just now"
+  ],
+  [
+   [
+    1000,
+    "__now:1030"
+   ],
+   "30 s ago"
+  ],
+  [
+   [
+    1000,
+    "__now:1300"
+   ],
+   "5 min ago"
+  ],
+  [
+   [
+    1000,
+    "__now:11800"
+   ],
+   "3 h ago"
+  ],
+  [
+   [
+    0,
+    "__now:0",
+    "clock"
+   ],
+   "1970-01-01 00:00 UTC"
+  ],
+  [
+   [
+    null
+   ],
+   "unknown"
+  ]
+ ],
+ "elide_end": [
+  [
+   [
+    "hello world",
+    20
+   ],
+   "hello world"
+  ],
+  [
+   [
+    "hello world",
+    6
+   ],
+   "hello…"
+  ],
+  [
+   [
+    "abc",
+    1
+   ],
+   "…"
+  ]
+ ],
+ "elide_left": [
+  [
+   [
+    "/Users/a/Documents/file.txt",
+    12
+   ],
+   "…ts/file.txt"
+  ],
+  [
+   [
+    "short",
+    10
+   ],
+   "short"
+  ]
+ ],
+ "host_label": [
+  [
+   [
+    "https://example.com/path?q=1"
+   ],
+   "example.com"
+  ],
+  [
+   [
+    "HTTPS://User:pw@Example.COM:8443/x"
+   ],
+   "example.com"
+  ],
+  [
+   [
+    "https://example.com@evil.net/"
+   ],
+   "evil.net"
+  ],
+  [
+   [
+    "https://a.b.c.d.example.com",
+    18
+   ],
+   "…b.c.d.example.com"
+  ],
+  [
+   [
+    "https://login.example.com.attacker-domain.net",
+    22
+   ],
+   "…attacker-domain.net"
+  ],
+  [
+   [
+    "https://very.deep.sub.shop.example.co.uk",
+    22
+   ],
+   "…shop.example.co.uk"
+  ],
+  [
+   [
+    "10.0.0.1"
+   ],
+   "10.0.0.1"
+  ],
+  [
+   [
+    ""
+   ],
+   ""
+  ],
+  [
+   [
+    "https://login.paypal.com.secure-verify.github.io",
+    26
+   ],
+   "…secure-verify.github.io"
+  ],
+  [
+   [
+    "https://xn--80ak6aa92e.com",
+    12
+   ],
+   "(host too long)"
+  ],
+  [
+   [
+    "https://a.b.xn--80ak6aa92e.com",
+    20
+   ],
+   "…xn--80ak6aa92e.com"
+  ],
+  [
+   [
+    "https://xn--aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.com",
+    20
+   ],
+   "(host too long)"
+  ],
+  [
+   [
+    "https://www.paypal.com.xn--verify-account-5xa.example.org",
+    30
+   ],
+   "…example.org"
+  ]
+ ],
+ "clean_text": [
+  [
+   [
+    "a‮b​c⁦d"
+   ],
+   "abcd"
+  ],
+  [
+   [
+    "tag󠁁󠁿s"
+   ],
+   "tags"
+  ],
+  [
+   [
+    "a b c\nd\te"
+   ],
+   "a b c d e"
+  ],
+  [
+   [
+    "x\u0000y\u0007z"
+   ],
+   "xyz"
+  ],
+  [
+   [
+    "  many   spaces  "
+   ],
+   "many spaces"
+  ],
+  [
+   [
+    "blankㅤfiller"
+   ],
+   "blank filler"
+  ],
+  [
+   [
+    "é́́́x"
+   ],
+   "é́x"
+  ],
+  [
+   [
+    null
+   ],
+   ""
+  ],
+  [
+   [
+    5
+   ],
+   ""
+  ]
+ ],
+ "neutralise_braces": [
+  [
+   [
+    "{{x}}"
+   ],
+   "{ {x} }"
+  ],
+  [
+   [
+    "{{{a}}}"
+   ],
+   "{ { {a} } }"
+  ],
+  [
+   [
+    "{ x }"
+   ],
+   "{ x }"
+  ],
+  [
+   [
+    "plain"
+   ],
+   "plain"
+  ]
+ ],
+ "safe_text": [
+  [
+   [
+    "rm -rf / ; echo $(id) | tee"
+   ],
+   "rm -rf / echo [id] tee"
+  ],
+  [
+   [
+    "=cmd one =two"
+   ],
+   "cmd one two"
+  ],
+  [
+   [
+    "café ‮ evil"
+   ],
+   "café evil"
+  ]
+ ],
+ "safe_copy": [
+  [
+   [
+    "hello world"
+   ],
+   "- hello world"
+  ],
+  [
+   [
+    [
+     "a",
+     [
+      "sub",
+      "b"
+     ]
+    ]
+   ],
+   "- a\n-   b"
+  ],
+  [
+   [
+    "; | & $"
+   ],
+   "- Copy blocked: text failed the safety check"
+  ]
+ ],
+ "tile_rule": [
+  {
+   "args": [
+    "Disk",
+    41.26,
+    "%",
+    100
+   ],
+   "expect": {
+    "value": 41.3,
+    "max": 100
+   }
+  },
+  {
+   "args": [
+    "Disk",
+    null
+   ],
+   "expect": null
+  },
+  {
+   "args": [
+    "Disk",
+    "12"
+   ],
+   "error": true
+  },
+  {
+   "args": [
+    "Disk",
+    "__nan__"
+   ],
+   "error": true
+  },
+  {
+   "args": [
+    "Disk",
+    true
+   ],
+   "error": true
+  },
+  {
+   "args": [
+    "Disk",
+    5,
+    "toolong"
+   ],
+   "error": true
+  }
+ ],
+ "validate": [
+  {
+   "name": "minimal row",
+   "rows": [
+    {
+     "title": "x"
+    }
+   ],
+   "valid": true
+  },
+  {
+   "name": "no title",
+   "rows": [
+    {
+     "subtitle": "x"
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "unknown icon",
+   "rows": [
+    {
+     "title": "x",
+     "icon": "NotAnIcon"
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "known icon",
+   "rows": [
+    {
+     "title": "x",
+     "icon": "activity"
+    }
+   ],
+   "valid": true
+  },
+  {
+   "name": "string tile value",
+   "rows": [
+    {
+     "title": "x",
+     "kpi_value": "12"
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "empty tile value",
+   "rows": [
+    {
+     "title": "x",
+     "kpi_value": ""
+    }
+   ],
+   "valid": true
+  },
+  {
+   "name": "long action label",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "composer",
+       "label": "fifteen chars!!",
+       "insert": "y"
+      }
+     ]
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "four actions",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "composer",
+       "label": "a",
+       "insert": "y"
+      },
+      {
+       "id": "b",
+       "kind": "composer",
+       "label": "b",
+       "insert": "y"
+      },
+      {
+       "id": "c",
+       "kind": "composer",
+       "label": "c",
+       "insert": "y"
+      },
+      {
+       "id": "d",
+       "kind": "composer",
+       "label": "d",
+       "insert": "y"
+      }
+     ]
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "bad action kind",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "shell",
+       "label": "a",
+       "insert": "y"
+      }
+     ]
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "nav back",
+   "rows": [
+    {
+     "title": "x",
+     "nav": {
+      "back": true
+     }
+    }
+   ],
+   "valid": true
+  },
+  {
+   "name": "nav view arg",
+   "rows": [
+    {
+     "title": "x",
+     "nav": {
+      "view": "disk",
+      "arg": "refresh"
+     }
+    }
+   ],
+   "valid": true
+  },
+  {
+   "name": "nav bad arg",
+   "rows": [
+    {
+     "title": "x",
+     "nav": {
+      "view": "disk",
+      "arg": "-all"
+     }
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "nested object field",
+   "rows": [
+    {
+     "title": "x",
+     "extra": {
+      "a": 1
+     }
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "file url",
+   "rows": [
+    {
+     "title": "x",
+     "url": "file:///etc/passwd"
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "not an array",
+   "rows": {
+    "title": "x"
+   },
+   "valid": false
+  },
+  {
+   "name": "tile label without number",
+   "rows": [
+    {
+     "title": "x",
+     "kpi_label": "Disk",
+     "kpi_value": ""
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "nav with actions",
+   "rows": [
+    {
+     "title": "x",
+     "nav": {
+      "back": true
+     },
+     "actions": [
+      {
+       "id": "a",
+       "kind": "composer",
+       "label": "a",
+       "insert": "y"
+      }
+     ]
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "id with trailing newline",
+   "rows": [
+    {
+     "title": "x",
+     "id": "abc\n"
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "three actions leave no room for Copy",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "composer",
+       "label": "a",
+       "insert": "y"
+      },
+      {
+       "id": "b",
+       "kind": "composer",
+       "label": "b",
+       "insert": "y"
+      },
+      {
+       "id": "c",
+       "kind": "composer",
+       "label": "c",
+       "insert": "y"
+      }
+     ]
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "url_template javascript:alert(1)",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "url",
+       "label": "Open",
+       "url_template": "javascript:alert(1)"
+      }
+     ]
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "url_template data:text/html,x",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "url",
+       "label": "Open",
+       "url_template": "data:text/html,x"
+      }
+     ]
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "url_template file:///etc/passwd",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "url",
+       "label": "Open",
+       "url_template": "file:///etc/passwd"
+      }
+     ]
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "url_template {{x}}://evil",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "url",
+       "label": "Open",
+       "url_template": "{{x}}://evil"
+      }
+     ]
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "url_template https://{{host}}/",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "url",
+       "label": "Open",
+       "url_template": "https://{{host}}/"
+      }
+     ]
+    }
+   ],
+   "valid": false
+  },
+  {
+   "name": "url_template https://ok.example/{{path}}",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "url",
+       "label": "Open",
+       "url_template": "https://ok.example/{{path}}"
+      }
+     ]
+    }
+   ],
+   "valid": true
+  },
+  {
+   "name": "url_template https://ok.example:8443/a?q={{q}}",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "url",
+       "label": "Open",
+       "url_template": "https://ok.example:8443/a?q={{q}}"
+      }
+     ]
+    }
+   ],
+   "valid": true
+  },
+  {
+   "name": "url_template https://ok.example",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "url",
+       "label": "Open",
+       "url_template": "https://ok.example"
+      }
+     ]
+    }
+   ],
+   "valid": true
+  },
+  {
+   "name": "url_template http://{{h}}.example.com/",
+   "rows": [
+    {
+     "title": "x",
+     "actions": [
+      {
+       "id": "a",
+       "kind": "url",
+       "label": "Open",
+       "url_template": "http://{{h}}.example.com/"
+      }
+     ]
+    }
+   ],
+   "valid": false
+  }
+ ]
+}

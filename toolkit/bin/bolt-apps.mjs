@@ -12,6 +12,7 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { checkApp, formatReport, reportOk, platformFindings, vendorKit, OSES } from '../lib/check.mjs';
 
 const ID = /^[a-z0-9][a-z0-9-]{0,63}$/, KEY = /^[a-z][a-z0-9_-]{0,23}$/, PREFIX = /^[a-z][a-z0-9]{0,11}$/;
 const PERMS = ['reads_clipboard', 'reads_launcher_input', 'copies_to_clipboard', 'runs_commands', 'network', 'files', 'agent_tools'];
@@ -78,6 +79,7 @@ export function lintApp(dir) {
 	if (!tier) E('empty_app', 'the app holds no snippet, search engine or User App', '.');
 	if (!Number.isInteger(app.tier) || app.tier < 1 || app.tier > 3) E('field_missing', 'tier must be 1, 2 or 3', 'bolt-app.json');
 	else if (app.tier < tier) E('tier_understated', `declares tier ${app.tier} but the content needs tier ${tier}`, 'bolt-app.json');
+	for (const x of platformFindings(app)) out.push(x);
 	if (!Array.isArray(app.permissions)) E('field_missing', 'permissions must be an array', 'bolt-app.json');
 	const declared = new Set((Array.isArray(app.permissions) ? app.permissions : []).filter((x) => typeof x === 'string'));
 	for (const x of declared) if (!PERMS.includes(x) && !/^opens_links:[a-z0-9.-]+$/.test(x)) E('permission_unknown', `unknown permission "${x}"`, 'bolt-app.json');
@@ -228,9 +230,25 @@ function cmdVerify(args) {
 const HELP = `bolt-apps: author toolkit for Bolt Apps\n\n  new <id> [--type snippet|search|transform|recognizer]   start from a working template\n  lint [path]                                             offline shape checks\n  keygen [--out file]                                     make your signing key (default ~/.bolt-apps/key.pem)\n  pack <app-folder> [--key file] [--out file]             build and self-sign a .boltpack\n  verify <file.boltpack>                                  check a pack's hash and signature\n\nDocs: https://sparcle.app/docs/extend/`;
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))) {
 	const [cmd, ...rest] = process.argv.slice(2);
-	const cmdCheck = () => die('check runs apps through Bolt\'s own engines and is not published yet. Use lint for offline shape checks; Bolt runs the tests when you add the app.');
-	const cmds = { check: cmdCheck, new: cmdNew, lint: cmdLint, keygen: cmdKeygen, pack: cmdPack, verify: cmdVerify };
-	if (cmds[cmd]) cmds[cmd](rest);
+	const cmdCheck = async (args) => {
+		const target = args.find((a, i) => !a.startsWith('--') && args[i - 1] !== '--os' && args[i - 1] !== '--case');
+		if (target && fs.existsSync(path.join(target, 'check.json'))) {
+			const osi = args.indexOf('--os'), osArg = osi >= 0 ? args[osi + 1] : undefined;
+			if (osi >= 0 && !OSES.includes(osArg)) die(`--os must be one of ${OSES.join(', ')}`);
+			const ci = args.indexOf('--case');
+			const r = await checkApp(target, { os: osArg, only: ci >= 0 ? args[ci + 1] : undefined, updateGolden: args.includes('--update-golden') });
+			console.log(args.includes('--json') ? JSON.stringify({ ok: reportOk(r), ...r }, null, 2) : formatReport(r));
+			process.exit(reportOk(r) ? 0 : 1);
+		}
+		die('check for snippets, search engines and transforms runs through Bolt\'s own engines and is not published yet. Use lint for offline shape checks; Bolt runs the tests when you add the app. Script apps (a check.json in the folder) run here: see kit/examples/system-glance.');
+	};
+	const cmdKit = (args) => {
+		if (args[0] !== 'vendor' || !args[1] || !fs.existsSync(path.join(args[1], 'check.json'))) die('usage: bolt-apps kit vendor <app-folder with check.json>');
+		const { dest, lock } = vendorKit(args[1]);
+		console.log(`vendored ${lock.name} ${lock.version} (sha256 ${lock.sha256.slice(0, 16)}...) into ${dest}`);
+	};
+	const cmds = { check: cmdCheck, kit: cmdKit, new: cmdNew, lint: cmdLint, keygen: cmdKeygen, pack: cmdPack, verify: cmdVerify };
+	if (cmds[cmd]) await cmds[cmd](rest);
 	else if (!cmd || cmd === 'help' || cmd === '--help') console.log(HELP);
 	else die(`unknown command "${cmd}"\n\n${HELP}`);
 }

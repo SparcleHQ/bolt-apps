@@ -1,0 +1,59 @@
+[
+  {
+    "title": "Back",
+    "subtitle": "Back to the overview",
+    "icon": "arrow-left",
+    "body": "",
+    "nav": {
+      "back": true
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Disk 40% used",
+    "subtitle": "186 GB of 466 GB",
+    "icon": "hard-drive",
+    "body": "",
+    "nav": {
+      "view": "disk"
+    },
+    "actions": [],
+    "pane": "disk",
+    "kpi_label": "Disk",
+    "kpi_value": 40,
+    "kpi_unit": "%",
+    "kpi_max": 100,
+    "kpi_note": "279 GB free",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Scan again",
+    "subtitle": "Enter to refresh",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "disk",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "disk",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

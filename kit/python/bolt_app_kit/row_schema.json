@@ -1,0 +1,438 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/SparcleHQ/bolt-apps/kit/schema/row.schema.json",
+  "title": "Bolt App row contract",
+  "description": "What a User App script prints to stdout (parse: json): an array of rows. Language neutral: any implementation that emits this passes. Mirrors what the launcher accepts (bolt-pwa utility-rows.ts mapBridgeRows, user-app-actions.ts sanitizeRowActions, userAppNav.ts sanitizeRowNav, kpiTile.ts). The kit is stricter than the launcher where the launcher silently drops or hides things (labels over 14 characters, a tile without a number).",
+  "type": "array",
+  "maxItems": 200,
+  "items": {
+    "$ref": "#/$defs/row"
+  },
+  "$defs": {
+    "icon": {
+      "description": "A key of the launcher's UTILITY_ICON_MAP. Generated from the launcher source by kit/schema/gen-icons.mjs; never edit the list by hand.",
+      "type": "string",
+      "enum": [
+        "Activity",
+        "AlarmClock",
+        "AlertCircle",
+        "ArrowLeft",
+        "ArrowLeftRight",
+        "Banknote",
+        "Bell",
+        "Binary",
+        "Bolt",
+        "BookOpen",
+        "Bot",
+        "Braces",
+        "Calculator",
+        "CalendarDays",
+        "CalendarRange",
+        "CaseSensitive",
+        "CheckCircle2",
+        "CircleSlash",
+        "Clipboard",
+        "ClipboardList",
+        "Clock",
+        "CloudSun",
+        "Code2",
+        "Coins",
+        "Contrast",
+        "Cpu",
+        "Crop",
+        "Crosshair",
+        "DollarSign",
+        "Download",
+        "ExternalLink",
+        "Eye",
+        "EyeOff",
+        "FileKey",
+        "FileText",
+        "Fingerprint",
+        "FolderOpen",
+        "GitMerge",
+        "Globe",
+        "Hash",
+        "Image",
+        "Key",
+        "KeySquare",
+        "Keyboard",
+        "Landmark",
+        "Layers",
+        "LineChart",
+        "Link",
+        "List",
+        "LoaderCircle",
+        "Mail",
+        "MapPin",
+        "MessageSquare",
+        "Navigation",
+        "Palette",
+        "PenTool",
+        "Percent",
+        "PieChart",
+        "Plug",
+        "QrCode",
+        "Quote",
+        "RefreshCw",
+        "Regex",
+        "RotateCcw",
+        "Ruler",
+        "Save",
+        "ScanText",
+        "Search",
+        "Share2",
+        "Shield",
+        "ShieldAlert",
+        "ShieldCheck",
+        "Sigma",
+        "Sparkles",
+        "SquareTerminal",
+        "Terminal",
+        "TextCursorInput",
+        "Timer",
+        "TrendingUp",
+        "Type",
+        "User",
+        "Volume2",
+        "Wifi",
+        "Zap",
+        "activity",
+        "arrow-left",
+        "arrow-left-right",
+        "banknote",
+        "barcode",
+        "battery",
+        "binary",
+        "book",
+        "book-marked",
+        "building-2",
+        "calculator",
+        "car",
+        "clock",
+        "cloud-sun",
+        "cpu",
+        "credit-card",
+        "file",
+        "file-box",
+        "file-digit",
+        "file-type",
+        "fingerprint",
+        "flask-conical",
+        "git-commit",
+        "globe",
+        "graduation-cap",
+        "hard-drive",
+        "hash",
+        "id-card",
+        "key",
+        "key-square",
+        "line-chart",
+        "link",
+        "list",
+        "lock",
+        "map-pin",
+        "music",
+        "network",
+        "newspaper",
+        "package",
+        "phone",
+        "plane",
+        "plug",
+        "shield",
+        "shield-alert",
+        "shield-check",
+        "smartphone",
+        "smile",
+        "stethoscope",
+        "terminal",
+        "trending-up",
+        "type",
+        "wallet",
+        "wifi"
+      ],
+      "x-source-sha256": "4a53fba485be87fa8cb5d985c06585c776824b42e05a5c21d9da82c7f5581143"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{1,64}$"
+    },
+    "navToken": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}$"
+    },
+    "numberOrEmpty": {
+      "oneOf": [
+        {
+          "const": ""
+        },
+        {
+          "type": "number"
+        }
+      ]
+    },
+    "nav": {
+      "description": "Where Enter goes inside this app: a declared view (with an optional arg) or back. Never both with a utility action.",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "back"
+          ],
+          "properties": {
+            "back": {
+              "const": true
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "view"
+          ],
+          "properties": {
+            "view": {
+              "$ref": "#/$defs/navToken"
+            },
+            "arg": {
+              "$ref": "#/$defs/navToken"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "action": {
+      "description": "A row footer button. Kinds the launcher keeps: url, composer, utility. The footer shows at most 3 buttons including the manifest Copy, so a row adds at most 2 when the manifest declares Copy. Labels over 14 characters vanish from the icon-only footer.",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "id",
+            "kind",
+            "label",
+            "url_template"
+          ],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/id"
+            },
+            "kind": {
+              "const": "url"
+            },
+            "label": {
+              "$ref": "#/$defs/label"
+            },
+            "url_template": {
+              "type": "string",
+              "maxLength": 2048,
+              "pattern": "^https?://[A-Za-z0-9.-]+([:/?#].*)?$"
+            },
+            "primary": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "id",
+            "kind",
+            "label",
+            "insert"
+          ],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/id"
+            },
+            "kind": {
+              "const": "composer"
+            },
+            "label": {
+              "$ref": "#/$defs/label"
+            },
+            "insert": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10000
+            },
+            "target": {
+              "type": "string",
+              "maxLength": 16
+            },
+            "primary": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "id",
+            "kind",
+            "label",
+            "target_chip"
+          ],
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/id"
+            },
+            "kind": {
+              "const": "utility"
+            },
+            "label": {
+              "$ref": "#/$defs/label"
+            },
+            "target_chip": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_+-]*$"
+            },
+            "query_template": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "primary": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 14
+    },
+    "badge": {
+      "type": "object",
+      "required": [
+        "label"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 24
+        },
+        "tone": {
+          "type": "string",
+          "maxLength": 16
+        }
+      },
+      "additionalProperties": false
+    },
+    "row": {
+      "type": "object",
+      "required": [
+        "title"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "icon": {
+          "$ref": "#/$defs/icon"
+        },
+        "body": {
+          "type": "string",
+          "maxLength": 8000
+        },
+        "pane": {
+          "$ref": "#/$defs/navToken"
+        },
+        "category": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^https?://",
+          "maxLength": 2048
+        },
+        "copy_text": {
+          "type": "string",
+          "maxLength": 10000
+        },
+        "copy_value": {
+          "type": "string",
+          "maxLength": 10000
+        },
+        "nav": {
+          "$ref": "#/$defs/nav"
+        },
+        "actions": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {
+            "$ref": "#/$defs/action"
+          }
+        },
+        "badges": {
+          "type": "array",
+          "maxItems": 4,
+          "items": {
+            "$ref": "#/$defs/badge"
+          }
+        },
+        "kpi_label": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "kpi_value": {
+          "$ref": "#/$defs/numberOrEmpty"
+        },
+        "kpi_unit": {
+          "type": "string",
+          "maxLength": 4
+        },
+        "kpi_max": {
+          "$ref": "#/$defs/numberOrEmpty"
+        },
+        "kpi_note": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "kpi_foot": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "kpi_badge": {
+          "type": "string",
+          "maxLength": 24
+        }
+      },
+      "additionalProperties": {
+        "description": "Free fields a manifest binds with {{row.x}} (fields, chips). Scalars only.",
+        "oneOf": [
+          {
+            "type": "string",
+            "maxLength": 4000
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -96,6 +96,8 @@ no real customer or company data.
 
 ## 4a. Start from the toolkit
 
+`bolt-apps` below means `node toolkit/bin/bolt-apps.mjs`.
+
 ```
 node toolkit/bin/bolt-apps.mjs new <id> --type snippet|search|transform|recognizer
 node toolkit/bin/bolt-apps.mjs lint apps/<id> --json     # exit 0 before you go on
@@ -105,12 +107,70 @@ node toolkit/bin/bolt-apps.mjs pack <folder> --personal   # own-use tier 3 or sc
 
 `lint` is the offline shape check; it does not run tests. Never put a signing key (`*.pem`) in this repository.
 
+## 4b. Build loop for an app you keep for yourself (script apps, tier 3)
+
+Do these in order. Each step prints findings with a stable `code`, the file, the line and the
+fix; branch on `code` with `--json`, never on message text.
+
+```
+node toolkit/bin/bolt-apps.mjs lint <folder> --personal --json    # layout, ids, tier (exit 0 first)
+node toolkit/bin/bolt-apps.mjs check <folder> --json              # script apps with check.json: runs the script against fixtures
+node toolkit/bin/bolt-apps.mjs verify <folder> --json             # the rules Bolt enforces at install, before you pack
+node toolkit/bin/bolt-apps.mjs keygen                             # once
+node toolkit/bin/bolt-apps.mjs pack <folder> --personal           # <id>.boltpack, prints what the app can do
+node toolkit/bin/bolt-apps.mjs verify <id>.boltpack --json        # the same rules on the file you will hand over
+```
+
+Then drop the `.boltpack` on the Bolt launcher or Bolt Apps (never Admin settings, Utilities,
+Bundles: it takes only Sparcle-signed bundles and answers "Bundle rejected"). Bolt shows what
+the app can do and asks the person to confirm.
+
+`check` runs the script on this machine: run it only on code you have read.
+
+Rules a script app must follow, each one a `verify` code:
+
+- One app file per `utilities/<id>.yaml`; scripts are single files directly in `scripts/`
+  (`script_subfolder`, `script_name`). A vendored `bolt_app_kit` folder cannot be installed yet.
+- The command names the script as `{{scripts_dir}}/<name>`, bare, never in quotes
+  (`command_variable_in_quotes`, `script_path_relative`, `script_missing`). Example:
+  `macos: "python3 {{scripts_dir}}/eagle.py {{view}}"`.
+- The command is one program with arguments: no `;` `&&` `||` `|` backtick or `$(`
+  (`command_shell_operator`). Put multi-step logic in the script.
+- `bridge.parse` is `json`, `lines` or `raw`; `timeout_seconds` is 1 to 60; `emits` is one of
+  the kinds in the schema (use `Generic`); no connector keys (`yaml_admin_only_key`,
+  `yaml_key_unknown`).
+- Give a command for each OS you support under `bridge.command` (`macos`, `linux`, `windows`);
+  Bolt needs at least one (`command_missing`).
+
+If Bolt does not show the app after the drop, open Settings, Desktop App, User Apps. Files
+that failed to load are listed there with the file name and Bolt's error. Run
+`verify <the folder or the pack> --json`: each Bolt error text below maps to one code.
+
+| Bolt's error contains | verify code |
+|---|---|
+| `inside double quotes` or `inside single quotes` | `command_variable_in_quotes` |
+| `malformed variable placeholder` or `unterminated` | `command_placeholder_malformed` |
+| `forbidden shell metachar` | `command_shell_operator` |
+| `not argv-splittable` | `command_not_argv` |
+| `unknown field` | `yaml_key_unknown` |
+| `admin-only field` | `yaml_admin_only_key` |
+| `missing field` | `yaml_key_missing` |
+| `runtime must be one of` | `runtime_not_allowed` |
+| `requires a \`bridge\` block` | `block_missing` |
+| `bridge.command must define` | `command_missing` |
+| `timeout_seconds must be 1..=60` | `timeout_out_of_range` |
+| `bridge.parse` | `parse_not_allowed` |
+
 ## 5. Check
 
 ```
 bolt-apps check apps/<id>          # human output
 bolt-apps check apps/<id> --json   # branch on findings[].code, never on message text
 ```
+
+`check` runs today for script apps (a `check.json` in the folder). For snippets, search
+engines and transforms it is not published yet and says so; use `lint --json` and `verify`
+until it is.
 
 Exit `0` = pass. Exit `1` = fix every `error` finding and run it again. Exit `2` = the
 command or the folder could not be loaded. Every code is listed in [CHECKER.md](CHECKER.md).
@@ -127,7 +187,7 @@ one example (input and output), its permissions in words. No marketing, no em da
 - Branch: `app/<id>`. One app per pull request.
 - Title: `app: <id> - <title>`.
 - Body: fill in [the template](.github/PULL_REQUEST_TEMPLATE.md) completely and paste the
-  full `bolt-apps check` output.
+  full `bolt-apps check` output (or `lint` and `verify` output until `check` is published for tier 1 and 2 apps).
 - Every commit signed off: `git commit -s`.
 - Never edit `INDEX.json`, `RANKING.md`, `schema/`, `.github/` or another author's app.
 

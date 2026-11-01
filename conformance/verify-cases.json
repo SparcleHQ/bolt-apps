@@ -1,0 +1,43 @@
+{
+  "$comment": "Conformance cases for `bolt-apps verify` (YAML and script layout level). Each case edits the base app and names the finding codes verify must report. `bolt_error_contains` is the text Bolt's own parser (loader::parse_str_for_pack / contract::validate) puts in the load error shown under Settings, Desktop App, User Apps, so a bolt-native test can run the same cases through the real parser: the expected result there is Err containing that text, or Ok when expect is empty.",
+  "base": {
+    "utilities/eagle-info.yaml": "schema_version: 1\nruntime: bridge\nid: eagle-info\nchip: eagle\ntitle: \"Eagle info\"\nemits: Generic\nargs:\n  - { name: view, from: \"query.word(0)\", default: overview }\nbridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\npresentation:\n  widget: list\n  title_field: title\n",
+    "scripts/eagle.py": "print('{}')\n"
+  },
+  "cases": [
+    { "name": "the base app is clean", "expect": [] },
+    { "name": "variable inside double quotes", "edit": { "utilities/eagle-info.yaml": [["python3 {{scripts_dir}}/eagle.py {{view}}", "python3 \\\"{{scripts_dir}}/eagle.py\\\" {{view}}"]] }, "expect": ["command_variable_in_quotes"], "bolt_error_contains": "inside double quotes" },
+    { "name": "variable inside single quotes", "edit": { "utilities/eagle-info.yaml": [["\"python3 {{scripts_dir}}/eagle.py {{view}}\"", "\"python3 '{{scripts_dir}}/eagle.py' {{view}}\""]] }, "expect": ["command_variable_in_quotes"], "bolt_error_contains": "inside single quotes" },
+    { "name": "one closing brace", "edit": { "utilities/eagle-info.yaml": [["{{scripts_dir}}/eagle.py", "{{scripts_dir}/eagle.py"]] }, "expect": ["command_placeholder_malformed", "script_unused"], "bolt_error_contains": "malformed variable placeholder" },
+    { "name": "unterminated placeholder", "edit": { "utilities/eagle-info.yaml": [["{{view}}\"", "{{view\""]] }, "expect": ["command_placeholder_malformed"], "bolt_error_contains": "unterminated" },
+    { "name": "pipe in the command", "edit": { "utilities/eagle-info.yaml": [["eagle.py {{view}}\"", "eagle.py {{view}} | head\""]] }, "expect": ["command_shell_operator"], "bolt_error_contains": "forbidden shell metachar" },
+    { "name": "and-and in the command", "edit": { "utilities/eagle-info.yaml": [["eagle.py {{view}}\"", "eagle.py && echo hi\""]] }, "expect": ["command_shell_operator"], "bolt_error_contains": "forbidden shell metachar" },
+    { "name": "unbalanced quote", "edit": { "utilities/eagle-info.yaml": [["eagle.py {{view}}\"", "eagle.py 'x\""]] }, "expect": ["command_not_argv"], "bolt_error_contains": "not argv-splittable" },
+    { "name": "no command for any OS", "edit": { "utilities/eagle-info.yaml": [["    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n", ""]] }, "expect": ["command_missing", "script_unused"], "bolt_error_contains": "bridge.command must define" },
+    { "name": "relative script path", "edit": { "utilities/eagle-info.yaml": [["{{scripts_dir}}/eagle.py", "scripts/eagle.py"]] }, "expect": ["script_path_relative", "script_unused"] },
+    { "name": "script run directly without a shebang", "edit": { "utilities/eagle-info.yaml": [["python3 {{scripts_dir}}/eagle.py", "{{scripts_dir}}/eagle.py"]] }, "expect": ["script_no_shebang"] },
+    { "name": "script named in the app is not in the pack", "remove": ["scripts/eagle.py"], "expect": ["script_missing"] },
+    { "name": "script no app runs", "add": { "scripts/extra.py": "x\n" }, "expect": ["script_unused"] },
+    { "name": "script in a folder", "add": { "scripts/lib/util.py": "x\n" }, "expect": ["script_subfolder"] },
+    { "name": "script with a space in its name", "add": { "scripts/a b.py": "x\n" }, "expect": ["script_name"] },
+    { "name": "parse mode not accepted", "edit": { "utilities/eagle-info.yaml": [["parse: json", "parse: xml"]] }, "expect": ["parse_not_allowed"], "bolt_error_contains": "bridge.parse" },
+    { "name": "timeout too long", "edit": { "utilities/eagle-info.yaml": [["timeout_seconds: 20", "timeout_seconds: 300"]] }, "expect": ["timeout_out_of_range"], "bolt_error_contains": "timeout_seconds must be 1..=60" },
+    { "name": "inline env value", "edit": { "utilities/eagle-info.yaml": [["  parse: json", "  env:\n    EAGLE_KEY: abc123\n  parse: json"]] }, "expect": ["env_inline_value"], "bolt_error_contains": "bridge.env" },
+    { "name": "unknown top-level key", "edit": { "utilities/eagle-info.yaml": [["emits: Generic", "emits: Generic\nversion: 2"]] }, "expect": ["yaml_key_unknown"], "bolt_error_contains": "unknown field" },
+    { "name": "admin-only key", "edit": { "utilities/eagle-info.yaml": [["emits: Generic", "emits: Generic\nscopes: [read]"]] }, "expect": ["yaml_admin_only_key"], "bolt_error_contains": "admin-only field" },
+    { "name": "missing required key", "edit": { "utilities/eagle-info.yaml": [["chip: eagle\n", ""]] }, "expect": ["yaml_key_missing"], "bolt_error_contains": "missing field" },
+    { "name": "schema_version 9", "edit": { "utilities/eagle-info.yaml": [["schema_version: 1", "schema_version: 9"]] }, "expect": ["schema_version_unsupported"], "bolt_error_contains": "schema_version must be" },
+    { "name": "runtime Bolt does not know", "edit": { "utilities/eagle-info.yaml": [["runtime: bridge", "runtime: shell"]] }, "expect": ["runtime_not_allowed"], "bolt_error_contains": "runtime must be one of" },
+    { "name": "id with capitals", "edit": { "utilities/eagle-info.yaml": [["id: eagle-info", "id: Eagle_Info"]] }, "expect": ["id_invalid"], "bolt_error_contains": "id must be lowercase-kebab" },
+    { "name": "chip with a space", "edit": { "utilities/eagle-info.yaml": [["chip: eagle", "chip: \"my eagle\""]] }, "expect": ["chip_invalid"], "bolt_error_contains": "chip must be lowercase-kebab" },
+    { "name": "empty title", "edit": { "utilities/eagle-info.yaml": [["title: \"Eagle info\"", "title: \"\""]] }, "expect": ["title_empty"], "bolt_error_contains": "title must be non-empty" },
+    { "name": "emits a kind Bolt does not know", "edit": { "utilities/eagle-info.yaml": [["emits: Generic", "emits: Bird"]] }, "expect": ["emits_not_allowed"], "bolt_error_contains": "emits" },
+    { "name": "widget not accepted", "edit": { "utilities/eagle-info.yaml": [["widget: list", "widget: chart"]] }, "expect": ["widget_not_allowed"], "bolt_error_contains": "presentation.widget" },
+    { "name": "bridge runtime without a bridge block", "edit": { "utilities/eagle-info.yaml": [["bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n", ""]] }, "expect": ["block_missing", "script_unused"], "bolt_error_contains": "requires a `bridge` block" },
+    { "name": "transform runtime with a bridge block", "edit": { "utilities/eagle-info.yaml": [["runtime: bridge", "runtime: transform"]] }, "expect": ["block_missing", "block_not_allowed"], "bolt_error_contains": "transform" },
+    { "name": "args from something other than query.word", "edit": { "utilities/eagle-info.yaml": [["query.word(0)", "clipboard"]] }, "expect": ["args_from_unsupported"], "bolt_error_contains": "unsupported" },
+    { "name": "http_local to a remote host", "edit": { "utilities/eagle-info.yaml": [["runtime: bridge", "runtime: http_local"], ["bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n", "http:\n  host: example.com\n  port: 8080\n  request:\n    method: GET\n    path: /x\n"]] }, "remove": ["scripts/eagle.py"], "expect": ["http_host_not_loopback"], "bolt_error_contains": "not a loopback address" },
+    { "name": "http_local with a bad method and path", "edit": { "utilities/eagle-info.yaml": [["runtime: bridge", "runtime: http_local"], ["bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n", "http:\n  host: 127.0.0.1\n  port: 8080\n  request:\n    method: DELETE\n    path: x\n"]] }, "remove": ["scripts/eagle.py"], "expect": ["http_method_not_allowed", "http_path_invalid"], "bolt_error_contains": "http.request" },
+    { "name": "action kind Bolt does not know", "edit": { "utilities/eagle-info.yaml": [["presentation:", "actions:\n  - { id: a, kind: shell, label: A }\npresentation:"]] }, "expect": ["action_not_allowed"], "bolt_error_contains": "action" }
+  ]
+}

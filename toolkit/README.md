@@ -7,7 +7,7 @@ node toolkit/bin/bolt-apps.mjs new my-app --type transform     # start from a wo
 node toolkit/bin/bolt-apps.mjs lint apps/my-app                 # offline shape checks
 node toolkit/bin/bolt-apps.mjs keygen                           # once: your signing key
 node toolkit/bin/bolt-apps.mjs pack apps/my-app                 # my-app.boltpack, self-signed
-node toolkit/bin/bolt-apps.mjs verify my-app.boltpack           # hash and signature
+node toolkit/bin/bolt-apps.mjs verify my-app.boltpack           # Bolt's install rules, offline
 ```
 
 Then drop the `.boltpack` on the Bolt launcher or on Bolt Apps. Bolt shows a review card and, because you signed it yourself, asks once more before it installs. Do not use Admin settings, Utilities, Bundles: that door takes only bundles signed by Sparcle and answers "Bundle rejected" to everything else. Dropping a pack on the launcher installs User Apps and scripts; Bolt skips snippets and search engines in a pack.
@@ -30,8 +30,8 @@ node toolkit/bin/bolt-apps.mjs pack apps/my-app --personal
 | `new <id> --type snippet\|search\|transform\|recognizer` | Creates `apps/<id>/` with `bolt-app.json`, a README and one content file. Every template passes `lint` and carries a test you can edit. |
 | `lint [path]` | Offline checks: file layout, id and key rules, the tier and permissions your content needs, and that every content file has a test. `--json` for tools and agents; branch on `code`, not `message`. |
 | `keygen [--out file]` | Makes an Ed25519 signing key in `~/.bolt-apps/key.pem` (mode 600). Never overwrites a key. Keep it out of any git repo. |
+| `verify <app-folder or file.boltpack> [--json]` | The checks Bolt runs at install, offline: each problem has a stable `code`, the file, the line and the fix; then an estimate of what Bolt will show (tier, permissions, files); Bolt checks again at install. Exit 1 on any error. |
 | `pack <app> [--key f] [--out f] [--version v] [--notes t] [--personal]` | Runs `lint`, then builds a `.boltpack` in Bolt's format and signs it. `--personal` allows tier 3 and script apps for your own use (not for the gallery). |
-| `verify <file>` | Checks the signature and every file hash. A valid result proves the files did not change after signing. It does not prove who signed. |
 | `check <app> [--json] [--os macos\|linux\|windows] [--case text] [--update-golden]` | For a **script app** (a folder with `check.json`): runs the script in a clean subprocess (empty environment, temp HOME, stub commands from recorded output), validates every output against the row contract, enforces the numeric-tile, footer and label rules, a hung-command time limit, hostile text and golden snapshots. For snippets, search engines and transforms it is not published yet: it runs the tests through Bolt's own engines, and Bolt runs the same tests when you add the app. See [docs/kit-design.md](../docs/kit-design.md). |
 | `kit vendor <app>` | Copies the pinned Python kit (`bolt_app_kit`) into the app's `scripts/` and writes a lock file (name, version, sha256). `check` fails if the copy is edited by hand. |
 

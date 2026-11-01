@@ -1,0 +1,30 @@
+{
+  "$comment": "The install rules Bolt enforces on a pack-installed User App, as plain data. Source of truth is bolt-native src-tauri/src/user_utilities (contract.rs, pack_validate.rs, pack_install.rs) and bolt-common bolt-manifest-verify, as read on 2026-11-01. `bolt-apps verify` reads this file. A bolt-native test should assert every list here equals the matching Rust constant and run conformance/verify-cases.json through the real parser; see docs/verify-rules.md.",
+  "bolt_rules_version": 1,
+  "pack": {
+    "bundle_schema_version": 1,
+    "max_entries": 1024,
+    "max_unpacked_bytes": 67108864,
+    "max_entry_name_chars": 128,
+    "max_entry_path_chars": 512,
+    "installed_kinds": ["user_utility", "script"],
+    "skipped_kinds": ["snippet", "search_engine", "skill", "agent", "recognizer"],
+    "script_interpreters": ["sh", "bash", "python3", "argv"]
+  },
+  "contract": {
+    "schema_versions": [1, 2],
+    "top_level_keys": ["schema_version", "runtime", "id", "chip", "title", "icon", "description", "placeholder_examples", "emits", "bridge", "http", "args", "presentation", "actions", "dispatch", "detect", "inputs", "submit", "recognize", "transform", "permissions", "auth_profile_ref", "requires", "scopes", "filters", "cache_ttl_seconds", "provisioning_mode", "departments", "roles", "groups"],
+    "required_keys": ["schema_version", "runtime", "id", "chip", "title", "emits", "presentation"],
+    "admin_only_keys": ["auth_profile_ref", "requires", "scopes", "filters", "cache_ttl_seconds", "provisioning_mode", "departments", "roles", "groups"],
+    "runtimes": ["bridge", "http_local", "transform"],
+    "action_kinds": ["url", "composer", "utility", "run"],
+    "emits": ["Person", "Issue", "Document", "Event", "File", "Incident", "Account", "Place", "Generic"],
+    "widgets": ["list", "table", "cards", "detail"],
+    "parse": ["json", "lines", "raw"],
+    "timeout_seconds": [1, 60],
+    "id_pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+    "http_hosts": ["127.0.0.1", "::1", "localhost"],
+    "http_methods": ["GET", "POST"],
+    "forbidden_shell": [";", "&&", "||", "|", "`", "$("]
+  }
+}

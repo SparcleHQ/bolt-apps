@@ -84,3 +84,9 @@ test('each action is judged with ITS OWN url_template and target_chip', () => {
 	const block = BASE + 'actions:\n  - id: a\n    kind: url\n    url_template: "https://ok.example/{{q}}"\n  - id: b\n    kind: run\n';
 	const a = assessYaml(block, 'g'); assert.ok(a.permissions.includes('opens_links:ok.example') && a.permissions.includes('runs_own_command_on_press'));
 });
+
+test('Windows line endings and emoji joiners are fine; a lone CR still is not', () => {
+	assert.deepEqual(unreadable(BASE.replace(/\n/g, '\r\n')), []);
+	assert.deepEqual(unreadable(BASE.replace('title: G', 'title: "\u{1F468}\u200D\u{1F469}\u200D\u{1F467} Family"')), []);
+	assert.ok(unreadable(BASE.replace('title: G', 'title: G\rx: 1')).length);
+});

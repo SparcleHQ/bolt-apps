@@ -11,7 +11,7 @@ const MAX_LINE = 64 * 1024, MAX_FILE = 1024 * 1024;
 const bad = (why) => { throw new Unreadable(why); };
 const KEY_START = (c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_';
 const KEY_CHAR = (c) => KEY_START(c) || (c >= '0' && c <= '9') || c === '-';
-const FORBIDDEN = /[\u0000-\u0008\u000b-\u001f\u007f-\u009f\u00ad\u200b-\u200f\u2028-\u202e\u2060-\u2069\ufeff]/;
+const FORBIDDEN = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f\u00ad\u200b\u200e\u200f\u2028-\u202e\u2060-\u2069\ufeff]/;
 
 // Scan a bare key at s[i]; returns the end index or -1. The colon must touch the key.
 function scanKey(s, i) {

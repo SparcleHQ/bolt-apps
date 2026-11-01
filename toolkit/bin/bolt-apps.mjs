@@ -84,19 +84,18 @@ export function lintApp(dir, opts = {}) {
 	}
 	for (const f of files.utilities) {
 		const p = `utilities/${f}`; const y = rd(path.join(dir, p));
-		const rt = /^runtime:\s*(\S+)/m.exec(y)?.[1]?.replace(/["']/g, '');
-		const yid = /^id:\s*(\S+)/m.exec(y)?.[1]?.replace(/["']/g, '');
+		const a = assessYaml(y, undefined), rt = a.runtime, yid = a.unknown ? undefined : a.id;
+		if (a.unknown) { tier = 3; E('yaml_unreadable_here', `this tool cannot interpret ${a.why}, so it cannot tell what the app can do; Bolt may read it differently. Write plain YAML in the supported subset (see AGENTS.md section 4b)`, p); if (personal) assessed.push(a); continue; }
 		if (personal) {
 			if (!plainName(f)) E('app_file_name', 'a file name may use only letters, digits, . _ and -, and may not start or end with a dot (Bolt refuses the whole pack otherwise)', p);
-			const a = assessYaml(y, yid); assessed.push(a);
+			assessed.push(a);
 			for (const pr of a.problems) E(pr.code, pr.message, p);
 			if (!yid) E('field_missing', 'id is required', p);
 			tier = Math.max(tier, a.tier); for (const x of a.permissions) perms.add(x);
 			continue;
 		}
 		if (rt !== 'transform') { tier = 3; E('tier3_not_accepted', `runtime "${rt}" runs commands or the network; only runtime: transform is allowed here`, p); continue; }
-		const ga = assessYaml(y, yid);
-		if (ga.tier >= 3) { tier = 3; E('tier3_not_accepted', `${ga.reasons[0] || 'it can act outside Bolt'}; only apps that act inside Bolt (no detect block, fixed https links) are allowed here`, p); continue; }
+		if (a.tier >= 3 || a.permissions.includes('runs_own_command_on_press')) { tier = 3; E('tier3_not_accepted', `${a.reasons[0] || (a.tier < 3 ? 'it has a button that runs a command (Bolt rates it tier 2, the gallery does not take it)' : 'it can act outside Bolt')}; only apps that act inside Bolt (no detect block, fixed https links) are allowed here`, p); continue; }
 		tier = Math.max(tier, 2); need('reads_launcher_input', 'copies_to_clipboard');
 		if (!yid) E('field_missing', 'id is required', p); else targets.add(`transform:${yid}`), targets.add(`recognizer:${yid}`);
 	}

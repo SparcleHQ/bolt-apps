@@ -1,57 +1,57 @@
 // What a User App can do, recomputed from its YAML the way Bolt does at install
 // (bolt-native src-tauri/src/user_utilities/pack_validate.rs: assess_utility, assess_pack).
-// The YAML is read with plain text rules (no YAML parser, zero dependencies), so this mirrors Bolt's
-// tier and permission rules but is not Bolt's parser. Bolt parses the file again at install.
+// The YAML is read by a strict subset reader (yamlsubset.mjs, no dependencies): a file outside that subset is
+// "unknown" (tier 3), never a lower tier. This mirrors Bolt's tier and permission rules but is not Bolt's parser;
+// Bolt parses the file again at install.
 export const ALLOWED_RUNTIME = ['bridge', 'http_local', 'transform'];
 export const ALLOWED_ACTION_KIND = ['url', 'composer', 'utility', 'run'];
-const unq = (s) => (s === undefined ? s : s.replace(/^["']|["']$/g, ''));
 
-// Top-level keys and their text (a key starts in column 0).
-export function topLevel(yaml) {
-	const out = {}; let key = null;
-	for (const line of yaml.split(/\r?\n/)) {
-		const m = /^([A-Za-z_][A-Za-z0-9_]*):(.*)$/.exec(line);
-		if (m) { key = m[1]; out[key] = m[2] + '\n'; } else if (key) out[key] += line + '\n';
-	}
-	return out;
-}
+import { parseYaml, Unreadable, get, str } from './yamlsubset.mjs';
 export function httpsLiteralHost(t) {
-	const rest = String(t).trim().replace(/^["']|["']$/g, '');
+	const rest = String(t).trim();
 	if (!rest.startsWith('https://')) return null;
-	const r = rest.slice(8), host = r.slice(0, r.search(/[/?#]|$/));
+	const r = rest.slice(8); let end = r.length; for (let i = 0; i < r.length; i++) if ('/?#'.includes(r[i])) { end = i; break; }
+	const host = r.slice(0, end);
 	return !host || /[{}@]/.test(host) ? null : host.toLowerCase();
 }
 export function scriptRefs(text) {
 	return new Set([...text.matchAll(/\{\{\s*scripts_dir\s*\}\}[/\\]([A-Za-z0-9._-]+)/g)].map((m) => m[1]));
 }
-// Returns { tier, permissions, reasons, runtime, id, problems } for one utilities/*.yaml.
+// Why this reader cannot interpret the file ([] when it can). Anything listed here is reported as unknown, never low.
+export function unreadable(yaml) { try { parseYaml(yaml); return []; } catch (e) { if (e instanceof Unreadable) return [e.message]; throw e; } }
+// Returns { tier, permissions, reasons, runtime, id, problems, refs, unknown, tree } for one utilities/*.yaml.
+// When the file is outside the readable subset, unknown is true and tier is 3 (the highest), so nothing reads low.
 export function assessYaml(yaml, name = 'the app') {
-	const top = topLevel(yaml), problems = [], reasons = [], perms = new Set();
-	const runtime = unq(/^\s*(\S*)/.exec(top.runtime || '')?.[1]), id = unq(/^\s*(\S*)/.exec(top.id || '')?.[1]) || name;
+	const problems = [], reasons = [], perms = new Set();
+	let root; try { root = parseYaml(yaml); } catch (e) {
+		if (!(e instanceof Unreadable)) throw e;
+		return { id: name, runtime: undefined, tier: 3, permissions: ['runs_commands'], reasons: [`${name} could not be read by this tool (${e.message}), so what it can do is unknown`], problems: [], refs: scriptRefs(yaml), unknown: true, why: e.message, tree: null };
+	}
+	const runtime = str(get(root, 'runtime')?.value), id = str(get(root, 'id')?.value) || name;
 	let tier = 1;
 	if (runtime === 'transform') { tier = 2; perms.add('reads_launcher_input'); perms.add('copies_to_clipboard'); }
 	else if (runtime === 'bridge') { tier = 3; perms.add('runs_commands'); reasons.push(`${id} runs a program on your computer`); }
 	else if (runtime === 'http_local') {
-		tier = 3; const port = /\bport:\s*(\d+)/.exec(top.http || '')?.[1] || '0';
+		tier = 3; const port = str(get(get(root, 'http')?.value, 'port')?.value) || '0';
 		perms.add(`network:localhost:${port}`); reasons.push(`${id} connects to a service on this computer (port ${port})`);
 	} else { tier = 3; problems.push({ code: 'runtime_not_allowed', message: `runtime "${runtime}" is not one Bolt accepts (${ALLOWED_RUNTIME.join(', ')}). Bolt would refuse the whole pack.` }); }
-	if ('detect' in top) { tier = 3; perms.add('runs_commands'); reasons.push(`${id} checks for a program on your computer (${unq(/\bbinary:\s*(\S+?)[,}\s]/.exec(top.detect + ' ')?.[1]) || '?'})`); }
-	if ('recognize' in top) perms.add('reads_launcher_input');
-	if (top.actions) {
-		const items = top.actions.split(/\n(?=\s*-\s)/).filter((s) => /kind:/.test(s));
-		for (const it of items) {
-			const kind = /kind:\s*["']?([A-Za-z_]*)/.exec(it)?.[1] ?? '';
-			if (kind === 'url') {
-				const host = httpsLiteralHost(/url_template:\s*("[^"]*"|'[^']*'|[^,}\s]+)/.exec(it)?.[1] || '');
-				if (host) perms.add(`opens_links:${host}`);
-				else { tier = 3; perms.add('opens_any_link'); reasons.push(`${id} opens links that are not fixed https addresses`); }
-			} else if (kind === 'composer') perms.add('inserts_text');
-			else if (kind === 'run') perms.add('runs_own_command_on_press');
-			else if (kind === 'utility') perms.add(`routes_to_app:${unq(/target_chip:\s*(\S+?)[,}\s]/.exec(it + ' ')?.[1]) || ''}`);
-			else { tier = 3; perms.add(`action:${kind}`); problems.push({ code: 'action_not_allowed', message: `action kind "${kind}" is not one Bolt accepts (${ALLOWED_ACTION_KIND.join(', ')}). Bolt would refuse the whole pack.` }); }
-		}
+	const detect = get(root, 'detect');
+	if (detect) { tier = 3; perms.add('runs_commands'); reasons.push(`${id} checks for a program on your computer (${str(get(detect.value, 'binary')?.value) || '?'})`); }
+	if (get(root, 'recognize')) perms.add('reads_launcher_input');
+	const actions = get(root, 'actions')?.value;
+	if (actions && !(actions.t === 'l' || (actions.t === 's' && actions.v === ''))) { return { id, runtime, tier: 3, permissions: ['runs_commands'], reasons: [`${id} has actions this tool could not read, so what it can do is unknown`], problems, refs: scriptRefs(yaml), unknown: true, why: 'actions that are not a list', tree: root }; }
+	for (const it of actions?.items || []) {
+		if (it.t !== 'm') return { id, runtime, tier: 3, permissions: ['runs_commands'], reasons: [`${id} has an action this tool could not read, so what it can do is unknown`], problems, refs: scriptRefs(yaml), unknown: true, why: 'an action that is not a mapping', tree: root };
+		const kind = str(get(it, 'kind')?.value) ?? '';
+		if (kind === 'url') {
+			const host = httpsLiteralHost(str(get(it, 'url_template')?.value) || '');
+			if (host) perms.add(`opens_links:${host}`); else { tier = 3; perms.add('opens_any_link'); reasons.push(`${id} opens links that are not fixed https addresses`); }
+		} else if (kind === 'composer') perms.add('inserts_text');
+		else if (kind === 'run') perms.add('runs_own_command_on_press');
+		else if (kind === 'utility') perms.add(`routes_to_app:${str(get(it, 'target_chip')?.value) || ''}`);
+		else { tier = 3; perms.add(`action:${kind}`); problems.push({ code: 'action_not_allowed', message: `action kind "${kind}" is not one Bolt accepts (${ALLOWED_ACTION_KIND.join(', ')}). Bolt would refuse the whole pack.` }); }
 	}
-	return { id, runtime, tier, permissions: [...perms].sort(), reasons, problems, refs: scriptRefs(yaml) };
+	return { id, runtime, tier, permissions: [...perms].sort(), reasons, problems, refs: scriptRefs(yaml), unknown: false, tree: root };
 }
 const WORDS = [
 	[/^runs_commands$/, 'run programs on your computer'], [/^network:localhost:(\d+)$/, 'talk to a service on this computer (port $1)'],

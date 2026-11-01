@@ -52,7 +52,7 @@ tar.gz. Build it outside `apps/` and run `bolt-apps lint <folder> --personal`, t
 files directly in `scripts/` (no folders, no vendored `bolt_app_kit`), named with letters,
 digits, `.`, `_` and `-`; every `{{scripts_dir}}/<name>` in the app file must exist; `runtime`
 is `transform`, `bridge` or `http_local`; action `kind` is `url`, `composer`, `utility` or
-`run`. The person installs it by dropping the `.boltpack` on the Bolt launcher or Bolt Apps
+`run`. Write the app YAML in plain form: bare keys with the colon touching them, values on one line (quoted or plain, `\"` and `\\` the only escapes), block lists and maps indented with spaces, no anchors, aliases, tags, block scalars (`|` `>`), duplicate keys or tabs. The tools read only that form; anything else is reported as `yaml_unreadable_here` and its tier as unknown. The person installs it by dropping the `.boltpack` on the Bolt launcher or Bolt Apps
 (never Admin settings, which accepts only Sparcle-signed bundles and answers "Bundle
 rejected"). Bolt shows what the app can do and asks them to confirm; a device with the
 approved-only company policy refuses it.

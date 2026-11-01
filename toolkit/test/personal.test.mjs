@@ -108,3 +108,12 @@ test('gallery lint also refuses a transform app with a detect block or a loose l
 	fs.writeFileSync(f, base + 'actions:\n  - { id: a, kind: 5, label: A }\n');
 	const r = run(d, 'lint', 'apps/g', '--personal'); assert.doesNotMatch(r.stderr, /TypeError/); assert.match(r.stdout, /action_not_allowed/);
 });
+
+test('lint cannot be fooled by YAML it cannot read: a space before the colon, an anchor, a block scalar (gallery and personal)', () => {
+	const d = tmp(); run(d, 'new', 'g', '--type', 'transform');
+	const f = path.join(d, 'apps/g/utilities/g.yaml'), base = fs.readFileSync(f, 'utf8');
+	for (const extra of ['detect : { binary: git }\n', 'actions:\n  - { id: a, kind : run, label: A }\n', 'detect: &d { binary: git }\n']) {
+		fs.writeFileSync(f, base + extra);
+		for (const flag of [[], ['--personal']]) { const r = run(d, 'lint', 'apps/g', ...flag); assert.equal(r.status, 1, extra + r.stdout); assert.match(r.stdout, /yaml_unreadable_here/); }
+	}
+});

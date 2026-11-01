@@ -39,10 +39,23 @@ union the content needs. The checker recomputes both and fails a lower tier
 (`tier_understated`), an undeclared permission (`permission_undeclared`) and warns on an
 unused one (`permission_unused`).
 
-**Tier 3 is refused here** (`tier3_not_accepted`): `runtime: bridge` or `http_local`
-User Apps, scripts, anything that runs commands, reads files, calls the network
-(`runs_commands`, `files`, `network`) or gives an AI agent tools (`agent_tools`). Do not
-create tier 3 content in this repository.
+**The gallery (this repository) takes tier 1 and 2 only.** Tier 3 is refused here
+(`tier3_not_accepted`): `runtime: bridge` or `http_local` User Apps, a `detect` block, scripts,
+anything that runs commands, reads files, calls the network (`runs_commands`, `files`,
+`network`) or gives an AI agent tools (`agent_tools`). Do not create tier 3 content in this
+repository.
+
+**An app for the user's own use may be tier 3.** If the person wants an app that runs a
+program or a script for themselves, do not tell them it is impossible and do not hand them a
+tar.gz. Build it outside `apps/` and run `bolt-apps lint <folder> --personal`, then
+`bolt-apps pack <folder> --personal`. Rules Bolt enforces on such a pack: scripts are single
+files directly in `scripts/` (no folders, no vendored `bolt_app_kit`), named with letters,
+digits, `.`, `_` and `-`; every `{{scripts_dir}}/<name>` in the app file must exist; `runtime`
+is `transform`, `bridge` or `http_local`; action `kind` is `url`, `composer`, `utility` or
+`run`. Write the app YAML in plain form: bare keys with the colon touching them, values on one line (quoted or plain, `\"` and `\\` the only escapes), block lists and maps indented with spaces, no anchors, aliases, tags, block scalars (`|` `>`), duplicate keys or tabs. The tools read only that form; anything else is reported as `yaml_unreadable_here` and its tier as unknown. The person installs it by dropping the `.boltpack` on the Bolt launcher or Bolt Apps
+(never Admin settings, which accepts only Sparcle-signed bundles and answers "Bundle
+rejected"). Bolt shows what the app can do and asks them to confirm; a device with the
+approved-only company policy refuses it.
 
 Valid permission strings: `reads_clipboard`, `reads_launcher_input`, `copies_to_clipboard`,
 `opens_links:<host>`, `runs_commands`, `network`, `files`, `agent_tools`.
@@ -87,6 +100,7 @@ no real customer or company data.
 node toolkit/bin/bolt-apps.mjs new <id> --type snippet|search|transform|recognizer
 node toolkit/bin/bolt-apps.mjs lint apps/<id> --json     # exit 0 before you go on
 node toolkit/bin/bolt-apps.mjs pack apps/<id>            # needs a key: bolt-apps keygen, once
+node toolkit/bin/bolt-apps.mjs pack <folder> --personal   # own-use tier 3 or script app (section 2); never for the gallery
 ```
 
 `lint` is the offline shape check; it does not run tests. Never put a signing key (`*.pem`) in this repository.

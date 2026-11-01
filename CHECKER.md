@@ -4,7 +4,7 @@
 
 The checker is part of Bolt's own code, because that is where those engines live. The in-app gallery runs the same check before it lets anyone add an app. The command-line checker is not published yet; it will be before the gallery opens.
 
-Until it is published, `node toolkit/bin/bolt-apps.mjs lint <folder>` runs the offline shape checks (layout, ids, tier, permissions, tests present). It does not run the tests.
+Until it is published, `node toolkit/bin/bolt-apps.mjs lint <folder>` runs the offline shape checks (layout, ids, tier, permissions, tests present). It does not run the tests. `lint --personal` applies Bolt's install rules for an app you keep for yourself (tier 3 and scripts allowed); the gallery never uses it.
 
 ## Run it
 
@@ -93,7 +93,7 @@ Outputs are compared exactly after trailing whitespace is trimmed. A recognizer 
 
 | Code | Why |
 |---|---|
-| `tier3_not_accepted` | runs commands, calls the network or uses agent tools; needs review by Sparcle or company approval |
+| `tier3_not_accepted` | runs commands, calls the network or uses agent tools; the gallery takes tier 1 and 2 only. For your own use, `bolt-apps pack <folder> --personal` builds a self-signed pack that Bolt asks the installer to confirm |
 | `tier_understated` | listing claims a lower tier than the content |
 | `permission_undeclared` | content needs a permission the listing does not declare |
 | `sensitive_secret`, `sensitive_email`, `sensitive_internal_url` | a key, token, email address or internal link is still in the content (`@example.com` addresses are fine) |

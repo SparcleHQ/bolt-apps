@@ -69,7 +69,7 @@ recognition; they do not decide whether an app is accepted.
 ## What gets rejected
 
 - Anything the checker refuses (see [CHECKER.md](CHECKER.md)).
-- Tier 3 content (commands, files, network, AI agent tools) without a Sparcle review.
+- Tier 3 content (commands, files, network, AI agent tools) without a Sparcle review. The gallery takes tier 1 and 2 only. If you want a tier 3 app for yourself, build it with `bolt-apps pack <folder> --personal` and install it by dropping the file on the Bolt launcher or Bolt Apps (not Admin settings); see [toolkit/README.md](toolkit/README.md).
 - Real personal data, customer data, secrets, keys, tokens or internal links.
 - An app that copies another one without adding anything, or drops the original author's
   credit (keep `derived_from`).

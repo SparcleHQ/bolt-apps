@@ -41,7 +41,7 @@
       "uniqueItems": true,
       "items": {
         "type": "string",
-        "pattern": "^(reads_clipboard|reads_launcher_input|copies_to_clipboard|opens_links(:[a-z0-9.-]+)?|runs_commands|network|files|agent_tools)$"
+        "pattern": "^(reads_clipboard|reads_launcher_input|copies_to_clipboard|opens_links(:[a-z0-9.:-]+)?|runs_commands|network|files|agent_tools)$"
       },
       "description": "Exactly what the content needs. The checker fails an undeclared permission and warns on an unneeded one."
     },

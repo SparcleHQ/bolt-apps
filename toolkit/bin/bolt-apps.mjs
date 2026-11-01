@@ -12,7 +12,7 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { get } from '../lib/yamlsubset.mjs';
+import { get, str } from '../lib/yamlsubset.mjs';
 import { assessYaml, plainPermission, listingPermissions, plainName } from '../lib/assess.mjs';
 import { checkApp, formatReport, reportOk, platformFindings, vendorKit, OSES } from '../lib/check.mjs';
 
@@ -87,8 +87,8 @@ export function lintApp(dir, opts = {}) {
 	}
 	for (const f of files.utilities) {
 		const p = `utilities/${f}`; const y = rd(path.join(dir, p));
-		const a = assessYaml(y, undefined), rt = a.runtime, yid = a.unknown || !a.tree || !get(a.tree, 'id') ? undefined : a.id;
-		if (a.unknown) { tier = 3; E('yaml_unreadable_here', `this tool cannot interpret ${a.why}, so it cannot tell what the app can do; Bolt may read it differently. Write plain YAML in the supported subset (see AGENTS.md section 4b)`, p); if (personal) assessed.push(a); continue; }
+		const a = assessYaml(y, undefined), rt = a.runtime, yid = a.unknown || !a.tree ? undefined : (str(get(a.tree, 'id')?.value) || '').trim() || undefined;
+		if (a.unknown) { tier = 3; E('yaml_unreadable_here', `this tool cannot interpret ${a.why}, so it cannot tell what the app can do; Bolt may read it differently. Write plain YAML in the supported subset (see AGENTS.md section 2)`, p); if (personal) assessed.push(a); continue; }
 		if (personal) {
 			if (`manifests/utilities/${f}`.length > 100) E('app_file_name', 'the name is too long for a pack (manifests/utilities/<name> must be at most 100 bytes)', p);
 			if (!plainName(f)) E('app_file_name', 'a file name may use only letters, digits, . _ and -, and may not start or end with a dot (Bolt refuses the whole pack otherwise)', p);
@@ -99,6 +99,7 @@ export function lintApp(dir, opts = {}) {
 			tier = Math.max(tier, a.tier); for (const x of a.permissions) perms.add(x);
 			continue;
 		}
+		if (rt === undefined) { E('field_missing', 'runtime is required', p); continue; }
 		if (rt !== 'transform') { tier = 3; E('tier3_not_accepted', `runtime "${rt}" runs commands or the network; only runtime: transform is allowed here`, p); continue; }
 		if (a.tier >= 3 || a.permissions.includes('runs_own_command_on_press')) { tier = 3; E('tier3_not_accepted', `${a.reasons[0] || (a.tier < 3 ? 'it has a button that runs a command (Bolt rates it tier 2, the gallery does not take it)' : 'it can act outside Bolt')}; only apps that act inside Bolt (no detect block, fixed https links) are allowed here`, p); continue; }
 		tier = Math.max(tier, 2); need(...a.permissions.filter((x) => PERMS.includes(x) || x.startsWith('opens_links:')));

@@ -142,3 +142,17 @@ test('a missing runtime is field_missing; .DS_Store and __pycache__ in scripts/ 
 	assert.equal(run(d, 'lint', 'apps/g', '--personal').status, 0, run(d, 'lint', 'apps/g', '--personal').stdout);
 	const t0 = Date.now(); unreadable(BASE + 'description: a' + ' '.repeat(60000) + 'b\n'); assert.ok(Date.now() - t0 < 500);
 });
+
+test('final minors: backslash host, empty id, gallery missing runtime, message points at a real section', () => {
+	assert.ok(assessYaml(BASE + 'actions:\n  - { id: a, kind: url, label: A, url_template: "https://evil.example\\\\good.example/x" }\n', 'g').permissions.includes('opens_any_link'));
+	assert.ok(assessYaml(BASE + 'actions:\n  - { id: a, kind: url, label: A, url_template: "https://ok .example/x" }\n', 'g').permissions.includes('opens_any_link'));
+	const d = fs.mkdtempSync(path.join(os.tmpdir(), 'bolt-yaml-')); run(d, 'new', 'g', '--type', 'transform');
+	const f = path.join(d, 'apps/g/utilities/g.yaml'), base = fs.readFileSync(f, 'utf8');
+	fs.writeFileSync(f, base.replace(/^id:.*\n/m, 'id: ""\n'));
+	for (const flag of [[], ['--personal']]) assert.match(run(d, 'lint', 'apps/g', ...flag).stdout, /field_missing: id is required/);
+	fs.writeFileSync(f, base.replace(/^runtime:.*\n/m, ''));
+	const g = run(d, 'lint', 'apps/g').stdout; assert.match(g, /field_missing: runtime is required/); assert.doesNotMatch(g, /tier3_not_accepted/);
+	fs.writeFileSync(f, base + 'detect : { binary: git }\n');
+	const m = /AGENTS\.md section (\w+)/.exec(run(d, 'lint', 'apps/g').stdout)[1];
+	assert.match(fs.readFileSync(path.resolve(HERE, '../../AGENTS.md'), 'utf8'), new RegExp(`^## ${m}\\.`, 'm'));
+});

@@ -163,3 +163,10 @@ test('the --personal hint appears only for a real tier 3 app, not for a stray fi
 	const r = run(d, 'pack', 'apps/g', '--key', path.join(d, 'k.pem'));
 	assert.equal(r.status, 1); assert.doesNotMatch(r.stderr, /tier 3/); assert.match(r.stderr, /unknown_file/);
 });
+
+test('the schema and lint agree on what an opens_links permission may look like', () => {
+	const schema = JSON.parse(fs.readFileSync(path.resolve(HERE, '../../schema/bolt-app.schema.json'), 'utf8'));
+	const re = new RegExp(schema.properties.permissions.items.pattern);
+	for (const p of ['opens_links:api.example.com:8443', 'opens_links:example.org', 'opens_links']) assert.ok(re.test(p), p);
+	assert.ok(!re.test('opens_links:evil\\good'));
+});

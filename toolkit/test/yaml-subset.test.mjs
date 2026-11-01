@@ -156,3 +156,10 @@ test('final minors: backslash host, empty id, gallery missing runtime, message p
 	const m = /AGENTS\.md section (\w+)/.exec(run(d, 'lint', 'apps/g').stdout)[1];
 	assert.match(fs.readFileSync(path.resolve(HERE, '../../AGENTS.md'), 'utf8'), new RegExp(`^## ${m}\\.`, 'm'));
 });
+
+test('the --personal hint appears only for a real tier 3 app, not for a stray file in a tier 2 app', () => {
+	const d = fs.mkdtempSync(path.join(os.tmpdir(), 'bolt-yaml-')); run(d, 'new', 'g', '--type', 'transform');
+	fs.writeFileSync(path.join(d, 'apps/g/check.json'), '{}'); run(d, 'keygen', '--out', path.join(d, 'k.pem'));
+	const r = run(d, 'pack', 'apps/g', '--key', path.join(d, 'k.pem'));
+	assert.equal(r.status, 1); assert.doesNotMatch(r.stderr, /tier 3/); assert.match(r.stderr, /unknown_file/);
+});

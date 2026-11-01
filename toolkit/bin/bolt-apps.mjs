@@ -223,7 +223,7 @@ function cmdPack(args) {
 	if (!dir || !fs.existsSync(path.join(dir, 'bolt-app.json'))) die('usage: bolt-apps pack <app-folder> [--key file] [--out file.boltpack] [--version 1.0.0] [--notes "text"] [--personal]');
 	const personal = args.includes('--personal');
 	const r = lintApp(dir, { personal }), errs = r.out.filter((x) => x.level === 'error');
-	if (!personal && errs.some((e) => e.code === 'tier3_not_accepted' || e.code === 'unknown_file') && lintApp(dir, { personal: true }).out.every((x) => x.level !== 'error')) {
+	if (!personal && errs.some((e) => e.code === 'tier3_not_accepted' || e.code === 'unknown_file') && (() => { const pl = lintApp(dir, { personal: true }); return pl.tier >= 3 && pl.out.every((x) => x.level !== 'error'); })()) {
 		die('this app runs programs or reaches the network (tier 3), so it cannot go to the gallery. To build a pack for your own use, add --personal:\n  bolt-apps pack ' + dir + ' --personal\nThe gallery takes tier 1 and 2 apps only.', 1);
 	}
 	if (errs.length) { errs.forEach((e) => console.error(`  ${e.code}: ${e.message} (${e.path})`)); die(`fix the findings above first (bolt-apps lint ${personal ? '--personal ' : ''}shows them)`, 1); }

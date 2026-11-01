@@ -12,7 +12,7 @@ export function httpsLiteralHost(t) {
 	if (!rest.startsWith('https://')) return null;
 	const r = rest.slice(8); let end = r.length; for (let i = 0; i < r.length; i++) if ('/?#'.includes(r[i])) { end = i; break; }
 	const host = r.slice(0, end);
-	return !host || /[{}@\\\s]/.test(host) ? null : host.toLowerCase();
+	return !host || !/^[A-Za-z0-9.:-]+$/.test(host) ? null : host.toLowerCase();
 }
 export function scriptRefs(text) {
 	return new Set([...text.matchAll(/\{\{\s*scripts_dir\s*\}\}[/\\]([A-Za-z0-9._-]+)/g)].map((m) => m[1]));

@@ -170,3 +170,7 @@ test('the schema and lint agree on what an opens_links permission may look like'
 	for (const p of ['opens_links:api.example.com:8443', 'opens_links:example.org', 'opens_links']) assert.ok(re.test(p), p);
 	assert.ok(!re.test('opens_links:evil\\good'));
 });
+
+test('a link host outside letters, digits, dot, colon and hyphen is a loose link (never an undeclarable permission)', () => {
+	for (const h of ['my_host.example', 'xn--é.example', 'a%20b.example']) assert.ok(assessYaml(BASE + `actions:\n  - { id: a, kind: url, label: A, url_template: "https://${h}/x" }\n`, 'g').permissions.includes('opens_any_link'), h);
+});

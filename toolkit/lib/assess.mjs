@@ -40,7 +40,7 @@ export function assessYaml(yaml, name = 'the app') {
 	if (top.actions) {
 		const items = top.actions.split(/\n(?=\s*-\s)/).filter((s) => /kind:/.test(s));
 		for (const it of items) {
-			const kind = unq(/kind:\s*([A-Za-z_"']+)/.exec(it)[1]);
+			const kind = /kind:\s*["']?([A-Za-z_]*)/.exec(it)?.[1] ?? '';
 			if (kind === 'url') {
 				const host = httpsLiteralHost(/url_template:\s*("[^"]*"|'[^']*'|[^,}\s]+)/.exec(it)?.[1] || '');
 				if (host) perms.add(`opens_links:${host}`);

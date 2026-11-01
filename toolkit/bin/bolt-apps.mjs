@@ -95,6 +95,8 @@ export function lintApp(dir, opts = {}) {
 			continue;
 		}
 		if (rt !== 'transform') { tier = 3; E('tier3_not_accepted', `runtime "${rt}" runs commands or the network; only runtime: transform is allowed here`, p); continue; }
+		const ga = assessYaml(y, yid);
+		if (ga.tier >= 3) { tier = 3; E('tier3_not_accepted', `${ga.reasons[0] || 'it can act outside Bolt'}; only apps that act inside Bolt (no detect block, fixed https links) are allowed here`, p); continue; }
 		tier = Math.max(tier, 2); need('reads_launcher_input', 'copies_to_clipboard');
 		if (!yid) E('field_missing', 'id is required', p); else targets.add(`transform:${yid}`), targets.add(`recognizer:${yid}`);
 	}

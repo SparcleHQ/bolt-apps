@@ -97,3 +97,14 @@ test('the repo kit example cannot be packed yet: its vendored kit is a folder an
 	const r = run(REPO, 'pack', 'kit/examples/system-glance', '--personal', '--key', keyed(tmp()), '--out', path.join(tmp(), 'x.boltpack'));
 	assert.equal(r.status, 1); assert.match(r.stderr, /script_subfolder/);
 });
+
+test('gallery lint also refuses a transform app with a detect block or a loose link; a non-letter action kind is a finding, not a crash', () => {
+	const d = tmp(); run(d, 'new', 'g', '--type', 'transform');
+	const f = path.join(d, 'apps/g/utilities/g.yaml'), base = fs.readFileSync(f, 'utf8');
+	fs.writeFileSync(f, base + 'detect:\n  binary: foo\n');
+	assert.match(run(d, 'lint', 'apps/g').stdout, /tier3_not_accepted/);
+	fs.writeFileSync(f, base + 'actions:\n  - { id: a, kind: url, label: A, url_template: "{{x}}" }\n');
+	assert.match(run(d, 'lint', 'apps/g').stdout, /tier3_not_accepted/);
+	fs.writeFileSync(f, base + 'actions:\n  - { id: a, kind: 5, label: A }\n');
+	const r = run(d, 'lint', 'apps/g', '--personal'); assert.doesNotMatch(r.stderr, /TypeError/); assert.match(r.stdout, /action_not_allowed/);
+});

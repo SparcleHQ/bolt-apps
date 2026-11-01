@@ -111,3 +111,18 @@ test('a gallery transform with a composer or utility action still lints clean', 
 	fs.writeFileSync(f, fs.readFileSync(f, 'utf8') + 'actions:\n  - { id: a, kind: composer, label: A }\n  - { id: b, kind: utility, label: B, target_chip: other }\n');
 	const r = run(d, 'lint', 'apps/g'); assert.equal(r.status, 0, r.stdout);
 });
+
+test('many keys parse in linear time, and a missing runtime is one finding', () => {
+	const t0 = Date.now(), keys = Array.from({ length: 40000 }, (_, i) => `k${i}: 1`).join('\n');
+	assert.ok(unreadable(BASE + keys + '\n').length === 0); assert.ok(Date.now() - t0 < 2000, `${Date.now() - t0} ms`);
+	assert.equal(assessYaml(BASE.replace('runtime: transform\n', ''), 'g').problems.length, 0);
+});
+test('a fixed https link with a port is a declarable permission; a long script name is a finding', () => {
+	const d = fs.mkdtempSync(path.join(os.tmpdir(), 'bolt-yaml-')); run(d, 'new', 'g', '--type', 'transform');
+	const dir = path.join(d, 'apps/g'), f = path.join(dir, 'utilities/g.yaml'), j = path.join(dir, 'bolt-app.json');
+	fs.writeFileSync(f, fs.readFileSync(f, 'utf8') + 'actions:\n  - { id: a, kind: url, label: A, url_template: "https://api.example.com:8443/x" }\n');
+	const app = JSON.parse(fs.readFileSync(j, 'utf8')); app.permissions.push('opens_links:api.example.com:8443'); fs.writeFileSync(j, JSON.stringify(app));
+	assert.equal(run(d, 'lint', 'apps/g').status, 0, run(d, 'lint', 'apps/g').stdout);
+	fs.mkdirSync(path.join(dir, 'scripts')); fs.writeFileSync(path.join(dir, 'scripts', 'a'.repeat(90) + '.py'), 'x');
+	assert.match(run(d, 'lint', 'apps/g', '--personal').stdout, /at most 100 bytes/);
+});

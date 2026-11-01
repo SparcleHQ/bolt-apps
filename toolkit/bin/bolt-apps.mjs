@@ -47,6 +47,7 @@ export function lintApp(dir, opts = {}) {
 			for (const f of fs.readdirSync(path.join(dir, 'scripts'), { withFileTypes: true })) {
 				if (f.isDirectory()) E('script_subfolder', `scripts/${f.name} is a folder. Bolt installs every script into one flat scripts folder, so a script that imports from a folder (such as a vendored bolt_app_kit) would break after install. Keep each script a single file in scripts/`, `scripts/${f.name}`);
 				else if (!f.isFile()) E('unknown_file', 'not a regular file', `scripts/${f.name}`);
+				else if (`manifests/scripts/${f.name}`.length > 100) E('app_file_name', 'the name is too long for a pack (manifests/scripts/<name> must be at most 100 bytes)', `scripts/${f.name}`);
 				else if (!plainName(f.name)) E('script_name', 'a script name may use only letters, digits, . _ and -, and may not start or end with a dot (Bolt refuses the whole pack otherwise)', `scripts/${f.name}`);
 				else scripts.push(f.name);
 			}
@@ -114,7 +115,7 @@ export function lintApp(dir, opts = {}) {
 	for (const x of platformFindings(app)) out.push(x);
 	if (!Array.isArray(app.permissions)) E('field_missing', 'permissions must be an array', 'bolt-app.json');
 	const declared = new Set((Array.isArray(app.permissions) ? app.permissions : []).filter((x) => typeof x === 'string'));
-	for (const x of declared) if (!PERMS.includes(x) && !/^opens_links:[a-z0-9.-]+$/.test(x)) E('permission_unknown', `unknown permission "${x}"`, 'bolt-app.json');
+	for (const x of declared) if (!PERMS.includes(x) && !/^opens_links:[a-z0-9.:-]+$/.test(x)) E('permission_unknown', `unknown permission "${x}"`, 'bolt-app.json');
 	if (!personal) for (const x of perms) if (!declared.has(x)) E('permission_undeclared', `content needs "${x}" but bolt-app.json does not declare it`, 'bolt-app.json');
 	for (const x of declared) if (!perms.has(x) && PERMS.includes(x) && tier < 3) W('permission_unused', `"${x}" is declared but nothing uses it`, 'bolt-app.json');
 	// tests

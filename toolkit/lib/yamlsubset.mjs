@@ -40,12 +40,12 @@ function value(s, i, ctx, depth = 0) {
 		bad('an unterminated single-quoted string');
 	}
 	if (c === '{') {
-		const entries = []; let j = i + 1;
+		const entries = [], seen = new Set(); let j = i + 1;
 		for (;;) {
 			while (s[j] === ' ') j++;
 			if (s[j] === '}') return [{ t: 'm', entries }, j + 1];
 			const e = scanKey(s, j); if (e < 0) bad('a flow-map key that is not a bare word touching its colon');
-			const key = s.slice(j, e); if (entries.some((x) => x.key === key)) bad(`a duplicate key "${key}"`);
+			const key = s.slice(j, e); if (seen.has(key)) bad(`a duplicate key "${key}"`); seen.add(key);
 			j = e + 1; while (s[j] === ' ') j++;
 			let v; [v, j] = value(s, j, 'flow', depth + 1); entries.push({ key, value: v });
 			while (s[j] === ' ') j++;
@@ -103,7 +103,7 @@ export function parseYaml(text) {
 		return mapping(indent);
 	}
 	function mapping(indent, pending) {
-		const entries = [];
+		const entries = [], seen = new Set();
 		for (;;) {
 			const L = pending || lines[pos];
 			if (!L || L.indent < indent) break;
@@ -111,7 +111,7 @@ export function parseYaml(text) {
 			if (L.t.startsWith('- ')) break;
 			const e = scanKey(L.t, 0); if (e < 0) bad(`a line that is not "key: value" (line ${L.line})`);
 			const key = L.t.slice(0, e); if (key === '<<') bad('a merge key');
-			if (entries.some((x) => x.key === key)) bad(`a duplicate key "${key}"`);
+			if (seen.has(key)) bad(`a duplicate key "${key}"`); seen.add(key);
 			if (!pending) pos++; else pending = null;
 			let j = e + 1; while (L.t[j] === ' ') j++;
 			let v;

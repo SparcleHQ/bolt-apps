@@ -42,7 +42,7 @@ export function assessYaml(yaml, name = 'the app') {
 	else if (runtime === 'http_local') {
 		tier = 3; const port = str(get(get(root, 'http')?.value, 'port')?.value) || '0';
 		perms.add(`network:localhost:${port}`); reasons.push(`${id} connects to a service on this computer (port ${port})`);
-	} else { tier = 3; problems.push({ code: 'runtime_not_allowed', message: `runtime "${runtime}" is not one Bolt accepts (${ALLOWED_RUNTIME.join(', ')}). Bolt would refuse the whole pack.` }); }
+	} else { tier = 3; if (runtime !== undefined) problems.push({ code: 'runtime_not_allowed', message: `runtime "${runtime}" is not one Bolt accepts (${ALLOWED_RUNTIME.join(', ')}). Bolt would refuse the whole pack.` }); }
 	const detect = get(root, 'detect');
 	if (detect) { tier = 3; perms.add('runs_commands'); reasons.push(`${id} checks for a program on your computer (${str(get(detect.value, 'binary')?.value) || '?'})`); }
 	if (get(root, 'recognize')) perms.add('reads_launcher_input');

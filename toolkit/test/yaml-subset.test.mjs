@@ -126,3 +126,9 @@ test('a fixed https link with a port is a declarable permission; a long script n
 	fs.mkdirSync(path.join(dir, 'scripts')); fs.writeFileSync(path.join(dir, 'scripts', 'a'.repeat(90) + '.py'), 'x');
 	assert.match(run(d, 'lint', 'apps/g', '--personal').stdout, /at most 100 bytes/);
 });
+
+test('an app file with no id is field_missing in both modes', () => {
+	const d = fs.mkdtempSync(path.join(os.tmpdir(), 'bolt-yaml-')); run(d, 'new', 'g', '--type', 'transform');
+	const f = path.join(d, 'apps/g/utilities/g.yaml'); fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace(/^id:.*\n/m, ''));
+	for (const flag of [[], ['--personal']]) assert.match(run(d, 'lint', 'apps/g', ...flag).stdout, /field_missing: id is required/);
+});

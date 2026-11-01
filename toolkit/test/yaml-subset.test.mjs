@@ -90,3 +90,17 @@ test('Windows line endings and emoji joiners are fine; a lone CR still is not', 
 	assert.deepEqual(unreadable(BASE.replace('title: G', 'title: "\u{1F468}\u200D\u{1F469}\u200D\u{1F467} Family"')), []);
 	assert.ok(unreadable(BASE.replace('title: G', 'title: G\rx: 1')).length);
 });
+
+test('review fixes: scripts-only is empty, comments do not name scripts, long app names, fixed https links are permissions', () => {
+	const d = fs.mkdtempSync(path.join(os.tmpdir(), 'bolt-yaml-')); run(d, 'new', 'g', '--type', 'transform');
+	const dir = path.join(d, 'apps/g'), f = path.join(dir, 'utilities/g.yaml'), base = fs.readFileSync(f, 'utf8');
+	fs.mkdirSync(path.join(dir, 'scripts')); fs.writeFileSync(path.join(dir, 'scripts/x.py'), 'x');
+	fs.writeFileSync(f, base + '# was {{scripts_dir}}/old.py\n');
+	assert.match(run(d, 'lint', 'apps/g', '--personal').stdout, /script_unused/);
+	assert.doesNotMatch(run(d, 'lint', 'apps/g', '--personal').stdout, /script_missing/);
+	fs.rmSync(f); assert.match(run(d, 'lint', 'apps/g', '--personal').stdout, /empty_app/);
+	fs.writeFileSync(path.join(dir, 'utilities', 'a'.repeat(90) + '.yaml'), base);
+	assert.match(run(d, 'lint', 'apps/g', '--personal').stdout, /at most 100 bytes/);
+	fs.rmSync(path.join(dir, 'utilities', 'a'.repeat(90) + '.yaml')); fs.writeFileSync(f, base + 'actions:\n  - { id: a, kind: url, label: A, url_template: "https://evil.example/x" }\n');
+	const j = JSON.parse(run(d, 'lint', 'apps/g', '--json').stdout); assert.ok(JSON.stringify(j).includes('permission_undeclared') && JSON.stringify(j).includes('opens_links:evil.example'));
+});

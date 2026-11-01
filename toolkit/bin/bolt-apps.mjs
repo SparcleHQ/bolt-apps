@@ -87,6 +87,7 @@ export function lintApp(dir, opts = {}) {
 		const a = assessYaml(y, undefined), rt = a.runtime, yid = a.unknown ? undefined : a.id;
 		if (a.unknown) { tier = 3; E('yaml_unreadable_here', `this tool cannot interpret ${a.why}, so it cannot tell what the app can do; Bolt may read it differently. Write plain YAML in the supported subset (see AGENTS.md section 4b)`, p); if (personal) assessed.push(a); continue; }
 		if (personal) {
+			if (`manifests/utilities/${f}`.length > 100) E('app_file_name', 'the name is too long for a pack (manifests/utilities/<name> must be at most 100 bytes)', p);
 			if (!plainName(f)) E('app_file_name', 'a file name may use only letters, digits, . _ and -, and may not start or end with a dot (Bolt refuses the whole pack otherwise)', p);
 			assessed.push(a);
 			for (const pr of a.problems) E(pr.code, pr.message, p);
@@ -96,7 +97,7 @@ export function lintApp(dir, opts = {}) {
 		}
 		if (rt !== 'transform') { tier = 3; E('tier3_not_accepted', `runtime "${rt}" runs commands or the network; only runtime: transform is allowed here`, p); continue; }
 		if (a.tier >= 3 || a.permissions.includes('runs_own_command_on_press')) { tier = 3; E('tier3_not_accepted', `${a.reasons[0] || (a.tier < 3 ? 'it has a button that runs a command (Bolt rates it tier 2, the gallery does not take it)' : 'it can act outside Bolt')}; only apps that act inside Bolt (no detect block, fixed https links) are allowed here`, p); continue; }
-		tier = Math.max(tier, 2); need('reads_launcher_input', 'copies_to_clipboard');
+		tier = Math.max(tier, 2); need(...a.permissions);
 		if (!yid) E('field_missing', 'id is required', p); else targets.add(`transform:${yid}`), targets.add(`recognizer:${yid}`);
 	}
 	if (personal && scripts.length) { tier = 3; perms.add('runs_commands'); }
@@ -106,7 +107,7 @@ export function lintApp(dir, opts = {}) {
 		const used = new Set(assessed.flatMap((a) => [...a.refs]));
 		for (const sc of scripts) if (!used.has(sc)) W('script_unused', `scripts/${sc} is not named by {{scripts_dir}}/${sc} in any app file`, `scripts/${sc}`);
 	}
-	if (!tier) E('empty_app', 'the app holds no snippet, search engine or User App', '.');
+	if (!tier || (personal && !files.utilities.length && !files.snippets.length && !files.search_engines.length)) E('empty_app', 'the app holds no snippet, search engine or User App', '.');
 	if (personal) { if (app.tier !== tier) W('tier_recomputed', `bolt-app.json says tier ${app.tier}; the content is tier ${tier}. The pack carries tier ${tier}`, 'bolt-app.json'); }
 	else if (!Number.isInteger(app.tier) || app.tier < 1 || app.tier > 3) E('field_missing', 'tier must be 1, 2 or 3', 'bolt-app.json');
 	else if (app.tier < tier) E('tier_understated', `declares tier ${app.tier} but the content needs tier ${tier}`, 'bolt-app.json');

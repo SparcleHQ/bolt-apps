@@ -17,6 +17,14 @@ export function httpsLiteralHost(t) {
 export function scriptRefs(text) {
 	return new Set([...text.matchAll(/\{\{\s*scripts_dir\s*\}\}[/\\]([A-Za-z0-9._-]+)/g)].map((m) => m[1]));
 }
+// Script names named by scalar VALUES of the parsed tree (comments are not values).
+function treeRefs(n, out = new Set()) {
+	if (!n) return out;
+	if (n.t === 's') for (const r of scriptRefs(n.v)) out.add(r);
+	else if (n.t === 'm') for (const e of n.entries) treeRefs(e.value, out);
+	else if (n.t === 'l') for (const i of n.items) treeRefs(i, out);
+	return out;
+}
 // Why this reader cannot interpret the file ([] when it can). Anything listed here is reported as unknown, never low.
 export function unreadable(yaml) { try { parseYaml(yaml); return []; } catch (e) { if (e instanceof Unreadable) return [e.message]; throw e; } }
 // Returns { tier, permissions, reasons, runtime, id, problems, refs, unknown, tree } for one utilities/*.yaml.
@@ -39,9 +47,9 @@ export function assessYaml(yaml, name = 'the app') {
 	if (detect) { tier = 3; perms.add('runs_commands'); reasons.push(`${id} checks for a program on your computer (${str(get(detect.value, 'binary')?.value) || '?'})`); }
 	if (get(root, 'recognize')) perms.add('reads_launcher_input');
 	const actions = get(root, 'actions')?.value;
-	if (actions && !(actions.t === 'l' || (actions.t === 's' && actions.v === ''))) { return { id, runtime, tier: 3, permissions: ['runs_commands'], reasons: [`${id} has actions this tool could not read, so what it can do is unknown`], problems, refs: scriptRefs(yaml), unknown: true, why: 'actions that are not a list', tree: root }; }
+	if (actions && !(actions.t === 'l' || (actions.t === 's' && actions.v === ''))) { return { id, runtime, tier: 3, permissions: ['runs_commands'], reasons: [`${id} has actions this tool could not read, so what it can do is unknown`], problems, refs: treeRefs(root), unknown: true, why: 'actions that are not a list', tree: root }; }
 	for (const it of actions?.items || []) {
-		if (it.t !== 'm') return { id, runtime, tier: 3, permissions: ['runs_commands'], reasons: [`${id} has an action this tool could not read, so what it can do is unknown`], problems, refs: scriptRefs(yaml), unknown: true, why: 'an action that is not a mapping', tree: root };
+		if (it.t !== 'm') return { id, runtime, tier: 3, permissions: ['runs_commands'], reasons: [`${id} has an action this tool could not read, so what it can do is unknown`], problems, refs: treeRefs(root), unknown: true, why: 'an action that is not a mapping', tree: root };
 		const kind = str(get(it, 'kind')?.value) ?? '';
 		if (kind === 'url') {
 			const host = httpsLiteralHost(str(get(it, 'url_template')?.value) || '');
@@ -51,7 +59,7 @@ export function assessYaml(yaml, name = 'the app') {
 		else if (kind === 'utility') perms.add(`routes_to_app:${str(get(it, 'target_chip')?.value) || ''}`);
 		else { tier = 3; perms.add(`action:${kind}`); problems.push({ code: 'action_not_allowed', message: `action kind "${kind}" is not one Bolt accepts (${ALLOWED_ACTION_KIND.join(', ')}). Bolt would refuse the whole pack.` }); }
 	}
-	return { id, runtime, tier, permissions: [...perms].sort(), reasons, problems, refs: scriptRefs(yaml), unknown: false, tree: root };
+	return { id, runtime, tier, permissions: [...perms].sort(), reasons, problems, refs: treeRefs(root), unknown: false, tree: root };
 }
 const WORDS = [
 	[/^runs_commands$/, 'run programs on your computer'], [/^network:localhost:(\d+)$/, 'talk to a service on this computer (port $1)'],

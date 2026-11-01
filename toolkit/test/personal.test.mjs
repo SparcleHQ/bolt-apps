@@ -105,6 +105,8 @@ test('gallery lint also refuses a transform app with a detect block or a loose l
 	assert.match(run(d, 'lint', 'apps/g').stdout, /tier3_not_accepted/);
 	fs.writeFileSync(f, base + 'actions:\n  - { id: a, kind: url, label: A, url_template: "{{x}}" }\n');
 	assert.match(run(d, 'lint', 'apps/g').stdout, /tier3_not_accepted/);
+	fs.writeFileSync(f, base + 'actions:\n  - { id: a, kind: run, label: A, command: "x" }\n');
+	assert.match(run(d, 'lint', 'apps/g').stdout, /tier3_not_accepted/);
 	fs.writeFileSync(f, base + 'actions:\n  - { id: a, kind: 5, label: A }\n');
 	const r = run(d, 'lint', 'apps/g', '--personal'); assert.doesNotMatch(r.stderr, /TypeError/); assert.match(r.stdout, /action_not_allowed/);
 });

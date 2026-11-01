@@ -154,9 +154,9 @@ Not absorbed: the Windows OEM code page for some console tools (decode with `enc
 
 `bolt-apps kit vendor <app>` copies the kit (`*.py` and the schema) into the app's `scripts/bolt_app_kit/` and writes `scripts/bolt_app_kit.lock.json`: `{ "name", "version", "sha256" }`, where the hash covers the path and content of every file in the kit directory. Python puts the script's own directory on `sys.path`, so `import bolt_app_kit` just works with no install.
 
-**The signature covers the kit** because the vendored files are ordinary files inside the pack. **Divergence guard:** `check` fails `kit_modified` if the vendored files differ from the lock (edited by hand), `kit_diverged` if the lock claims this toolkit's version but the files differ from it, and warns `kit_outdated` if the app is pinned to an older version.
+**The signature would cover the kit** if the vendored files could go inside a pack, but they cannot yet: Bolt installs every script into one flat `scripts/` folder (`pack_install.rs` `safe_script_name` keeps only the file name), so `import bolt_app_kit` would fail after install. `bolt-apps pack --personal` refuses a folder under `scripts/` (`script_subfolder`). **Divergence guard:** `check` fails `kit_modified` if the vendored files differ from the lock (edited by hand), `kit_diverged` if the lock claims this toolkit's version but the files differ from it, and warns `kit_outdated` if the app is pinned to an older version.
 
-`bolt-apps pack` does not accept script apps yet (`lint` refuses tier 3). Packing a script app, with all per-OS entrypoints in one pack, one signature covering them, and `platforms` recorded in the pack manifest, is future work and needs the runtime to accept it.
+`bolt-apps pack --personal` packs a single-file-script app for your own use (all per-OS commands in one app file, one signature). `platforms` is not recorded in the pack, and a kit app needs Bolt to install script folders first. The gallery still takes tier 1 and 2 only.
 
 **Bundled apps in `bolt-native`.** The sample apps that ship inside the desktop bundle could consume the kit later the same way: a sync script copies the pinned kit into their `scripts/` and a guard test fails when the copy differs from its lock. Not part of this task; no `bolt-native` file is touched.
 

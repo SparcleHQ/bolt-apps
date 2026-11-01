@@ -4,7 +4,7 @@
 //   lint [path]                                             offline shape checks (not the full checker)
 //   keygen [--out file]                                     make your signing key
 //   pack <app-folder> [--key file] [--out file] [--personal]  build and self-sign a .boltpack
-//   verify <file.boltpack>                                  check a pack's hash and signature
+//   verify <app-folder | file.boltpack> [--json]            the checks Bolt runs at install, offline, with the fix for each problem
 // The pack layout and hash are Bolt's own (bolt-manifest-verify). Bolt checks every pack again at install.
 import fs from 'node:fs';
 import os from 'node:os';
@@ -12,6 +12,7 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { checkManifests, confirmPreview, checkPackShape, FIXES } from '../lib/verify.mjs';
 import { get, str } from '../lib/yamlsubset.mjs';
 import { assessYaml, plainPermission, listingPermissions, plainName } from '../lib/assess.mjs';
 import { checkApp, formatReport, reportOk, platformFindings, vendorKit, OSES } from '../lib/check.mjs';
@@ -189,7 +190,7 @@ function cmdKeygen(args) {
 	console.log(`key written to ${out} (private, mode 600)\npublic key: ${rawPub(publicKey)}\nKeep the file private. Anyone with it can sign as you.`);
 }
 const rawPub = (pub) => pub.export({ type: 'spki', format: 'der' }).subarray(-32).toString('hex');
-function tarFile(name, data) {
+export function tarFile(name, data) {
 	const nb = Buffer.from(name); if (nb.length > 100) die(`path too long for a pack: ${name}`);
 	const h = Buffer.alloc(512); nb.copy(h, 0);
 	h.write('0000644\0', 100); h.write('0000000\0', 108); h.write('0000000\0', 116);
@@ -198,17 +199,33 @@ function tarFile(name, data) {
 	h.write(h.reduce((a, b) => a + b, 0).toString(8).padStart(6, '0') + '\0 ', 148);
 	return Buffer.concat([h, data, Buffer.alloc((512 - (data.length % 512)) % 512)]);
 }
+const PACK_LIMITS = { entries: 1024, unpacked: 64 * 1024 * 1024, inflated: 64 * 1024 * 1024 + 4 * 1024 * 1024 };
+// Only these names exist in a pack: bundle.json, signature.bin and files under manifests/. Segments are plain: no empty, ., .., backslash or leading slash.
+const canonicalName = (n) => (n === 'bundle.json' || n === 'signature.bin' || n.startsWith('manifests/') || n === 'manifests') && n.length > 0 && !n.includes('\\') && !n.startsWith('/') && n.split('/').every((seg) => seg !== '' && seg !== '.' && seg !== '..');
+class PackError extends Error { constructor(code, message) { super(message); this.code = code; } }
 function untar(buf) {
-	const files = new Map(); let off = 0;
+	const files = new Map(); let off = 0, headers = 0, bytes = 0;
 	while (off + 512 <= buf.length) {
 		const h = buf.subarray(off, off + 512); if (h.every((b) => b === 0)) break;
+		if (++headers > PACK_LIMITS.entries) throw new PackError('too_many_files', `more than ${PACK_LIMITS.entries} entries`);
 		const s = (a, b) => h.subarray(a, b).toString('utf8').replace(/\0.*$/s, '');
-		const name = (s(345, 500) ? s(345, 500) + '/' : '') + s(0, 100), size = parseInt(s(124, 136).trim() || '0', 8), type = String.fromCharCode(h[156] || 48);
-		off += 512; if (type === '0' || type === '\0') files.set(name, buf.subarray(off, off + size)); off += Math.ceil(size / 512) * 512;
+		const name = (s(345, 500) ? s(345, 500) + '/' : '') + s(0, 100), raw = s(124, 136).trim() || '0';
+		const want = s(148, 156).trim(); let sum = 0; for (let k = 0; k < 512; k++) sum += k >= 148 && k < 156 ? 32 : h[k];
+		if (!/^[0-7]+$/.test(want) || parseInt(want, 8) !== sum) throw new PackError('pack_malformed', 'a tar header checksum does not match');
+		if (!/^[0-7]+$/.test(raw)) throw new PackError('pack_malformed', 'a file size in the archive is not a valid number');
+		const size = parseInt(raw, 8), type = String.fromCharCode(h[156] || 48);
+		if (type !== '0' && type !== '5') throw new PackError('pack_malformed', `an archive entry of type ${JSON.stringify(type)} (only plain files and folders are allowed)`);
+		const bare = type === '5' ? name.replace(/\/$/, '') : name;
+		if (!canonicalName(bare)) throw new PackError('pack_malformed', `an archive entry has a name Bolt does not accept: ${JSON.stringify(name.slice(0, 60))}`);
+		if (!Number.isSafeInteger(size) || size < 0) throw new PackError('pack_malformed', 'a file size in the archive is invalid');
+		bytes += size; if (bytes > PACK_LIMITS.unpacked) throw new PackError('pack_too_large', 'the pack unpacks to more than 64 MB');
+		off += 512; if (off + size > buf.length) throw new PackError('pack_malformed', 'the archive ends inside a file');
+		if (type === '0') { if (files.has(name)) throw new PackError('pack_duplicate_entry', `the archive holds ${name.slice(0, 80)} twice`); files.set(name, buf.subarray(off, off + size)); }
+		off += Math.ceil(size / 512) * 512;
 	}
 	return files;
 }
-function contentHash(manifests) {
+export function contentHash(manifests) {
 	const h = crypto.createHash('sha256');
 	for (const [p, c] of [...manifests].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {
 		const pb = Buffer.from(p), pl = Buffer.alloc(4), cl = Buffer.alloc(8); pl.writeUInt32LE(pb.length); cl.writeBigUInt64LE(BigInt(c.length)); h.update(pl).update(pb).update(cl).update(c);
@@ -227,6 +244,11 @@ function cmdPack(args) {
 		die('this app runs programs or reaches the network (tier 3), so it cannot go to the gallery. To build a pack for your own use, add --personal:\n  bolt-apps pack ' + dir + ' --personal\nThe gallery takes tier 1 and 2 apps only.', 1);
 	}
 	if (errs.length) { errs.forEach((e) => console.error(`  ${e.code}: ${e.message} (${e.path})`)); die(`fix the findings above first (bolt-apps lint ${personal ? '--personal ' : ''}shows them)`, 1); }
+	if (personal) { // never write a pack that verify would refuse
+		const vf = []; for (const [folder, names] of Object.entries(r.files)) for (const n of names) if (KINDS[folder]) vf.push({ path: `${folder}/${n}`, kind: KINDS[folder], content: fs.readFileSync(path.join(dir, folder, n)) });
+		const bad = checkManifests(vf).findings.filter((x) => x.level === 'error');
+		if (bad.length) { bad.forEach((e) => console.error(`  ${e.code}: ${e.message} (${e.file}${e.line ? ':' + e.line : ''})\n    fix: ${e.fix}`)); die('fix the findings above first (bolt-apps verify shows them)', 1); }
+	}
 	const keyFile = flag(args, '--key', DEFAULT_KEY);
 	if (!fs.existsSync(keyFile)) die(`no signing key at ${keyFile}. Make one with: bolt-apps keygen`);
 	const priv = crypto.createPrivateKey(rd(keyFile)), pub = rawPub(crypto.createPublicKey(priv));
@@ -262,27 +284,74 @@ function cmdPack(args) {
 	} else console.log('to install: drop it on the Bolt launcher. Bolt shows a review card, then asks again because it is self-signed.');
 }
 export function readPack(file) {
-	let e; try { e = untar(zlib.gunzipSync(fs.readFileSync(file))); } catch (x) { return { ok: false, reason: `not a gzip tar: ${x.message}` }; }
-	const bj = e.get('bundle.json'), sig = e.get('signature.bin'); if (!bj) return { ok: false, reason: 'bundle.json is missing' };
-	let meta; try { meta = JSON.parse(bj.toString()); } catch { return { ok: false, reason: 'bundle.json is not JSON' }; }
+	let e;
+	try {
+		if (fs.statSync(file).size > 50 * 1024 * 1024) return { ok: false, code: 'pack_too_large', reason: 'the file is larger than 50 MB' };
+		e = untar(zlib.gunzipSync(fs.readFileSync(file), { maxOutputLength: PACK_LIMITS.inflated }));
+	} catch (x) {
+		if (x instanceof PackError) return { ok: false, code: x.code, reason: x.message };
+		if (x.code === 'ERR_BUFFER_TOO_LARGE') return { ok: false, code: 'pack_too_large', reason: 'the pack unpacks to more than 64 MB' };
+		return { ok: false, code: 'pack_not_gzip_tar', reason: `not a gzip tar: ${x.message}` };
+	}
+	const bj = e.get('bundle.json'), sig = e.get('signature.bin'); if (!bj) return { ok: false, code: 'bundle_missing', reason: 'bundle.json is missing' };
+	let meta; try { meta = JSON.parse(bj.toString()); } catch { return { ok: false, code: 'bundle_not_json', reason: 'bundle.json is not JSON' }; }
+	if (!isObj(meta) || (meta.entries !== undefined && (!Array.isArray(meta.entries) || meta.entries.some((x) => !isObj(x) || typeof x.path !== 'string' || typeof x.sha256 !== 'string')))) return { ok: false, code: 'bundle_not_json', reason: 'bundle.json is not the object with an entries list of {path, sha256} that a pack has' };
 	const man = new Map([...e].filter(([p]) => p.startsWith('manifests/')).map(([p, c]) => [p.slice(10), c]));
-	if (!sig || sig.length !== 64) return { ok: false, reason: 'signature.bin is missing or not 64 bytes', meta };
-	if (!meta.signer_pubkey) return { ok: false, reason: 'signed by a Sparcle or company key; only Bolt can verify that', meta };
+	const bad = (code, reason) => ({ ok: false, code, reason, meta, files: man, count: e.size });
+	if (!sig || sig.length !== 64) return bad('signature_missing', 'signature.bin is missing or not 64 bytes');
+	if (meta.signer_pubkey !== undefined && !/^[0-9a-f]{64}$/i.test(String(meta.signer_pubkey))) return bad('signature_mismatch', 'signer_pubkey is not 64 hexadecimal characters');
+	if (!meta.signer_pubkey) return bad('signed_by_other_key', 'signed by a Sparcle or company key; only Bolt can verify that');
 	let good = false; try { good = crypto.verify(null, bj, crypto.createPublicKey({ key: Buffer.concat([Buffer.from('302a300506032b6570032100', 'hex'), Buffer.from(meta.signer_pubkey, 'hex')]), format: 'der', type: 'spki' }), sig); } catch { /* bad key */ }
-	if (!good) return { ok: false, reason: 'the signature does not match bundle.json', meta };
-	if (contentHash(man) !== meta.content_sha256) return { ok: false, reason: 'files changed after signing (content hash mismatch)', meta };
-	for (const en of meta.entries || []) { const c = man.get(en.path.replace(/^manifests\//, '')); if (!c || sha(c) !== en.sha256) return { ok: false, reason: `entry ${en.path} does not match its hash`, meta }; }
-	return { ok: true, meta };
+	if (!good) return bad('signature_mismatch', 'the signature does not match bundle.json');
+	if (contentHash(man) !== meta.content_sha256) return bad('content_hash_mismatch', 'files changed after signing (content hash mismatch)');
+	for (const en of meta.entries || []) { if (!String(en.path).startsWith('manifests/')) continue; const c = man.get(String(en.path).replace(/^manifests\//, '')); if (!c || sha(c) !== en.sha256) return bad('entry_hash_mismatch', `entry ${en.path} does not match its hash`); }
+	return { ok: true, meta, files: man, count: e.size };
 }
+// Pack text is untrusted: show control, format and bidi characters as \\uXXXX so a pack cannot move the cursor or forge lines.
+export const esc = (v) => String(v).replace(/[\u0000-\u001f\u007f-\u009f\u00ad\u200b-\u200f\u2028-\u202e\u2060-\u2069\ufeff]/g, (c) => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
 function cmdVerify(args) {
-	const f = args[0]; if (!f || !fs.existsSync(f)) die('usage: bolt-apps verify <file.boltpack>');
-	const r = readPack(f);
-	if (!r.ok) { console.error(`NOT VALID: ${r.reason}`); process.exit(1); }
-	const m = r.meta; console.log(`valid, self-signed\n  pack     ${m.pack?.pack_id} ${m.bundle_version} (${m.pack?.name})\n  signer   ${m.signer_pubkey}\n  signed   ${m.signed_at}\n  files    ${m.manifest_count}\nThis proves the files were not changed after signing. It does not prove who signed them.`);
+	const json = args.includes('--json'), f = args.find((x) => !x.startsWith('--'));
+	if (!f || !fs.existsSync(f)) die('usage: bolt-apps verify <app-folder | file.boltpack> [--json]');
+	let findings = [], confirm = null, kind;
+	if (fs.statSync(f).isDirectory()) {
+		kind = 'app';
+		const r = lintApp(f, { personal: true });
+		findings = r.out.filter((x) => !(x.code === 'field_missing' && /^(id|runtime) is required$/.test(x.message)) && !['script_missing', 'script_unused', 'runtime_not_allowed', 'action_not_allowed', 'yaml_unreadable_here'].includes(x.code)).map((x) => ({ level: x.level, code: x.code, message: x.message, file: x.path, fix: FIXES[x.code] || x.message }));
+		if (r.app) {
+			const files = [];
+			for (const [folder, names] of Object.entries(r.files)) for (const n of names) if (KINDS[folder]) files.push({ path: `${folder}/${n}`, kind: KINDS[folder], content: fs.readFileSync(path.join(f, folder, n)) });
+			const c = checkManifests(files); findings.push(...c.findings);
+			confirm = confirmPreview({ apps: c.apps, files, scriptsList: files.filter((x) => x.kind === 'script').map((x) => path.basename(x.path)), signer: 'not signed yet: bolt-apps pack signs it with your key', unknownAssess: c.unknownAssess });
+		}
+	} else {
+		kind = 'pack';
+		const r = readPack(f);
+		if (!r.ok) findings.push({ level: 'error', code: r.code, message: r.reason, file: path.basename(f), fix: FIXES[r.code] });
+		else {
+			findings.push(...checkPackShape(r.meta, r.files, r.count));
+			const files = (r.meta.entries || []).filter((e) => ['user_utility', 'script'].includes(e.kind) && r.files.has(String(e.path).replace(/^manifests\//, ''))).map((e) => ({ path: String(e.path).replace(/^manifests\//, ''), kind: e.kind, content: r.files.get(String(e.path).replace(/^manifests\//, '')) }));
+			const c = checkManifests(files); findings.push(...c.findings);
+			confirm = confirmPreview({ apps: c.apps, files, scriptsList: files.filter((x) => x.kind === 'script').map((x) => path.basename(x.path)), signer: `self-signed by key ${r.meta.signer_pubkey}; identity is not verified`, unknownAssess: c.unknownAssess });
+		}
+	}
+	const ok = !findings.some((x) => x.level === 'error');
+	if (json) console.log(JSON.stringify({ ok, kind, findings, confirm }, null, 2));
+	else {
+		for (const x of findings) console.log(`${x.level.toUpperCase().padEnd(7)} ${esc(x.code)}  ${esc(x.file || '')}${x.line ? ':' + x.line : ''}\n        ${esc(x.message)}\n        fix: ${esc(x.fix)}`);
+		if (confirm) {
+			console.log(`\nEstimate, Bolt checks again at install (it may rate the app higher):\n  tier ${confirm.tier}, risk ${confirm.risk}\n  signer: ${esc(confirm.signer)}`);
+			if (confirm.tier === 'unknown') console.log('  unable to assess: see yaml_unreadable_here above; treat it as high risk until fixed');
+			for (const p of confirm.permissions) console.log(`  can: ${esc(p.text)}`);
+			for (const x of confirm.reasons) console.log(`  because: ${esc(x)}`);
+			console.log(`  files: ${confirm.files.map((x) => esc(x.path)).join(', ')}\n  ${esc(confirm.note)}`);
+		}
+		console.log(ok ? (kind === 'pack' ? 'valid, self-signed\nThis proves the files were not changed after signing. It does not prove who signed them. Bolt parses every app file again at install.' : 'no known install problems found. Bolt parses every app file again at install.') : `NOT VALID: ${findings.filter((x) => x.level === 'error').length} problem(s) Bolt would refuse, that would stop the app loading, or that this tool cannot assess`);
+	}
+	process.exit(ok ? 0 : 1);
 }
 
 // ---------- main ----------
-const HELP = `bolt-apps: author toolkit for Bolt Apps\n\n  new <id> [--type snippet|search|transform|recognizer]   start from a working template\n  lint [path]                                             offline shape checks\n  keygen [--out file]                                     make your signing key (default ~/.bolt-apps/key.pem)\n  pack <app-folder> [--key file] [--out file] [--personal]  build and self-sign a .boltpack (--personal: your own tier 3 or script app)\n  verify <file.boltpack>                                  check a pack's hash and signature\n\nDocs: https://sparcle.app/docs/extend/`;
+const HELP = `bolt-apps: author toolkit for Bolt Apps\n\n  new <id> [--type snippet|search|transform|recognizer]   start from a working template\n  lint [path]                                             offline shape checks\n  keygen [--out file]                                     make your signing key (default ~/.bolt-apps/key.pem)\n  pack <app-folder> [--key file] [--out file] [--personal]  build and self-sign a .boltpack (--personal: your own tier 3 or script app)\n  verify <app-folder | file.boltpack> [--json]            the checks Bolt runs at install, offline, with the fix for each problem\n\nDocs: https://sparcle.app/docs/extend/`;
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))) {
 	const [cmd, ...rest] = process.argv.slice(2);
 	const cmdCheck = async (args) => {

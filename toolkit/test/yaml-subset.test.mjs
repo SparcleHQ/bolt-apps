@@ -132,3 +132,13 @@ test('an app file with no id is field_missing in both modes', () => {
 	const f = path.join(d, 'apps/g/utilities/g.yaml'); fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace(/^id:.*\n/m, ''));
 	for (const flag of [[], ['--personal']]) assert.match(run(d, 'lint', 'apps/g', ...flag).stdout, /field_missing: id is required/);
 });
+
+test('a missing runtime is field_missing; .DS_Store and __pycache__ in scripts/ are ignored; a long trailing-space line is fast', () => {
+	const d = fs.mkdtempSync(path.join(os.tmpdir(), 'bolt-yaml-')); run(d, 'new', 'g', '--type', 'transform');
+	const dir = path.join(d, 'apps/g'), f = path.join(dir, 'utilities/g.yaml'), base = fs.readFileSync(f, 'utf8');
+	fs.writeFileSync(f, base.replace(/^runtime:.*\n/m, ''));
+	assert.match(run(d, 'lint', 'apps/g', '--personal').stdout, /field_missing: runtime is required/);
+	fs.writeFileSync(f, base); fs.mkdirSync(path.join(dir, 'scripts', '__pycache__'), { recursive: true }); fs.writeFileSync(path.join(dir, 'scripts', '.DS_Store'), 'x');
+	assert.equal(run(d, 'lint', 'apps/g', '--personal').status, 0, run(d, 'lint', 'apps/g', '--personal').stdout);
+	const t0 = Date.now(); unreadable(BASE + 'description: a' + ' '.repeat(60000) + 'b\n'); assert.ok(Date.now() - t0 < 500);
+});

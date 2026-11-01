@@ -46,6 +46,7 @@ export function lintApp(dir, opts = {}) {
 		if (personal && ((ent.isFile() && ent.name === 'check.json') || (ent.isDirectory() && (ent.name === 'fixtures' || ent.name === 'golden')))) continue; // author-side only, never packed
 		if (personal && ent.isDirectory() && ent.name === 'scripts') {
 			for (const f of fs.readdirSync(path.join(dir, 'scripts'), { withFileTypes: true })) {
+				if (f.name.startsWith('.') || f.name === '__pycache__') continue; // editor and OS leftovers are never packed
 				if (f.isDirectory()) E('script_subfolder', `scripts/${f.name} is a folder. Bolt installs every script into one flat scripts folder, so a script that imports from a folder (such as a vendored bolt_app_kit) would break after install. Keep each script a single file in scripts/`, `scripts/${f.name}`);
 				else if (!f.isFile()) E('unknown_file', 'not a regular file', `scripts/${f.name}`);
 				else if (`manifests/scripts/${f.name}`.length > 100) E('app_file_name', 'the name is too long for a pack (manifests/scripts/<name> must be at most 100 bytes)', `scripts/${f.name}`);
@@ -92,6 +93,7 @@ export function lintApp(dir, opts = {}) {
 			if (`manifests/utilities/${f}`.length > 100) E('app_file_name', 'the name is too long for a pack (manifests/utilities/<name> must be at most 100 bytes)', p);
 			if (!plainName(f)) E('app_file_name', 'a file name may use only letters, digits, . _ and -, and may not start or end with a dot (Bolt refuses the whole pack otherwise)', p);
 			assessed.push(a);
+			if (a.runtime === undefined) E('field_missing', 'runtime is required', p);
 			for (const pr of a.problems) E(pr.code, pr.message, p);
 			if (!yid) E('field_missing', 'id is required', p);
 			tier = Math.max(tier, a.tier); for (const x of a.permissions) perms.add(x);

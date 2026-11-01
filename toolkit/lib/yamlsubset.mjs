@@ -74,7 +74,7 @@ function value(s, i, ctx, depth = 0) {
 		if (ch === ':' && (s[j + 1] === ' ' || s[j + 1] === undefined || (ctx === 'flow' && ',]}'.includes(s[j + 1])))) bad('a nested mapping where a value belongs');
 		j++;
 	}
-	const v = s.slice(i, j).replace(/ +$/, '');
+	const v = s.slice(i, j).trimEnd();
 	return [{ t: 's', v, q: false }, i + v.length];
 }
 function restOfLine(s, j) { while (s[j] === ' ') j++; if (j < s.length && !(s[j] === '#' && s[j - 1] === ' ')) bad('text after a value'); }

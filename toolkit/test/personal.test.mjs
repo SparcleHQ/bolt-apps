@@ -119,3 +119,17 @@ test('lint cannot be fooled by YAML it cannot read: a space before the colon, an
 		for (const flag of [[], ['--personal']]) { const r = run(d, 'lint', 'apps/g', ...flag); assert.equal(r.status, 1, extra + r.stdout); assert.match(r.stdout, /yaml_unreadable_here/); }
 	}
 });
+
+test('a failed gallery pack of a tier 3 app or an app with scripts/ ends with the --personal hint', () => {
+	const HINT = /The gallery takes tier 1 and 2 only\. Use `pack --personal` to build a pack for your own use\./;
+	const d = tmp(); scriptApp(d); const key = keyed(d);
+	// tier 3 app that also has an unpackable helper folder: personal lint fails too, so only the general hint can fire
+	write(path.join(d, 'apps', 'eagle-info', 'scripts', 'lib', 'm.py'), 'x');
+	assert.match(run(d, 'pack', 'apps/eagle-info', '--key', key).stderr, HINT);
+	// a tier 2 app with a stray scripts/ folder
+	run(d, 'new', 'plain', '--type', 'transform'); write(path.join(d, 'apps', 'plain', 'scripts', 'x.sh'), 'x');
+	assert.match(run(d, 'pack', 'apps/plain', '--key', key).stderr, HINT);
+	// a tier 2 app that fails for another reason, with no scripts/: no hint
+	run(d, 'new', 'other', '--type', 'transform'); write(path.join(d, 'apps', 'other', 'notes.txt'), 'x');
+	const r = run(d, 'pack', 'apps/other', '--key', key); assert.equal(r.status, 1); assert.doesNotMatch(r.stderr, /personal/);
+});

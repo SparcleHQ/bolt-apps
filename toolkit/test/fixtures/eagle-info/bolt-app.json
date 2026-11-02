@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "eagle-info",
+  "title": "Eagle info",
+  "role": "Fixture only",
+  "saves": "Nothing; made-up data for the install safety net",
+  "summary": "Fixture shaped like a real script app: helper package, seven hosts, tier 3.",
+  "author": { "name": "Fixture" },
+  "tier": 3,
+  "permissions": ["runs_commands"],
+  "tests": []
+}

@@ -46,14 +46,26 @@ export function lintApp(dir, opts = {}) {
 		if (ent.isFile() && (ent.name === 'bolt-app.json' || ent.name === 'README.md')) continue;
 		if (personal && ((ent.isFile() && ent.name === 'check.json') || (ent.isDirectory() && (ent.name === 'fixtures' || ent.name === 'golden')))) continue; // author-side only, never packed
 		if (personal && ent.isDirectory() && ent.name === 'scripts') {
-			for (const f of fs.readdirSync(path.join(dir, 'scripts'), { withFileTypes: true })) {
-				if (f.name.startsWith('.') || f.name === '__pycache__') continue; // editor and OS leftovers are never packed
-				if (f.isDirectory()) E('script_subfolder', `scripts/${f.name} is a folder. Bolt installs every script into one flat scripts folder, so a script that imports from a folder (such as a vendored bolt_app_kit) would break after install. Keep each script a single file in scripts/`, `scripts/${f.name}`);
-				else if (!f.isFile()) E('unknown_file', 'not a regular file', `scripts/${f.name}`);
-				else if (`manifests/scripts/${f.name}`.length > 100) E('app_file_name', 'the name is too long for a pack (manifests/scripts/<name> must be at most 100 bytes)', `scripts/${f.name}`);
-				else if (!plainName(f.name)) E('script_name', 'a script name may use only letters, digits, . _ and -, and may not start or end with a dot (Bolt refuses the whole pack otherwise)', `scripts/${f.name}`);
-				else scripts.push(f.name);
-			}
+			// Scripts keep their folders (Bolt 0.1.180 and later installs a pack's scripts where the pack puts them),
+			// so a helper package next to the entry script keeps working. Same rules as Bolt: plain names, at most 8 deep.
+			const seen = new Map();
+			const walk = (rel, depth) => {
+				for (const f of fs.readdirSync(path.join(dir, 'scripts', rel), { withFileTypes: true })) {
+					if (f.name.startsWith('.') || f.name === '__pycache__') continue; // editor and OS leftovers are never packed
+					const sub = rel ? `${rel}/${f.name}` : f.name, shown = `scripts/${sub}`;
+					if (f.isDirectory()) {
+						if (depth >= 8) E('script_too_deep', `${shown} is more than 8 folders deep`, shown);
+						else if (!plainName(f.name)) E('script_name', 'a folder name may use only letters, digits, . _ and -, and may not start or end with a dot (Bolt refuses the whole pack otherwise)', shown);
+						else walk(sub, depth + 1);
+					}
+					else if (!f.isFile()) E('unknown_file', 'not a regular file', shown);
+					else if (`manifests/scripts/${sub}`.length > 100) E('app_file_name', 'the name is too long for a pack (manifests/scripts/<path> must be at most 100 bytes)', shown);
+					else if (!plainName(f.name)) E('script_name', 'a script name may use only letters, digits, . _ and -, and may not start or end with a dot (Bolt refuses the whole pack otherwise)', shown);
+					else if (seen.has(sub.toLowerCase())) E('script_case', `${shown} and scripts/${seen.get(sub.toLowerCase())} differ only in capital letters; one would replace the other on macOS and Windows`, shown);
+					else { seen.set(sub.toLowerCase(), sub); scripts.push(sub); }
+				}
+			};
+			walk('', 0);
 			continue;
 		}
 		if (ent.isDirectory() && Object.hasOwn(files, ent.name)) {

@@ -32,7 +32,9 @@ export const FIXES = {
 	entry_kind_skipped: 'Dropping a pack on the launcher installs User Apps and scripts only. Install snippets and search engines from Bolt Apps instead.',
 	entry_kind_unknown: 'Bolt does not install this kind of file from a pack. Remove it from the app folder.',
 	file_not_listed: 'The pack holds a file bundle.json does not list; Bolt ignores it. Build the pack again with bolt-apps pack.',
-	script_subfolder: 'Bolt installs every script into one flat scripts folder, so a script that imports from a folder breaks. Put each script directly in scripts/ as a single file (no vendored library folders).',
+	script_case: 'Two script paths differ only in capital letters, so one would replace the other on macOS and Windows. Rename one.',
+	script_too_deep: 'Scripts may be at most 8 folders deep.',
+	script_conflict: 'A name is used both as a file and as a folder in scripts/. Rename one.',
 	script_name: 'Use only letters, digits, . _ and - in script names, with no leading or trailing dot. Rename the script.',
 	script_missing: 'The app file runs a script that is not in the pack. Add the file to scripts/ or fix the name after {{scripts_dir}}/.',
 	script_unused: 'No app file runs this script. Remove it or reference it as {{scripts_dir}}/<name> in the command.',
@@ -107,13 +109,17 @@ export function commandProblem(os, cmd) {
 // files: [{ path: 'utilities/x.yaml' | 'scripts/x.py', kind, content: Buffer }]
 export function checkManifests(files) {
 	const findings = [], apps = [], add = (...a) => findings.push(mk(...a));
-	const scripts = new Map(files.filter((f) => f.kind === 'script').map((f) => [path.basename(f.path), f.content]));
+	const scripts = new Map(files.filter((f) => f.kind === 'script').map((f) => [f.path.replace(/^scripts\//, ''), f.content]));
 	const used = new Set();
 	let unknownAssess = false;
+	const seenPaths = new Map(), allScripts = files.filter((x) => x.kind === 'script').map((f) => f.path.replace(/^scripts\//, ''));
 	for (const f of files.filter((x) => x.kind === 'script')) {
-		const rel = f.path.replace(/^scripts\//, '');
-		if (rel.includes('/')) add('error', 'script_subfolder', `${f.path} is inside a folder; Bolt installs scripts flat, so it would not be found where the app imports it`, f.path);
-		else if (!plainName(rel)) add('error', 'script_name', `script name "${rel}" has characters or a shape Bolt refuses`, f.path);
+		const rel = f.path.replace(/^scripts\//, ''), parts = rel.split('/');
+		if (parts.length > 9) add('error', 'script_too_deep', `${f.path} is more than 8 folders deep`, f.path);
+		else if (!parts.every((s) => plainName(s))) add('error', 'script_name', `script path "${rel}" has characters or a shape Bolt refuses`, f.path);
+		if (seenPaths.has(rel.toLowerCase()) && seenPaths.get(rel.toLowerCase()) !== rel) add('error', 'script_case', `${f.path} and scripts/${seenPaths.get(rel.toLowerCase())} differ only in capital letters`, f.path);
+		seenPaths.set(rel.toLowerCase(), rel);
+		if (allScripts.some((o) => o.toLowerCase().startsWith(rel.toLowerCase() + '/'))) add('error', 'script_conflict', `${f.path} is both a file and a folder`, f.path);
 	}
 	for (const f of files.filter((x) => x.kind === 'user_utility')) {
 		const y = f.content.toString('utf8'), file = f.path;
@@ -157,7 +163,7 @@ export function checkManifests(files) {
 				if (prob) E(prob[0], prob[1], cl);
 				for (const r of scriptRefs(cmd)) used.add(r);
 				for (const t of cmd.split(/\s+/).filter(Boolean).slice(0, 2).filter((x) => !x.includes('{{'))) if (/\.(py|sh|js|mjs|rb|ps1)$/.test(t) && !/^([/~]|[A-Za-z]:\\)/.test(t)) E('script_path_relative', `${o} command names ${t} without {{scripts_dir}}; Bolt runs it in a fresh empty folder`, cl);
-				const direct = /^\s*\{\{\s*scripts_dir\s*\}\}[/\\]([A-Za-z0-9._-]+)/.exec(cmd);
+				const direct = /^\s*\{\{\s*scripts_dir\s*\}\}[/\\]([A-Za-z0-9._-]+(?:\/[A-Za-z0-9._-]+)*)/.exec(cmd);
 				if (o !== 'windows' && direct && scripts.has(direct[1]) && !scripts.get(direct[1]).subarray(0, 2).equals(Buffer.from('#!'))) E('script_no_shebang', `${o} command runs scripts/${direct[1]} directly but the file has no #! line`, cl);
 			}
 			const pr = S(bridge, 'parse'); if (pr !== undefined && !R.parse.includes(pr)) E('parse_not_allowed', `bridge.parse "${pr}" is not accepted`, ln(bridge, 'parse', bl));

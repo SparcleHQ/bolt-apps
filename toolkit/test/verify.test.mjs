@@ -111,10 +111,22 @@ test('a good pack: verify says valid and prints what Bolt will show; --json is s
 
 test('every code verify can emit has a case, and every fix is plain words', () => {
 	const lintLevel = ['app_file_name', 'unknown_file', 'listing_unreadable', 'field_missing', 'empty_app', 'bad_json', 'permission_unknown']; // covered in personal.test.mjs and the lint tests
+	const needsTwoPathsDiskCannotHold = ['script_case', 'script_conflict']; // unit-tested below with in-memory files
 	const sizeLevel = ['too_many_files', 'pack_too_large', 'yaml_unreadable_here', 'pack_malformed', 'pack_duplicate_entry']; // the last three are covered in hostile.test.mjs; // would need a 64 MB or 1025-file pack; checked by reading shape only
-	const missing = Object.keys(FIXES).filter((c) => !covered.has(c) && !lintLevel.includes(c) && !sizeLevel.includes(c));
+	const missing = Object.keys(FIXES).filter((c) => !covered.has(c) && !lintLevel.includes(c) && !sizeLevel.includes(c) && !needsTwoPathsDiskCannotHold.includes(c));
 	assert.deepEqual(missing, []);
 	for (const [c, f] of Object.entries(FIXES)) { assert.ok(f.length > 10, c); assert.ok(!f.includes(String.fromCharCode(0x2014)), c); }
+});
+
+test('two script paths that differ only in case, or a name that is a file and a folder, are errors', async () => {
+	const { checkManifests } = await import('../lib/verify.mjs');
+	const yaml = Buffer.from(CASES.base['utilities/eagle-info.yaml']);
+	const f = (p, c = 'x\n') => ({ path: p, kind: 'script', content: Buffer.from(c) });
+	const base = [{ path: 'utilities/eagle-info.yaml', kind: 'user_utility', content: yaml }, f('scripts/eagle.py', CASES.base['scripts/eagle.py'])];
+	const codesOf = (extra) => [...new Set(checkManifests([...base, ...extra]).findings.filter((x) => x.level === 'error').map((x) => x.code))];
+	assert.deepEqual(codesOf([f('scripts/lib/Cache.py'), f('scripts/lib/cache.py')]), ['script_case']);
+	assert.deepEqual(codesOf([f('scripts/lib'), f('scripts/lib/x.py')]), ['script_conflict']);
+	assert.deepEqual(codesOf([f('scripts/lib/cache.py'), f('scripts/other/cache.py')]), []);
 });
 
 test('verify never needs a key or the network, and a missing file is a usage error', () => {

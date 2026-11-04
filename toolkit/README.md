@@ -21,7 +21,7 @@ node toolkit/bin/bolt-apps.mjs lint apps/my-app --personal
 node toolkit/bin/bolt-apps.mjs pack apps/my-app --personal
 ```
 
-`pack --personal` recomputes what the app can do from its files and prints it in plain words, then Bolt shows the same facts and asks whoever installs it to confirm, because the pack is signed only by you. On a device whose company policy allows only approved apps, Bolt refuses it. Scripts install into one flat `scripts/` folder, so each script must be one file: a folder such as a vendored `bolt_app_kit` is refused (`script_subfolder`) until Bolt installs scripts in subfolders. `check.json`, `fixtures/` and `golden/` stay on your machine and are not packed.
+`pack --personal` recomputes what the app can do from its files and prints it in plain words, then Bolt shows the same facts and asks whoever installs it to confirm, because the pack is signed only by you. On a device whose company policy allows only approved apps, Bolt refuses it. Scripts keep their folders (a vendored `bolt_app_kit` installs where you put it), with plain names and at most 8 folders deep. Bolt 0.1.179 and earlier refuse a script inside a folder when the pack is dropped; Bolt 0.1.180 and later install it. `check.json`, `fixtures/` and `golden/` stay on your machine and are not packed.
 
 ## Commands
 

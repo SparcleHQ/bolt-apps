@@ -49,21 +49,16 @@ test('fixture without the helper folder (one flat script) packs with --personal 
 	assert.ok(m.entries.some((e) => e.kind === 'script' && e.path === 'manifests/scripts/eagle_info.py'));
 });
 
-// The tester's real layout. Bolt 0.1.178 installs scripts flat, so `import bolt_app_kit` breaks
-// after install. Until Bolt installs script subfolders the toolkit must REFUSE this pack in
-// words that say why, never build a pack that installs and then fails. When Bolt gains
-// subfolder support this flips on its own: the pack must build and keep the folder paths.
-test('fixture with the helper package: refused in plain words, or packed with the folder intact', { skip: SKIP }, () => {
+// The normal Python layout: a helper package folder next to the entry script. Bolt installs a pack's
+// scripts where the pack puts them, so the pack keeps its folders and `import bolt_app_kit` still works.
+test('fixture with the helper package packs with the folder intact', { skip: SKIP }, () => {
 	const { root, key } = stage();
 	const out = path.join(root, 'e.boltpack');
 	const r = run(root, 'pack', 'apps/eagle-info', '--personal', '--key', key, '--out', out);
-	if (r.status === 0) {
-		const paths = readPack(out).meta.entries.map((e) => e.path);
-		for (const f of ['__init__.py', 'cache.py', 'text.py', 'rows.py']) assert.ok(paths.includes(`manifests/scripts/bolt_app_kit/${f}`), f);
-		assert.equal(paths.filter((p) => p.startsWith('manifests/scripts/bolt_app_kit/')).length, 10);
-	} else {
-		assert.match(r.stderr, /bolt_app_kit/);
-		assert.match(r.stderr, /folder|subfolder|flat/);
-		assert.ok(!fs.existsSync(out), 'no pack is written when it would break after install');
-	}
+	assert.equal(r.status, 0, r.stderr);
+	const paths = readPack(out).meta.entries.map((e) => e.path);
+	for (const f of ['__init__.py', 'cache.py', 'text.py', 'rows.py']) assert.ok(paths.includes(`manifests/scripts/bolt_app_kit/${f}`), f);
+	assert.equal(paths.filter((p) => p.startsWith('manifests/scripts/bolt_app_kit/')).length, 10);
+	assert.equal(run(root, 'verify', out).status, 0);
 });
+

@@ -15,7 +15,7 @@ export function httpsLiteralHost(t) {
 	return !host || !/^[A-Za-z0-9.:-]+$/.test(host) ? null : host.toLowerCase();
 }
 export function scriptRefs(text) {
-	return new Set([...text.matchAll(/\{\{\s*scripts_dir\s*\}\}[/\\]([A-Za-z0-9._-]+)/g)].map((m) => m[1]));
+	return new Set([...text.matchAll(/\{\{\s*scripts_dir\s*\}\}[/\\]([A-Za-z0-9._-]+(?:\/[A-Za-z0-9._-]+)*)/g)].map((m) => m[1]));
 }
 // Script names named by scalar VALUES of the parsed tree (comments are not values).
 function treeRefs(n, out = new Set()) {

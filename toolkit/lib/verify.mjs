@@ -198,9 +198,12 @@ export function checkPackShape(meta, man, count) {
 	if (meta.schema_version !== P_.bundle_schema_version) add('error', 'bundle_schema_version', `bundle.json schema_version is ${meta.schema_version}`, 'bundle.json');
 	if (count > P_.max_entries) add('error', 'too_many_files', `the pack holds ${count} entries`, 'bundle.json');
 	if ([...man.values()].reduce((n, c) => n + c.length, 0) > P_.max_unpacked_bytes) add('error', 'pack_too_large', 'the pack unpacks to more than 64 MB', 'bundle.json');
-	const listed = new Set();
+	const listed = new Set(), ids = new Set();
 	for (const e of meta.entries || []) {
-		const p = String(e.path); listed.add(p);
+		const p = String(e.path);
+		if (listed.has(p) || (e.kind === 'script' && ids.has(`script:${e.id}`))) add('error', 'pack_duplicate_entry', `${p} (id ${e.id}) is listed twice, so one file would replace the other`, p);
+		if (e.kind === 'script') ids.add(`script:${e.id}`);
+		listed.add(p);
 		const rel = p.startsWith('manifests/') ? p.slice(10) : null;
 		if (rel === null) { add('error', 'entry_outside_manifests', `${p} is not under manifests/`, p); continue; }
 		if (rel.length > P_.max_entry_path_chars || !rel.split('/').every((s) => plainName(s))) add('error', 'entry_path_not_plain', `${p} has a name Bolt refuses`, p);

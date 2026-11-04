@@ -273,7 +273,7 @@ function cmdPack(args) {
 	for (const [folder, names] of Object.entries(r.files)) for (const n of names) manifests.set(`${folder}/${n}`, fs.readFileSync(path.join(dir, folder, n)));
 	const app = r.app, version = flag(args, '--version', '1.0.0');
 	const entries = [...manifests].sort(([a], [b]) => (a < b ? -1 : 1)).map(([p, c]) => {
-		const kind = KINDS[p.split('/')[0]], e = { path: `manifests/${p}`, kind, id: kind === 'script' ? path.basename(p) : path.basename(p).replace(/\.[^.]+$/, ''), sha256: sha(c), requires_min_schema: 1 };
+		const kind = KINDS[p.split('/')[0]], e = { path: `manifests/${p}`, kind, id: kind === 'script' ? p.replace(/^scripts\//, '') : path.basename(p).replace(/\.[^.]+$/, ''), sha256: sha(c), requires_min_schema: 1 };
 		if (kind === 'script' && INTERPRETERS[path.extname(p)]) e.interpreter = INTERPRETERS[path.extname(p)];
 		return e;
 	});
@@ -338,7 +338,7 @@ function cmdVerify(args) {
 			const files = [];
 			for (const [folder, names] of Object.entries(r.files)) for (const n of names) if (KINDS[folder]) files.push({ path: `${folder}/${n}`, kind: KINDS[folder], content: fs.readFileSync(path.join(f, folder, n)) });
 			const c = checkManifests(files); findings.push(...c.findings);
-			confirm = confirmPreview({ apps: c.apps, files, scriptsList: files.filter((x) => x.kind === 'script').map((x) => path.basename(x.path)), signer: 'not signed yet: bolt-apps pack signs it with your key', unknownAssess: c.unknownAssess });
+			confirm = confirmPreview({ apps: c.apps, files, scriptsList: files.filter((x) => x.kind === 'script').map((x) => x.path.replace(/^scripts\//, '')), signer: 'not signed yet: bolt-apps pack signs it with your key', unknownAssess: c.unknownAssess });
 		}
 	} else {
 		kind = 'pack';
@@ -348,7 +348,7 @@ function cmdVerify(args) {
 			findings.push(...checkPackShape(r.meta, r.files, r.count));
 			const files = (r.meta.entries || []).filter((e) => ['user_utility', 'script'].includes(e.kind) && r.files.has(String(e.path).replace(/^manifests\//, ''))).map((e) => ({ path: String(e.path).replace(/^manifests\//, ''), kind: e.kind, content: r.files.get(String(e.path).replace(/^manifests\//, '')) }));
 			const c = checkManifests(files); findings.push(...c.findings);
-			confirm = confirmPreview({ apps: c.apps, files, scriptsList: files.filter((x) => x.kind === 'script').map((x) => path.basename(x.path)), signer: `self-signed by key ${r.meta.signer_pubkey}; identity is not verified`, unknownAssess: c.unknownAssess });
+			confirm = confirmPreview({ apps: c.apps, files, scriptsList: files.filter((x) => x.kind === 'script').map((x) => x.path.replace(/^scripts\//, '')), signer: `self-signed by key ${r.meta.signer_pubkey}; identity is not verified`, unknownAssess: c.unknownAssess });
 		}
 	}
 	const ok = !findings.some((x) => x.level === 'error');

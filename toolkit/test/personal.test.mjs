@@ -92,6 +92,22 @@ test('--personal also packs an ordinary tier 2 app, and a local-service app says
 	assert.equal(r.status, 0, r.stderr); assert.match(r.stdout, /service on this computer \(port 8080\)/);
 });
 
+test('two same-named scripts in different folders stay two entries with distinct ids and full paths shown', () => {
+	const d = tmp(), dir = scriptApp(d);
+	write(path.join(dir, 'scripts', 'a', 'cache.py'), 'A = 1\n');
+	write(path.join(dir, 'scripts', 'b', 'cache.py'), 'B = 2\n');
+	const out = path.join(d, 'g.boltpack');
+	const r = run(d, 'pack', 'apps/eagle-info', '--personal', '--key', keyed(d), '--out', out);
+	assert.equal(r.status, 0, r.stderr);
+	const sc = readPack(out).meta.entries.filter((e) => e.kind === 'script');
+	const ids = sc.map((e) => e.id);
+	assert.equal(new Set(ids).size, ids.length, `script ids collide: ${ids}`);
+	assert.ok(ids.includes('a/cache.py') && ids.includes('b/cache.py'), ids.join());
+	assert.match(r.stdout, /a\/cache\.py/); assert.match(r.stdout, /b\/cache\.py/);
+	const v = run(d, 'verify', out);
+	assert.equal(v.status, 0, v.stderr); assert.match(v.stdout, /a\/cache\.py/); assert.match(v.stdout, /b\/cache\.py/);
+});
+
 test('a script in a folder packs, keeps its path and verifies', () => {
 	const d = tmp(), dir = scriptApp(d);
 	write(path.join(dir, 'scripts', 'lib', 'm.py'), 'X = 1\n');

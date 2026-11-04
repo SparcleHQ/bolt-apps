@@ -129,8 +129,10 @@ the app can do and asks the person to confirm.
 
 Rules a script app must follow, each one a `verify` code:
 
-- One app file per `utilities/<id>.yaml`; scripts are single files directly in `scripts/`
-  (`script_subfolder`, `script_name`). A vendored `bolt_app_kit` folder cannot be installed yet.
+- One app file per `utilities/<id>.yaml`; scripts keep their folders under `scripts/`
+  (`script_name`, `script_too_deep`, `script_case`, `script_conflict`): a vendored `bolt_app_kit`
+  folder installs where you put it. Names use letters, digits, `.`, `_` and `-`; at most 8 folders deep.
+  Bolt 0.1.179 and earlier refuse a script inside a folder at install; Bolt 0.1.180 and later install it.
 - The command names the script as `{{scripts_dir}}/<name>`, bare, never in quotes
   (`command_variable_in_quotes`, `script_path_relative`, `script_missing`). Example:
   `macos: "python3 {{scripts_dir}}/eagle.py {{view}}"`.

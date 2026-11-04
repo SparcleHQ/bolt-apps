@@ -59,7 +59,7 @@ test('pack --personal builds the layout Bolt installs, says what the app can do,
 
 test('personal packs refuse what Bolt would break or reject, with the fix in the words', () => {
 	const cases = [
-		['script in a folder', (dir) => write(path.join(dir, 'scripts', 'lib', 'm.py'), 'x'), /script_subfolder.*flat/s],
+		['script folder with a bad name', (dir) => write(path.join(dir, 'scripts', 'my lib', 'm.py'), 'x'), /script_name/],
 		['bad script name', (dir) => write(path.join(dir, 'scripts', 'a b.py'), 'x'), /script_name/],
 		['missing script', (dir) => fs.rmSync(path.join(dir, 'scripts', 'eagle.py')), /script_missing.*scripts\/eagle\.py/s],
 		['runtime Bolt does not accept', (dir) => write(path.join(dir, 'utilities', 'eagle-info.yaml'), BRIDGE.replace('runtime: bridge', 'runtime: wasm')), /runtime_not_allowed/],
@@ -92,10 +92,30 @@ test('--personal also packs an ordinary tier 2 app, and a local-service app says
 	assert.equal(r.status, 0, r.stderr); assert.match(r.stdout, /service on this computer \(port 8080\)/);
 });
 
-test('the repo kit example cannot be packed yet: its vendored kit is a folder and Bolt installs scripts flat', () => {
-	const REPO = path.resolve(HERE, '../..');
-	const r = run(REPO, 'pack', 'kit/examples/system-glance', '--personal', '--key', keyed(tmp()), '--out', path.join(tmp(), 'x.boltpack'));
-	assert.equal(r.status, 1); assert.match(r.stderr, /script_subfolder/);
+test('two same-named scripts in different folders stay two entries with distinct ids and full paths shown', () => {
+	const d = tmp(), dir = scriptApp(d);
+	write(path.join(dir, 'scripts', 'a', 'cache.py'), 'A = 1\n');
+	write(path.join(dir, 'scripts', 'b', 'cache.py'), 'B = 2\n');
+	const out = path.join(d, 'g.boltpack');
+	const r = run(d, 'pack', 'apps/eagle-info', '--personal', '--key', keyed(d), '--out', out);
+	assert.equal(r.status, 0, r.stderr);
+	const sc = readPack(out).meta.entries.filter((e) => e.kind === 'script');
+	const ids = sc.map((e) => e.id);
+	assert.equal(new Set(ids).size, ids.length, `script ids collide: ${ids}`);
+	assert.ok(ids.includes('a/cache.py') && ids.includes('b/cache.py'), ids.join());
+	assert.match(r.stdout, /a\/cache\.py/); assert.match(r.stdout, /b\/cache\.py/);
+	const v = run(d, 'verify', out);
+	assert.equal(v.status, 0, v.stderr); assert.match(v.stdout, /a\/cache\.py/); assert.match(v.stdout, /b\/cache\.py/);
+});
+
+test('a script in a folder packs, keeps its path and verifies', () => {
+	const d = tmp(), dir = scriptApp(d);
+	write(path.join(dir, 'scripts', 'lib', 'm.py'), 'X = 1\n');
+	const out = path.join(d, 'f.boltpack');
+	const r = run(d, 'pack', 'apps/eagle-info', '--personal', '--key', keyed(d), '--out', out);
+	assert.equal(r.status, 0, r.stderr);
+	assert.ok(readPack(out).meta.entries.some((e) => e.path === 'manifests/scripts/lib/m.py'));
+	assert.equal(run(d, 'verify', out).status, 0);
 });
 
 test('gallery lint also refuses a transform app with a detect block or a loose link; a non-letter action kind is a finding, not a crash', () => {

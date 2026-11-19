@@ -6,7 +6,7 @@ The source of truth is the launcher's own manifest contract, pack validation, pa
 
 ## What `verify` does not do
 
-It reads YAML with plain text rules, not Bolt's parser. It does not check `presentation` fields, `inputs`, `transform.pipe` steps, `recognize` regexes, reserved ports, env-variable rules or the schema of the rows a script prints (use `check` for that). A pass means none of the known ways to fail were found.
+It reads YAML with plain text rules, not Bolt's parser. Of `transform.pipe` it checks only that each step names a step listed in `schema/user-app.schema.json` and that the number of steps is within its limits; of `recognize` only the number of patterns and the length of each regex. It does not check step values, what a regex matches, `presentation` fields, `inputs`, reserved ports, env-variable rules or the schema of the rows a script prints (use `check` for that). A pass means none of the known ways to fail were found.
 
 ## Keeping Bolt and this repo equal
 

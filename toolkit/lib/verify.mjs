@@ -73,6 +73,10 @@ export const FIXES = {
 	yaml_key_unknown: 'Bolt refuses a key it does not know and the app fails to load. Remove it or fix the spelling.',
 	yaml_key_missing: 'Add this required key.',
 	yaml_admin_only_key: 'This key is for company-managed apps only and Bolt refuses it in a user app. Remove it.',
+	transform_step_unknown: 'Use a step name listed for transform.pipe in schema/user-app.schema.json: a plain name such as trim or lines, or a mapping with exactly one listed key such as { split: "," }. Only the name is checked here; Bolt checks the value.',
+	transform_pipe_count: 'Give transform.pipe at least 1 step and no more than schema/user-app.schema.json allows; split a longer job into two apps.',
+	recognize_patterns_count: 'Give recognize.patterns at least 1 entry and no more than schema/user-app.schema.json allows; merge patterns with | inside one regex.',
+	recognize_regex_too_long: 'Shorten the regex to the length schema/user-app.schema.json allows, for example by splitting it into two patterns.',
 	schema_version_unsupported: `Set schema_version to ${R.schema_versions.join(' or ')}.`,
 	runtime_not_allowed: `Set runtime to one of: ${R.runtimes.join(', ')}.`,
 	id_invalid: 'Use lowercase letters, digits and hyphens, starting with a letter or digit, at most 64 characters.',
@@ -226,7 +230,7 @@ export function checkManifests(files, opts = {}) {
 		const args = val(root, 'args'); for (const it of args?.items || []) { const fr = S(it, 'from'); if (fr !== undefined && !/^query\.word\(\s*\d+\s*\)$/.test(fr.trim())) E('args_from_unsupported', `args[].from "${fr}" is not supported`, ln(root, 'args')); }
 		// checks verify already makes with its own codes (top-level keys, timeout range, inline env, loopback host, method) are not reported twice
 		const DUP = new Set(['env_inline_value', 'timeout_out_of_range', 'http_host_not_loopback', 'http_method_not_allowed', 'action_kind', 'http_parse']);
-		for (const pr of a.problems.filter((x) => x.code !== 'runtime_not_allowed' && !DUP.has(x.code) && !(/^(unknown_field|missing_field)$/.test(x.code) && /^the app file/.test(x.message)) && !(x.code === 'missing_field' && /"(bridge|http)" is required/.test(x.message)))) add(pr.level || 'error', pr.code, pr.message, file, ln(root, 'actions') || 1);
+		for (const pr of a.problems.filter((x) => x.code !== 'runtime_not_allowed' && !DUP.has(x.code) && !(/^(unknown_field|missing_field)$/.test(x.code) && /^the app file/.test(x.message)) && !(x.code === 'missing_field' && /"(bridge|http)" is required/.test(x.message)))) add(pr.level || 'error', pr.code, pr.message, file, pr.line || ln(root, 'actions') || 1);   // a problem that knows its line (transform, recognize) points there
 	}
 	for (const r of used) if (!scripts.has(r)) add('error', 'script_missing', `an app runs {{scripts_dir}}/${r} but the pack has no scripts/${r}`, `scripts/${r}`);
 	const usedAll = dataFilesUsed(used, [...scripts.keys()], (n) => scripts.get(n));

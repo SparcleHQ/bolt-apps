@@ -15,7 +15,7 @@ Read this page only. Every command is `./bolt-apps <command>`, run from the root
 | One command line tool | `cli-wrapper-template` | `scripts/<id>__config.json`, `scripts/<id>__wrap.py` | itself |
 | Quick local probes as tiles | `system-glance` | `scripts/system-glance.py` | itself |
 | Several APIs joined | `repo-radar`, `around` | `scripts/<id>__config.json`, `scripts/<id>__fixtures.json`, the one script | itself |
-| A service on this computer | `local-service-template` | `utilities/localmodels.yaml` | itself |
+| A service on this computer | `local-service-template` | `utilities/<id>.yaml` | itself |
 | An API no engine template fits | `script-template` | `scripts/<id>__config.json`, `scripts/<id>__fixtures.json`, `scripts/<id>__app.py` | itself |
 | Reshape pasted text, no script | `./bolt-apps new <id> --type transform` | its yaml | [AGENTS.md](../../AGENTS.md) |
 

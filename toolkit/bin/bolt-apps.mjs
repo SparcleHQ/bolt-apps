@@ -17,7 +17,7 @@ import { get, str, notYamlHint } from '../lib/yamlsubset.mjs';
 import { assessYaml, plainPermission, listingPermissions, plainName, dataFilesUsed, escapeProblem, ASSESS_CODES, MAX_HASHED_FILE_BYTES } from '../lib/assess.mjs';
 import { iconProblem, chipMismatch } from '../lib/assess.mjs';
 import { versionProblem, layoutProblems, namespaceProblems } from '../lib/boltrules.mjs';
-import { newList, newFromTemplate, listTemplates, hasTemplate, runApp, ship, doctor, staleCloneNote } from '../lib/workflow.mjs';
+import { newList, newFromTemplate, listTemplates, hasTemplate, runApp, ship, doctor, staleCloneNote, bump } from '../lib/workflow.mjs';
 import { exportShared } from '../lib/shared.mjs';
 import { checkApp, formatReport, reportOk, platformFindings, vendorKit, OSES } from '../lib/check.mjs';
 
@@ -332,7 +332,7 @@ function cmdPack(args) {
 	for (const w of r.out.filter((x) => x.level === 'warning')) console.log(`warning ${w.code}: ${w.message} (${w.path})`);
 	for (const w of packWarnings) console.log(`warning ${w.code}: ${w.message} (${w.file})`);
 	// The launcher maps "is already installed" to same_or_older_version: Bolt refuses a pack whose bundle_version is not newer than the installed one
-	console.log(`\nversion ${version}: Bolt refuses to install a pack whose version is the same as, or older than, the one already installed (same_or_older_version). If you installed an earlier build of ${app.id}, rebuild with a higher number: bump --version (for example --version ${bumpVersion(version)}).`);
+	console.log(`\nversion ${version}: Bolt refuses to install a pack whose version is the same as, or older than, the one already installed (same_or_older_version). If you installed an earlier build of ${app.id}, rebuild with a higher number: bump --version (for example --version ${bump(version)}).`);
 	if (personal) {
 		console.log(`\nThis app is for your own use. What it can do:`);
 		for (const x of r.perms) console.log(`  - ${plainPermission(x)}`);
@@ -341,7 +341,6 @@ function cmdPack(args) {
 		console.log(`\nBolt will show these same facts and ask whoever installs it to confirm, because the pack is signed only by you. Anyone you give it to must trust you.\nTo install: drop ${out} on the Bolt launcher or on Bolt Apps (not Admin settings, which takes only Sparcle-signed bundles).\nOn a device whose company policy allows only approved apps, Bolt refuses it.`);
 	} else console.log('to install: drop it on the Bolt launcher. Bolt shows a review card, then asks again because it is self-signed.');
 }
-const bumpVersion = (v) => { const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(v); return m ? `${m[1]}.${m[2]}.${Number(m[3]) + 1}` : `${v}.1`; };
 export function readPack(file) {
 	let e;
 	try {

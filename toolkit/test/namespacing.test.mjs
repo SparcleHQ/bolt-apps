@@ -10,7 +10,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readPack } from '../bin/bolt-apps.mjs';
-import { clockVersion, newer } from '../lib/workflow.mjs';
+import { clockVersion, newer, bump } from '../lib/workflow.mjs';
 import { BOLT_SAYS, markdownTable } from '../lib/boltsays.mjs';
 import { scanMentions, declaredHostsOf, assessYaml } from '../lib/assess.mjs';
 
@@ -128,6 +128,44 @@ test('ship: a lost ship.json cannot make a lower version; --version still wins; 
 	const forced = cli(home, d, 'ship', path.join(d, 'shipper'), '--version', '9.9.9'); assert.equal(ver(forced), '9.9.9');
 	const after = cli(home, d, 'ship', path.join(d, 'shipper')); assert.ok(newer(ver(after), '9.9.9'));
 	const bad = cli(home, d, 'ship', path.join(d, 'shipper'), '--version', 'abc'); assert.notEqual(bad.status, 0);
+	// --version also takes a short or tagged form; the next build must still be higher than it, never 1.0.1
+	for (const v of ['20.0', 'v30.1.0-rc1']) {
+		assert.equal(ver(cli(home, d, 'ship', path.join(d, 'shipper'), '--version', v)), v);
+		const next = ver(cli(home, d, 'ship', path.join(d, 'shipper'))); assert.ok(newer(next, v), `${next} must be higher than ${v}`);
+	}
+	// the same when ship.json is lost: the version is read from the packs themselves, in every form --version takes
+	for (const v of ['40', 'V41.0', 'v42.1.0-rc1', '43.1.0+build.7']) {
+		assert.equal(ver(cli(home, d, 'ship', path.join(d, 'shipper'), '--version', v)), v);
+		fs.rmSync(path.join(home, '.bolt-apps', 'ship.json'));
+		const lost = ver(cli(home, d, 'ship', path.join(d, 'shipper'))); assert.ok(newer(lost, v), `${lost} must be higher than ${v} after ship.json was deleted`);
+	}
+	// a pack of another app whose id starts the same (shipper-2) never counts, however its file is named
+	const top = ver(cli(home, d, 'ship', path.join(d, 'shipper')));
+	assert.equal(cli(home, d, 'new', 'script-template', 'shipper-2', '--dir', d).status, 0);
+	assert.equal(cli(home, d, 'ship', path.join(d, 'shipper-2'), '--version', '900.0.0').status, 0);
+	fs.renameSync(path.join(home, '.bolt-apps', 'packs', 'shipper-2-900.0.0.boltpack'), path.join(home, '.bolt-apps', 'packs', 'shipper-900.0.0.boltpack'));
+	fs.rmSync(path.join(home, '.bolt-apps', 'ship.json'));
+	const own = ver(cli(home, d, 'ship', path.join(d, 'shipper'))); assert.ok(newer(own, top) && !newer(own, '900.0.0'), `${own}: only shipper's own packs count`);
+	// a file that is not a good pack (not a pack, or a pipe) is never counted and never read: ship does not hang on it
+	const pk = path.join(home, '.bolt-apps', 'packs'); fs.rmSync(path.join(pk, 'shipper-900.0.0.boltpack'));
+	fs.writeFileSync(path.join(pk, 'shipper-950.0.0.boltpack'), 'not a pack');
+	if (process.platform !== 'win32') assert.equal(spawnSync('mkfifo', [path.join(pk, 'shipper-960.0.0.boltpack')]).status, 0);
+	fs.rmSync(path.join(home, '.bolt-apps', 'ship.json'));
+	const safe = spawnSync(process.execPath, [CLI, 'ship', path.join(d, 'shipper')], { cwd: d, encoding: 'utf8', env: { ...process.env, HOME: home }, timeout: 120000 });
+	assert.equal(safe.error, undefined, 'ship must not block on a pipe in the packs folder'); const sv = ver(safe); assert.ok(newer(sv, own) && !newer(sv, '900.0.0'), sv);
+});
+
+test('pack suggests a --version that is really higher, also for a +build version', () => {
+	const d = tmp('ns-hint-'), home = tmp('ns-home-');
+	assert.equal(cli(home, d, 'new', 'script-template', 'hinted', '--dir', d).status, 0);
+	const r = cli(home, d, 'pack', path.join(d, 'hinted'), '--personal', '--key', KEY, '--version', '1.2.3+build.7', '--out', path.join(d, 'h.boltpack')); assert.equal(r.status, 0, r.stdout + r.stderr);
+	const s = /for example --version (\S+)\)/.exec(r.stdout); assert.ok(s, r.stdout); assert.ok(newer(s[1], '1.2.3+build.7'), s[1]);
+});
+
+test('bump gives a version newer than every form --version accepts', () => {
+	for (const [v, want] of [['1.0.5', '1.0.6'], ['2.0', '2.0.1'], ['2', '2.0.1'], ['v1.2.0-rc1', '1.2.1'], ['1.2.3+build.7', '1.2.4'], ['1.2.3.1000', '1.2.3.1001']]) {
+		assert.equal(bump(v), want, v); assert.ok(newer(bump(v), v), v);
+	}
 });
 
 test('clockVersion follows the rules of Bolt\'s own version order', () => {

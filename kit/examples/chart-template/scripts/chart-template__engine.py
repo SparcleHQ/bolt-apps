@@ -114,8 +114,9 @@ def _when(v, day_only=False):
 def shown(v, filt):
     if v is None or v == "":
         return kit.UNKNOWN
-    if filt == "yes":
-        return "Yes" if v is True else ("No" if v is False else str(v))
+    if filt == "yes":   # a JSON true or false, or the text a form toggle or an API sends: "true", "false", "yes", "no"
+        t = str(v).strip().lower() if isinstance(v, str) else v
+        return "Yes" if v is True or t in ("true", "yes") else ("No" if v is False or t in ("false", "no") else str(v))
     if filt == "human":
         return human(v)
     if filt in MAPS:
@@ -154,8 +155,9 @@ def shown(v, filt):
     return str(v)
 
 
-def render(tpl, item, glob, strict=False):
-    """Fill {name} and {name|filter} from the item, then the shared values. strict=True returns None when a name is missing."""
+def render(tpl, item, glob, strict=False, blank=None):
+    """Fill {name} and {name|filter} from the item, then the shared values. strict=True returns None when a name is missing.
+    blank, when given, stands in for a missing value instead of "unknown" (a form record saves an empty input as empty text)."""
     if not isinstance(tpl, str):
         return "" if not strict else None
     missing = []
@@ -169,6 +171,8 @@ def render(tpl, item, glob, strict=False):
     out = TOKEN.sub(sub, tpl)
     if strict:
         return None if missing else one_noun(tpl, out)
+    if blank is not None:
+        return one_noun(tpl, TOKEN.sub(lambda m: blank if lookup(m.group(1), item, glob) in (None, "") else shown(lookup(m.group(1), item, glob), m.group(2)), tpl))
     return one_noun(tpl, TOKEN.sub(lambda m: shown(lookup(m.group(1), item, glob), m.group(2)), tpl))
 
 
@@ -232,14 +236,23 @@ def badge_for(rules, item, glob):
 
 
 def make_tile(spec, item, glob):
-    """A KPI tile from {label, value, max, unit, note, foot, badge}. A value that cannot be read gives no tile, never a zero."""
+    """A KPI tile from {label, value, max, unit, note, foot, badge}. A value that cannot be read gives no tile, never a zero.
+    Its badge then comes only from rules with an `if` that do not name the value's own field (one on another field, such as
+    status==open, still applies): the last rule has no `if`, so it would say CLEAR or BEHIND about a number that did not load, and a
+    rule such as remaining>=10 would compare a text value like N/A as text. A plain word badge is left out."""
     if not spec:
         return None, ""
-    badge = badge_for(spec.get("badge"), item, glob) if isinstance(spec.get("badge"), list) else str(spec.get("badge", ""))
     val = spec.get("value")
     v = number(val) if not isinstance(val, str) or number(val) is not None else number(lookup(val, item, glob))
+    rules = spec.get("badge") if isinstance(spec.get("badge"), list) else None
     if v is None:
-        return None, badge
+        own = val if isinstance(val, str) else None
+
+        def other_field(r):   # skipped: a rule whose left side is the value's field, or whose right side reads that field (the same word as plain text is kept)
+            m = RULE.match(str(r.get("if") or ""))
+            return bool(m) and m.group(1) != own and not (m.group(3) == own and lookup(own, item, glob) is not None)
+        return None, (badge_for([r for r in rules if isinstance(r, dict) and other_field(r)], item, glob) if rules else "")
+    badge = badge_for(rules, item, glob) if rules is not None else str(spec.get("badge", ""))
     mx = spec.get("max")
     mxv = None if mx is None else (number(mx) if number(mx) is not None else number(lookup(mx, item, glob)))
     return kit.safe_tile(render(spec.get("label", ""), item, glob), v, unit=spec.get("unit", ""), max=mxv,
@@ -814,9 +827,11 @@ def notice_rows(L, view_id, arg, ttl):
         rows.append(kit.row(title, sub, icon="AlertCircle", nav={"view": view_id, "arg": arg}, pane=NOTE_ACTIVE[0] or view_id, body=sub if NOTE_ACTIVE[0] else "", copy=False,
                             tile=tile, badge={"stale": "STALE", "partial": "PARTIAL", "page": "FIRST PAGE"}[kind]))
     if not rows and L.from_cache and L.cached_age >= 2:
-        rows.append(kit.row("Loaded from cache, %d s old" % L.cached_age, "Enter to refresh (data is kept %d s)" % ttl, icon="RefreshCw",
-                            nav={"view": view_id, "arg": arg}, pane=NOTE_ACTIVE[0] or view_id, body="Enter to refresh (data is kept %d s)" % ttl if NOTE_ACTIVE[0] else "", copy=False,
-                            tile=kit.tile("Data age", L.cached_age, "s", ttl, note="from cache, Enter to refresh"), badge="CACHED"))
+        forced = arg == "refresh" or arg.startswith("refresh.")   # not for an id too long for "refresh.<id>": Enter reopens it from the cache
+        sub = "Enter to refresh (data is kept %d s)" % ttl if forced else "Data is kept %d s; this id is too long for a forced refresh" % ttl
+        rows.append(kit.row("Loaded from cache, %d s old" % L.cached_age, sub, icon="RefreshCw",
+                            nav={"view": view_id, "arg": arg}, pane=NOTE_ACTIVE[0] or view_id, body=sub if NOTE_ACTIVE[0] else "", copy=False,
+                            tile=kit.tile("Data age", L.cached_age, "s", ttl, note="from cache, Enter to refresh" if forced else "from cache"), badge="CACHED"))
     return rows
 
 
@@ -863,7 +878,17 @@ def children_of(cfg, view, item, data, glob):
     return rows
 
 
+def unread_row(view, at, arg="refresh"):
+    """The row for a list whose call failed with no old copy to show: it says the list did not load, never "0 rows" or "nothing linked".
+    Enter reloads the view `at` (the list itself, or the detail the list belongs to)."""
+    sub = "The list did not load, so it is not shown as empty. Enter to retry"
+    return kit.row("Could not read %s" % view.get("title", view["id"]).lower(), sub, icon="AlertCircle", nav={"view": at, "arg": arg},
+                   copy=False, badge="ERROR", **dict(noted(at, sub), **dict(("f%d" % (i + 1), "") for i in range(MAX_FIELDS))))
+
+
 def list_rows(cfg, view, data, glob, flt):
+    if data.get(view["endpoint"]) is None:   # not read: a failed call is never shown as an empty list
+        return [back_row("Back to the overview")], [unread_row(view, view["id"])]
     vs = views_by_id(cfg)
     items = sort_items(view, data.get(view["endpoint"]) or [])
     nav_to_detail = bool(view.get("children"))
@@ -899,9 +924,12 @@ def detail_rows(cfg, view, data, glob, wanted, refresh_arg):
     item = found[0]
     kids = children_of(cfg, view, item, data, glob)
     rows = [back_row("Back to %s" % view.get("title", view["id"]).lower()), item_row(cfg, view, item, glob, None)]
-    for cv, x in kids[:MAX_ROWS - 4]:
+    unread = [vs[c["view"]] for c in view.get("children") or [] if data.get(vs[c["view"]]["endpoint"]) is None]
+    for cv, x in kids[:max(0, MAX_ROWS - 4 - len(unread))]:
         rows.append(item_row(cfg, cv, x, glob, {"view": cv["id"], "arg": item_id(cv, x)} if cv.get("children") and item_id(cv, x) else None))
-    if not kids and view.get("children"):
+    for cv in unread:   # each linked list that did not load says so, beside the linked rows that did
+        rows.append(unread_row(cv, view["id"], refresh_arg))
+    if not kids and not unread and view.get("children"):
         rows.append(kit.row(view.get("no_children", "Nothing linked"), "No related rows", icon="list", copy=False, **noted(view["id"], "No related rows")))
     return rows
 
@@ -1193,6 +1221,12 @@ def run_views(cfg, args, fx, fixtures):
         names = sorted(set([v["endpoint"]] + objects + [vs[c["view"]]["endpoint"] for c in v.get("children") or []]))
     L = load(cfg, names, refresh, demo, fx, fixtures)
     retry = "refresh" if not detail_id or view_id == "overview" else "refresh." + detail_id
+    if not NAV_OK.match(retry) or ".." in retry:
+        # a filter word such as C++, café or a/b cannot ride in a nav arg: retry the list (a refresh drops the filter anyway).
+        # An id of 57 to 64 characters is a valid arg but too long with "refresh." in front: retry opens the detail by its id, so
+        # Enter re-reads the calls that failed (they are never cached) but serves the others from the cache until its ttl ends.
+        # A filter word that long and made of token characters takes the same path, so its retry keeps the filter.
+        retry = detail_id if NAV_OK.match(detail_id) and ".." not in detail_id else "refresh"
     data_view = view_id != "overview" and (vs[view_id].get("widget") or {}).get("mode") == "list_data"   # every row is plotted: no Back or refresh rows
     if L.stop:
         rows = stop_rows(L, view_id, retry)
@@ -1211,7 +1245,9 @@ def run_views(cfg, args, fx, fixtures):
         notes = notice_rows(L, view_id, retry, ttl)
         if detail_id:
             body = detail_rows(cfg, v, L.data, glob, detail_id, retry)
-            rows = body[:1] + notes + body[1:] + ([] if never_fetches(cfg) else [refresh_row(view_id, retry)])
+            again = refresh_row(view_id, retry) if retry == "refresh" or retry.startswith("refresh.") else refresh_row(   # a long id: Enter reopens the item, it does not skip the cache
+                view_id, retry, title="Reload", sub="Enter reads the calls that failed again; the rest comes from the cache (kept %d s)" % ttl)
+            rows = body[:1] + notes + body[1:] + ([] if never_fetches(cfg) else [again])
         else:
             head, body = list_rows(cfg, v, L.data, glob, flt)
             if data_view and body:   # only a stale or partial notice is worth a row among the data; a skipped cell shows as a gap
@@ -1365,7 +1401,7 @@ def run_form(cfg, args, fx, fixtures):
     vals, bad = form_values(fm, args)
     if bad:
         kit.emit([kit.error_row("; ".join(bad[:3]), title="Not saved")])
-    rec = dict((k, render(t, vals, {})) for k, t in fm["record"].items())
+    rec = dict((k, render(t, vals, {}, blank="")) for k, t in fm["record"].items())   # an empty input is saved as "", never as the word unknown
     store_append(fm, rec)
     saved = list(reversed(store_read(fm)))
     seeds = list(fixtures.get("seed") or []) if fx else []

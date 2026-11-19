@@ -61,7 +61,7 @@ The person types `=chip customers acme`, sees the customers that match (each row
 `on_missing_key` (`setup` or `sample`; see "Three starting states" below), `base_url` (https, or loopback http for tests; required unless the app is sample-only: `api.fixture_default` true, or no `api` section at all), `key_env` (variable name), `env_file` (a `.env` path, must be `chmod 600`), `auth_header`, `auth_prefix` (`"Bearer "`), `fixture_default` (true = sample data, no network), `fixture_file`, `fixture_banner` (show a Sample data row). `allowed_hosts` (extra https hosts an endpoint `path` may name; the key is sent only to the `base_url` host), `auth_in` (`header`, the default, or `query`), `auth_param` (the query parameter name for `auth_in: query`, default `api_key`; the key is stripped from every answer before it is cached or shown, so prefer a header when the API allows one), `user_agent`.
 
 ## `cache`
-`ttl` seconds a result is fresh (a repeat run inside it makes no request), `stale_max` seconds an old copy may be shown when the API fails. A failed call is never cached and never shown as zero.
+`ttl` seconds a result is fresh (a repeat run inside it makes no request), `stale_max` seconds an old copy may be shown when the API fails. A failed call is never cached and never shown as zero: a view whose list did not load and has no old copy shows one "Could not read <view>" row (Enter retries), not an empty list. A detail shows the same row for each linked list that did not load, beside the linked rows that did.
 
 ## When the API answers 404
 An HTTP 404 (or 410) on EVERY call of a run, with nothing else to show, means the service is up and has no such thing. The app then shows one row with the typed word in its subtitle and no Retry: "No such <app.noun>" when `noun` is set; in lookup mode "No match" (or the lookup's `none_title`); in views mode without a noun, "The service answered 404 for <endpoint names>". It is never shown as an outage, and an old copy is never shown for it. When only some calls answered 404 and others worked, the data that loaded is kept and a notice says "Some data did not load: <endpoint> answered 404". A 404 mixed with another failure shows the other failure (offline, rejected key, rate limit, "returned an error" for a 5xx). In a chained lookup only the first step, the one that takes the typed word, can say "No such"; a later 404 reads "Found it, but the next lookup answered 404". `demo-notfound` previews the row in sample mode.
@@ -87,7 +87,7 @@ Totals over a field: `{ "endpoint": "tickets", "field_sum": "hours" }` adds the 
 `title`, `subtitle`, `icon`, `body`, `view` (drill to a view; `arg` filters it), `url` (opens a link), `tile`, `extra`, `trend` (list of numbers), `only_if`. `overview.widget` replaces the default tiles pane.
 
 ## `tile`
-`{ label, value (a stat or field name, or a number), max, unit (4 characters), note, foot, badge }`. `badge` is a word or a list of `{ "if": "ready>=80", "badge": "ON TRACK" }` rules, first match wins, last one without `if`.
+`{ label, value (a stat or field name, or a number), max, unit (4 characters), note, foot, badge }`. `badge` is a word or a list of `{ "if": "ready>=80", "badge": "ON TRACK" }` rules, first match wins, last one without `if`. A value that cannot be read gives no tile, and its badge comes only from rules with an `if` on another field: `status==open` still applies, while the last rule without `if` and every rule that has the value's field on its left, or reads that field on its right, are skipped, so a count that did not load is never called CLEAR and a text such as N/A never meets `remaining>=10`. A plain word badge is left out.
 
 ## `views[]`
 `id` (view count: see [the rules table](QUICKSTART.md#4-the-rules-table)), `title`, `icon`, `endpoint`, `sort` (`[{ field, order[], desc }]`), `children` (`[{ view, match }]` drills to rows of another view whose `match` field equals this row's id), `no_children`, `empty`, `widget` (`{ kind, mode, bind }`, copied into the app file; default is a detail preview built from `item.fields`). Pane kinds with app data: card, markdown, entity_preview, chart, table, cards, detail, json_tree, diff, image_grid (the same list as the rules table; chart types are line, bar and sparkline only).
@@ -106,7 +106,7 @@ What each filter takes and gives:
 | `whenday` | the same | the date only, `2026-11-15`; ISO strings work, so a crates.io or GitHub date needs no other filter |
 | `day` | any text that starts with a date | its first 10 characters (`2026-07-18`) |
 | `hhmm` | an ISO date-time | characters 12 to 16 (`05:30`) |
-| `yes` | a true or false value | Yes or No (it never prints blank, so a missing flag reads `unknown`; show a flag only on rows where it matters) |
+| `yes` | a true or false value, or the text true, false, yes or no in any case | Yes or No (it never prints blank, so a missing flag reads `unknown`; show a flag only on rows where it matters) |
 | `thousands` | a number or digits | `1,720,732,933`; with decimals `1,234.50`; not a number reads `unknown` |
 | `round`, `round1`, `round2` | a number | 0, 1 or 2 decimals, half up |
 | `human` | text | in_progress becomes In progress |
@@ -116,10 +116,10 @@ What each filter takes and gives:
 A `tile` value must be a number (a text value draws a `-` tile), but a tile `label`, `note` and `foot` are templates: put text such as a version in the label (`"Latest {crate.max_stable_version}"`). Numbers in a tile get no separator; put the formatted number in the row title or subtitle with `thousands`.
 
 ## Words typed after the chip (views mode)
-`=chip view`, `=chip view <id>` (detail), `=chip view <word>` (filter by that word), `=chip view demo-offline | demo-stale | demo-auth | demo-nokey | demo-notfound` (preview the error rows in fixture mode). A view whose widget `mode` is `list_data` (chart, table) shows only its data rows, so nothing but data is plotted.
+`=chip view`, `=chip view <id>` (detail; an id of 57 to 64 characters has no forced refresh, so its Reload row reads the failed calls again and takes the rest from the cache), `=chip view <word>` (filter by that word; any word works, `C++` or `a/b` too, and its Retry rows reload the list without the filter), `=chip view demo-offline | demo-stale | demo-auth | demo-nokey | demo-notfound` (preview the error rows in fixture mode). A view whose widget `mode` is `list_data` (chart, table) shows only its data rows, so nothing but data is plotted.
 
 ## `form`
-`inputs[]` (`name`, `type` text, number, date, select or toggle, `label`, `required`, `default`, `placeholder`, `options`, `min`, `max`, `step`, `max_length`, `pattern`), `submit.label`, `store.file` (a local log, kept `0600`; `max_rows`), `record` (what is saved, templates over the input values), `item` (how a saved row becomes a result row), `widget`. Bad input shows one "Not saved" row and saves nothing.
+`inputs[]` (`name`, `type` text, number, date, select or toggle, `label`, `required`, `default`, `placeholder`, `options`, `min`, `max`, `step`, `max_length`, `pattern`), `submit.label`, `store.file` (a local log, kept `0600`; `max_rows`), `record` (what is saved, templates over the input values; an empty input is saved as empty text, not `unknown`), `item` (how a saved row becomes a result row), `widget`. Bad input shows one "Not saved" row and saves nothing.
 
 ## `lookup`
 `endpoint`, `match` (fields compared to the typed word: exact first, then contains), `item`, `widget`, `prompt_title`, `prompt_subtitle`, `none_title`, `examples`.

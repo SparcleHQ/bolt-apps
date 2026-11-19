@@ -273,7 +273,7 @@ runtime: transform
 id: sortu
 chip: sortu
 title: Sort and dedupe lines
-icon: list-ordered
+icon: list
 description: Sort pasted lines and drop repeats, on this device
 emits: Generic
 placeholder_examples:

@@ -130,6 +130,28 @@ test('ship: a lost ship.json cannot make a lower version; --version still wins; 
 	const bad = cli(home, d, 'ship', path.join(d, 'shipper'), '--version', 'abc'); assert.notEqual(bad.status, 0);
 });
 
+test('new <template> <id> puts the person in author, never the examples name, and the pack carries that name', () => {
+	const d = tmp('ns-author-'), home = tmp('ns-home-');
+	const author = (id) => JSON.parse(fs.readFileSync(path.join(d, id, 'bolt-app.json'), 'utf8')).author;
+	assert.equal(cli(home, d, 'new', 'portal-template', 'mine', '--dir', d, '--author', 'Tester').status, 0);
+	assert.deepEqual(author('mine'), { name: 'Tester' });
+	const out = path.join(d, 'mine.boltpack'); packOf(path.join(d, 'mine'), out);
+	const r = readPack(out); assert.ok(r.ok, r.reason); assert.equal(r.meta.signed_by, 'Tester'); assert.equal(r.meta.pack.author.name, 'Tester');
+	assert.doesNotMatch(JSON.stringify(r.meta), /Bolt Apps examples|github\.com/);
+	// with no --author, the login name, as `new <id>` does
+	assert.equal(cli(home, d, 'new', 'script-template', 'mine-2', '--dir', d).status, 0);
+	assert.deepEqual(author('mine-2'), { name: os.userInfo().username });
+});
+
+test('the transform `new` writes and the AGENTS.md worked example use icons the launcher has (no icon_unknown)', () => {
+	const d = tmp('ns-icon-'), home = tmp('ns-home-');
+	assert.equal(cli(home, d, 'new', 'g-app', '--type', 'transform', '--dir', d, '--author', 'Tester').status, 0);
+	const l = cli(home, d, 'lint', path.join(d, 'g-app')); assert.equal(l.status, 0, l.stdout); assert.doesNotMatch(l.stdout, /icon_unknown|warning/);
+	const icons = new Set(JSON.parse(fs.readFileSync(path.join(REPO, 'kit', 'schema', 'icons.json'), 'utf8')).icons);
+	const agents = fs.readFileSync(path.join(REPO, 'AGENTS.md'), 'utf8'), m = /\nicon: (\S+)\n/.exec(agents.slice(agents.indexOf('## 9. Worked example')));
+	assert.ok(m && icons.has(m[1]), `AGENTS.md worked example icon: ${m && m[1]}`);
+});
+
 test('clockVersion follows the rules of Bolt\'s own version order', () => {
 	const a = clockVersion(Date.UTC(2026, 10, 15)), b = clockVersion(Date.UTC(2026, 10, 15, 0, 0, 1));
 	assert.ok(newer(b, a)); assert.ok(newer('1.0.1000000', '1.0.999999')); assert.ok(!newer('1.0', '1.0.0'));

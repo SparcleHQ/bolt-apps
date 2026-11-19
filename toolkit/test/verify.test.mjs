@@ -110,6 +110,18 @@ test('a good pack: verify says valid and prints what Bolt will show; --json is s
 	assert.deepEqual(Object.keys(j.confirm).sort(), ['apps', 'estimate', 'files', 'note', 'permissions', 'reasons', 'risk', 'signer', 'tier']);
 });
 
+test('verify names each script by its path under scripts/, so two nested files with the same base name stay distinct', () => {
+	const nested = { 'scripts/eagle-info__lib/util.py': 'X = 1\n', 'scripts/eagle-info__tools/util.py': 'Y = 2\n' };
+	const want = ['eagle-info__eagle.py', 'eagle-info__lib/util.py', 'eagle-info__tools/util.py'];
+	const listed = (j) => j.confirm.reasons.filter((s) => s.startsWith('the pack includes a script')).map((s) => s.slice(s.indexOf('(') + 1, -1)).sort();
+	const { d } = appFromCase({ add: nested });
+	assert.deepEqual(listed(JSON.parse(run(d, 'verify', 'apps/eagle-info', '--json').stdout)), want);
+	const k = path.join(d, 'k.pem'), f = path.join(d, 'p.boltpack'); run(d, 'keygen', '--out', k);
+	const p = run(d, 'pack', 'apps/eagle-info', '--personal', '--key', k, '--out', f); assert.equal(p.status, 0, p.stdout + p.stderr);
+	const v = run(d, 'verify', f, '--json'); assert.equal(v.status, 0, v.stdout + v.stderr);
+	assert.deepEqual(listed(JSON.parse(v.stdout)), want);
+});
+
 test('every code verify can emit has a case, and every fix is plain words', () => {
 	const lintLevel = ['app_file_name', 'unknown_file', 'listing_unreadable', 'field_missing', 'empty_app', 'bad_json', 'permission_unknown']; // covered in personal.test.mjs and the lint tests
 	const sizeLevel = ['too_many_files', 'pack_too_large', 'yaml_unreadable_here', 'pack_malformed', 'pack_duplicate_entry']; // the last three are covered in hostile.test.mjs; // would need a 64 MB or 1025-file pack; checked by reading shape only

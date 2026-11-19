@@ -29,6 +29,8 @@ const rd = (f) => fs.readFileSync(f, 'utf8');
 const isObj = (x) => x !== null && typeof x === 'object' && !Array.isArray(x);
 
 // ---------- lint ----------
+// Files the OS or git put in any folder: never part of an app, so lint skips them and pack leaves them out. Only these names: a dot file such as .backup.yaml is still the author's and is checked.
+const LEFTOVER = /^(\.DS_Store|Thumbs\.db|desktop\.ini|\.git|\.gitignore|\.gitattributes)$/;
 // opts.personal: the app is for its author's own use (tier 3 and script apps allowed). The gallery rules are the default.
 export function lintApp(dir, opts = {}) {
 	const personal = opts.personal === true;
@@ -52,6 +54,7 @@ export function lintApp(dir, opts = {}) {
 	const files = { snippets: [], search_engines: [], utilities: [] }, scripts = [], assessed = [], sizes = {};
 	if (personal) files.scripts = scripts;
 	for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+		if (LEFTOVER.test(ent.name)) continue; // what Finder, Explorer and git leave in a folder is skipped, never packed
 		if (ent.isFile() && (ent.name === 'bolt-app.json' || ent.name === 'README.md' || ent.name.endsWith('.boltpack'))) continue; // a pack built here earlier is never packed
 		if (personal && ((ent.isFile() && (ent.name === 'check.json' || ent.name === 'bolt_app_kit.lock.json')) || (ent.isDirectory() && (ent.name === 'fixtures' || ent.name === 'golden')))) continue; // author-side only, never packed
 		if (personal && ent.isDirectory() && ent.name === 'scripts') {
@@ -75,6 +78,7 @@ export function lintApp(dir, opts = {}) {
 		}
 		if (ent.isDirectory() && Object.hasOwn(files, ent.name)) {
 			for (const f of fs.readdirSync(path.join(dir, ent.name))) {
+				if (LEFTOVER.test(f)) continue; // never packed
 				const okExt = ent.name === 'utilities' ? /\.ya?ml$/.test(f) : f.endsWith('.json');
 				if (okExt) files[ent.name].push(f); else E('unknown_file', 'not an allowed file here', `${ent.name}/${f}`);
 			}

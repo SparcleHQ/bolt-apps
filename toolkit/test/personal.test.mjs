@@ -75,6 +75,21 @@ test('personal packs refuse what Bolt would break or reject, with the fix in the
 	}
 });
 
+test('.DS_Store, Thumbs.db, desktop.ini, .gitignore and a .git folder are skipped, never refused and never packed; another dot file is still checked', () => {
+	const d = tmp(), dir = scriptApp(d);
+	for (const f of ['.DS_Store', 'Thumbs.db', '.gitignore', path.join('.git', 'HEAD'), path.join('utilities', '.DS_Store'), path.join('utilities', 'desktop.ini'), path.join('scripts', '.DS_Store')]) write(path.join(dir, f), 'x');
+	const l = run(d, 'lint', 'apps/eagle-info', '--personal'); assert.equal(l.status, 0, l.stdout + l.stderr); assert.doesNotMatch(l.stdout, /unknown_file/);
+	const out = path.join(d, 'e.boltpack'), p = run(d, 'pack', 'apps/eagle-info', '--personal', '--key', keyed(d), '--out', out); assert.equal(p.status, 0, p.stdout + p.stderr);
+	const rp = readPack(out); assert.ok(rp.ok, rp.reason); const names = [...rp.files.keys()]; assert.ok(names.includes('utilities/eagle-info.yaml'), names.join(' '));
+	assert.ok(names.every((n) => !n.split('/').some((seg) => seg.startsWith('.'))), names.join(' '));
+	// the gallery rules skip them too: a tier 2 folder opened in Finder still lints
+	const g = path.join(d, 'gallery'); assert.equal(run(d, 'new', 'g-app', '--type', 'transform', '--dir', g, '--author', 'Tester').status, 0);
+	write(path.join(g, 'g-app', '.DS_Store'), 'x'); write(path.join(g, 'g-app', 'utilities', '.DS_Store'), 'x');
+	const gl = run(d, 'lint', path.join(g, 'g-app')); assert.equal(gl.status, 0, gl.stdout + gl.stderr);
+	// any other name, dot or not, is the author's: still refused, so lint, check and run never disagree about what is in the app
+	write(path.join(dir, '.notes'), 'x'); const o = run(d, 'lint', 'apps/eagle-info', '--personal'); assert.equal(o.status, 1); assert.match(o.stdout + o.stderr, /unknown_file.*\.notes/s);
+});
+
 test('the permissions printed come from the files, not from what bolt-app.json claims', () => {
 	const d = tmp(), dir = scriptApp(d, { permissions: [], tier: 1 });
 	write(path.join(dir, 'utilities', 'eagle-info.yaml'), BRIDGE + 'actions:\n  - { id: o, kind: url, label: Open, url_template: "https://example.org/{{q}}" }\n  - { id: p, kind: url, label: Any, url_template: "{{link}}" }\n');

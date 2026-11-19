@@ -438,7 +438,9 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(file
 			const osi = args.indexOf('--os'), osArg = osi >= 0 ? args[osi + 1] : undefined;
 			if (osi >= 0 && !OSES.includes(osArg)) die(`--os must be one of ${OSES.join(', ')}`);
 			const ci = args.indexOf('--case');
-			const r = await checkApp(target, { os: osArg, only: ci >= 0 ? args[ci + 1] : undefined, updateGolden: args.includes('--update-golden'), shared: args.includes('--shared') });
+			// an unreadable check.json is a folder that could not be loaded (exit 2, the load-error code in CHECKER.md), not a crash with a stack trace
+			let cj; try { cj = JSON.parse(fs.readFileSync(path.join(target, 'check.json'), 'utf8')); } catch (e) { die(`${path.join(target, 'check.json')} is not valid JSON (${e.message}). Fix it, then run check again`); } if (!cj || typeof cj !== 'object' || Array.isArray(cj)) die(`${path.join(target, 'check.json')} must be a JSON object with "script" and "cases". Fix it, then run check again`);
+			const r = await checkApp(target, { cfg: cj, os: osArg, only: ci >= 0 ? args[ci + 1] : undefined, updateGolden: args.includes('--update-golden'), shared: args.includes('--shared') });
 			console.log(args.includes('--json') ? JSON.stringify({ ok: reportOk(r), ...r }, null, 2) : formatReport(r));
 			process.exit(reportOk(r) ? 0 : 1);
 		}

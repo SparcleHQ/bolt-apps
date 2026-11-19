@@ -481,7 +481,7 @@ export async function checkApp(appDir, opts = {}) {
 }
 async function checkAppRun(appDir, opts = {}) {
 	const cfgFile = path.join(appDir, 'check.json');
-	const cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8'));
+	const cfg = opts.cfg ?? JSON.parse(fs.readFileSync(cfgFile, 'utf8'));   // the CLI passes the check.json it already read and validated, so the file is read once
 	const host = hostOs();
 	const report = { app: path.basename(path.resolve(appDir)), host_os: host, findings: [], cases: [] };
 	const top = (level, code, message, p) => report.findings.push({ level, code, message, path: p });

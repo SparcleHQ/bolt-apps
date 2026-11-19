@@ -303,3 +303,13 @@ test('scripts_dir_form: lint --personal and verify refuse a comment mention; the
 	}
 	for (const app of ['acme-dash', 'portal-template']) assert.ok(!/scripts_dir/.test(fs.readFileSync(path.join(root, 'kit', 'examples', app, 'utilities', `${app}.yaml`), 'utf8').replace(/\{\{scripts_dir\}\}\/[a-z0-9-]+__(engine\.py|config\.json|fixtures\.json|bolt_app_kit\.py)/g, '')));
 });
+
+test('check on a check.json that is not JSON, or not an object, exits 2 with a one-line reason, never a stack trace', () => {
+	for (const [body, want] of [['{oops', /check\.json is not valid JSON/], ['[]', /check\.json must be a JSON object/], ['null', /check\.json must be a JSON object/]]) {
+		const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-badcfg-')); fs.cpSync(EXAMPLE, d, { recursive: true }); fs.writeFileSync(path.join(d, 'check.json'), body);
+		for (const extra of [[], ['--json']]) {
+			const r = spawnSync(process.execPath, [CLI, 'check', d, ...extra], { encoding: 'utf8' });
+			assert.equal(r.status, 2, `${body} ${extra}: ${r.stdout}${r.stderr}`); assert.match(r.stderr, want); assert.doesNotMatch(r.stderr, /\n\s+at /, 'no stack trace');
+		}
+	}
+});

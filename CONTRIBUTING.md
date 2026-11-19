@@ -41,20 +41,25 @@ explained in [CHECKER.md](CHECKER.md).
 Use made-up data everywhere: `@example.com` addresses, `ACME-123` style IDs, no real names,
 no keys or tokens, no internal links.
 
-## 3. Run the checker
+## 3. Run the checks
 
 ```
-bolt-apps check apps/<id>
+bolt-apps lint apps/<id> --json
+bolt-apps verify apps/<id>
 ```
 
-It loads your app with Bolt's own code in a clean setup, runs your tests, works out the
-tier and the permissions, and looks for secrets and personal data. Fix every error. Paste
-its output into your pull request. [CHECKER.md](CHECKER.md) lists every finding code.
+Fix every error and paste both outputs into your pull request. [CHECKER.md](CHECKER.md)
+lists every finding code.
+
+`bolt-apps check apps/<id>` will replace them once it is published for snippets, search
+engines and transforms (today it exits 2 and says so). It loads your app with Bolt's own
+code in a clean setup, runs your tests, works out the tier and the permissions, and looks
+for secrets and personal data. When it runs for your app, paste its output instead.
 
 ## 4. Open a pull request
 
 One app per pull request. Use the template; it asks for the kind, tier, permissions, what
-the app saves, the checker output, and confirmation that you used demo data only. Sign off
+the app saves, the output from section 3, and confirmation that you used demo data only. Sign off
 every commit (`git commit -s`), see [Licence](#licence) below.
 
 ## Review

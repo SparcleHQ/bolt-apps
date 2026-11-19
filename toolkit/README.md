@@ -65,11 +65,11 @@ A `.boltpack` is a gzip tar of `bundle.json`, `signature.bin` (Ed25519 over the 
 ## Tests
 
 ```
-node --test toolkit/test/
+node --test toolkit/test/*.test.mjs
 (cd kit/python && python3 -m unittest discover -s tests)
 ```
 
-Round trip for every template, tamper refusal, tier and permission rules, key handling; the kit: icon drift, the row contract, `check` (failing apps fail, the example passes) and the Python unit tests. The suite takes about a minute because it runs a hung-command case.
+Round trip for every template, tamper refusal, tier and permission rules, key handling; the kit: icon drift, the row contract, `check` (failing apps fail, the example passes) and the Python unit tests. On recent GitHub Actions runs the Node suite took about 7 to 10 minutes, because it runs the examples end to end and a hung-command case.
 
 ## For AI agents
 

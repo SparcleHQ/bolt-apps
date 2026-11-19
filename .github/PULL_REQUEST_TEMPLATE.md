@@ -16,7 +16,9 @@ that add a new app to apps/ are closed until the gallery opens (see README.md). 
 
 ## Checker output
 
-<!-- Paste the full output of: bolt-apps check apps/<id> -->
+<!-- Paste the full output of: bolt-apps check apps/<id>
+     Until check is published for snippets, search engines and transforms (it exits 2 and says so),
+     paste the output of: bolt-apps lint apps/<id> --json  and  bolt-apps verify apps/<id> -->
 
 ```
 ```
@@ -24,7 +26,7 @@ that add a new app to apps/ are closed until the gallery opens (see README.md). 
 ## Confirm
 
 - [ ] Every sample and test uses made-up data only (`@example.com`, `ACME-123`). No real names, emails, keys, tokens or internal links.
-- [ ] `bolt-apps check` passes with no errors.
+- [ ] `bolt-apps check` passes with no errors (until it is published for this kind of app: `lint` and `verify` pass with no errors).
 - [ ] Every content file has a test that fails when the app is wrong.
 - [ ] If this app is based on another, `derived_from` names it and its author keeps credit.
 - [ ] I have the right to submit this under the Apache License 2.0, and every commit carries a DCO sign-off (`git commit -s`).

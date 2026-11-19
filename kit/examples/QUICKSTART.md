@@ -13,7 +13,7 @@ Read this page only. Every command is `./bolt-apps <command>`, run from the root
 | A typed form that saves rows | `form-template` | `scripts/<id>__config.json` | itself |
 | A local file the person names | `file-insights-template` | `scripts/<id>__config.json`, `scripts/<id>__fixtures.json` | itself |
 | One command line tool | `cli-wrapper-template` | `scripts/<id>__config.json`, `scripts/<id>__wrap.py` | itself |
-| Quick local probes as tiles | `system-glance` | `scripts/system-glance.py` | itself |
+| Quick local probes as tiles | `system-glance` | `scripts/<id>__system-glance.py` | itself |
 | Several APIs joined | `repo-radar`, `around` | `scripts/<id>__config.json`, `scripts/<id>__fixtures.json`, the one script | itself |
 | A service on this computer | `local-service-template` | `utilities/localmodels.yaml` | itself |
 | An API no engine template fits | `script-template` | `scripts/<id>__config.json`, `scripts/<id>__fixtures.json`, `scripts/<id>__app.py` | itself |

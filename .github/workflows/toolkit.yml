@@ -3,10 +3,10 @@ name: toolkit
 
 on:
   pull_request:
-    paths: ["toolkit/**", "apps/**", "schema/**", "kit/**", "docs/**"]
+    paths: ["toolkit/**", "apps/**", "schema/**", "kit/**", "docs/**", "conformance/**", "scripts/**", "bolt-apps", "**.md", ".github/workflows/toolkit.yml"]
   push:
     branches: [main]
-    paths: ["toolkit/**", "kit/**"]
+    paths: ["toolkit/**", "apps/**", "schema/**", "kit/**", "docs/**", "conformance/**", "scripts/**", "bolt-apps", "**.md", ".github/workflows/toolkit.yml"]
 
 permissions:
   contents: read
@@ -29,6 +29,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      - run: node --test toolkit/test/
+      - run: node --test toolkit/test/*.test.mjs
       - run: python -m unittest discover -s tests
         working-directory: kit/python

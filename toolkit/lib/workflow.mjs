@@ -129,8 +129,12 @@ export function newFromTemplate(template, id, root) {
 	if (oldChip && oldChip !== chip) parts.push(`=${esc(oldChip)}(?![A-Za-z0-9_-])`);
 	if (oldTitle && oldTitle !== title) parts.push(`(?<![A-Za-z0-9_-])${esc(oldTitle)}(?![A-Za-z0-9_-])`);
 	const oneRe = new RegExp(parts.map((x) => `(${x})`).join('|'), 'g');
+	// The copy's one app file is utilities/<id>.yaml (lint: utilities_name_mismatch), whatever the template named its own; its README and notes say so too.
+	const oldAppFiles = fs.existsSync(tud) ? fs.readdirSync(tud).filter((f) => /\.ya?ml$/.test(f)) : [];
+	const oldAppFile = oldAppFiles.length === 1 && oldAppFiles[0] !== `${id}.yaml` ? oldAppFiles[0] : undefined;
+	const renameAppFile = (s) => (oldAppFile ? s.split(`utilities/${oldAppFile}`).join(`utilities/${id}.yaml`) : s);
 	const reword = (s) => (template === id ? s : s.replace(oneRe, (m, g1, g2, g3, g4) => (g1 ? `${id}__` : g2 ? id : g3 ? `=${chip}` : title)));
-	const walkText = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) walkText(f); else if (/\.(md|json|ya?ml|py)$/.test(e.name) && !/__bolt_app_kit\.py$|fixtures\.json$/.test(e.name)) { const s = fs.readFileSync(f, 'utf8'), r = reword(s); if (r !== s) fs.writeFileSync(f, r); } } };
+	const walkText = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) walkText(f); else if (/\.(md|json|ya?ml|py)$/.test(e.name) && !/__bolt_app_kit\.py$|fixtures\.json$/.test(e.name)) { const s = fs.readFileSync(f, 'utf8'), r = renameAppFile(reword(s)); if (r !== s) fs.writeFileSync(f, r); } } };
 	// the template's README runs its commands from the repo root; the copy lives elsewhere, so they run from inside the folder
 	edit('README.md', (s) => s.split('node toolkit/bin/bolt-apps.mjs').join('bolt-apps').split(`kit/examples/${template}`).join('.'));
 	walkText(dir);
@@ -149,7 +153,10 @@ export function newFromTemplate(template, id, root) {
 		if (r.status !== 0) fail(`could not generate the app file: ${String(r.stderr || (r.error && r.error.message) || PYTHON_MISSING).slice(-300)}`);
 		for (const y of fs.readdirSync(ud)) fs.rmSync(path.join(ud, y));
 		fs.writeFileSync(path.join(ud, `${id}.yaml`), r.stdout);
-	} else if (fs.existsSync(ud)) for (const y of fs.readdirSync(ud)) { const p = path.join(ud, y); fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(/^id: .*$/m, `id: ${id}`).replace(/^chip: .*$/m, `chip: ${chip}`).replace(/^title: .*$/m, `title: "${title}"`)); }
+	} else if (fs.existsSync(ud)) {
+		for (const y of fs.readdirSync(ud)) { const p = path.join(ud, y); fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(/^id: .*$/m, `id: ${id}`).replace(/^chip: .*$/m, `chip: ${chip}`).replace(/^title: .*$/m, `title: "${title}"`)); }
+		if (oldAppFile && fs.existsSync(path.join(ud, oldAppFile))) fs.renameSync(path.join(ud, oldAppFile), path.join(ud, `${id}.yaml`));
+	}
 	// the vendored kit is named for its app: re-vendor it under the new name (the template's lock and file name carry the old id)
 	if (fs.existsSync(path.join(dir, 'check.json')) && fs.existsSync(path.join(dir, 'scripts', `${id}__bolt_app_kit.py`))) { try { vendorKit(dir, { flat: true }); } catch (e) { fail(`could not vendor the kit: ${e.message}`); } }
 	let note = '', minimal = false;
@@ -160,7 +167,9 @@ export function newFromTemplate(template, id, root) {
 		const r2 = r.status === 0 ? bolt(['check', dir]) : r;   // a second plain run proves the recorded goldens agree with a fresh run
 		note = r2.status === 0 ? `check passes on the sample data${minimal ? ' (check.json was rewritten with one case per view and none of the template words: it checks that every row is well formed)' : ''}${pruned ? ` (${pruned} expected-text line${pruned === 1 ? '' : 's'} about the template's own sample words were dropped from check.json; add your own once your data is in)` : ''}` : `CHECK DOES NOT PASS YET (it did not pass straight after the copy, which is a toolkit fault, not yours):\n${(r2.stdout + r2.stderr).slice(-900)}`;
 	}
-	console.log(`created ${q(dir)} from ${template} (id ${id}, chip =${chip}). ${note}\n\nNext:\n${[`edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).map((f) => f.split(`${template}__`).join(`${id}__`)).join(', ')}${(() => { const fe = listTemplates().find((a) => a.id === template)?.first_edit; return fe ? `\n     change first: ${String(fe).split(`${template}__`).join(`${id}__`)}` : ''; })()}`, connectStep(dir, id), `./bolt-apps run ${q(dir)} --sample      (see the rows) and  ./bolt-apps check ${q(dir)}`, `./bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)`].filter(Boolean).map((t, i) => `  ${i + 1}. ${t}`).join('\n')}\n\nMake it yours (full list: ENGINE.md, "Make it yours"):\n  - the listing in bolt-app.json and the config description say TODO\n  - README.md starts with a note: replace it\n  - check.json ${minimal ? 'has one case per view' : 'still expects the template words'}\n  - once your data is final, run ./bolt-apps check ${q(dir)} --update-golden and read what changed.`);
+	// index.json names the template's own files; say the names they have in the copy (scripts renamed to <id>__, the app file to utilities/<id>.yaml)
+	const copyPath = (f) => renameAppFile(f.split(`${template}__`).join(`${id}__`));
+	console.log(`created ${q(dir)} from ${template} (id ${id}, chip =${chip}). ${note}\n\nNext:\n${[`edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).map(copyPath).join(', ')}${(() => { const fe = listTemplates().find((a) => a.id === template)?.first_edit; return fe ? `\n     change first: ${copyPath(String(fe))}` : ''; })()}`, connectStep(dir, id), `./bolt-apps run ${q(dir)} --sample      (see the rows) and  ./bolt-apps check ${q(dir)}`, `./bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)`].filter(Boolean).map((t, i) => `  ${i + 1}. ${t}`).join('\n')}\n\nMake it yours (full list: ENGINE.md, "Make it yours"):\n  - the listing in bolt-app.json and the config description say TODO\n  - README.md starts with a note: replace it\n  - check.json ${minimal ? 'has one case per view' : 'still expects the template words'}\n  - once your data is final, run ./bolt-apps check ${q(dir)} --update-golden and read what changed.`);
 }
 
 // For an engine app in views or lookup mode, replace the template's check.json cases by one case per view, taken from the app's own config (view ids, the first example query).

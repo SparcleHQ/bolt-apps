@@ -124,16 +124,17 @@ export function parseYaml(text) {
 		return { t: 'm', entries };
 	}
 	function sequence(indent) {
-		const items = [];
+		const items = [], at = [];   // at[i]: the line of item i's "-", so a finding can point at the item
 		for (;;) {
 			const L = lines[pos];
 			if (!L || L.indent !== indent || !(L.t.startsWith('- ') || L.t === '-')) { if (L && L.indent > indent) bad('inconsistent indentation'); break; }
+			at.push(L.line);
 			const rest = L.t.slice(1).replace(/^ +/, ''), off = L.t.length - rest.length;
 			if (!rest || rest[0] === '#') { pos++; const nx = lines[pos]; items.push(nx && nx.indent > indent ? block(nx.indent) : { t: 's', v: '', q: false }); continue; }
 			if (scanKey(rest, 0) >= 0) { const sub = { indent: indent + off, t: rest, line: L.line }; pos++; items.push(mapping(indent + off, sub)); continue; }
 			pos++; const [v, k] = value(rest, 0, 'block'); restOfLine(rest, k); items.push(v);
 		}
-		return { t: 'l', items };
+		return { t: 'l', items, lines: at };
 	}
 	if (lines[0].indent !== 0) bad('a document that is indented');
 	const root = block(0);

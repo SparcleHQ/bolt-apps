@@ -87,3 +87,40 @@ test('numeric-looking ids are quoted in generated YAML and pass lint', () => {
 	assert.match(fs.readFileSync(path.join(d, 'apps/123/utilities/123.yaml'), 'utf8'), /^id: "123"/m);
 	assert.equal(run(d, 'lint', 'apps/123').status, 0);
 });
+
+test('gallery lint and pack check the app file the way verify does: keys, pipe steps and recognizer patterns', () => {
+	const d = tmp(), key = path.join(d, 'k.pem'); run(d, 'keygen', '--out', key);
+	const errors = (r) => JSON.parse(r.stdout).reports[0].findings.filter((x) => x.level === 'error').map((x) => x.code);
+	const app = (id, type, edit) => { run(d, 'new', id, '--type', type, '--author', 'T'); const f = path.join(d, 'apps', id, 'utilities', `${id}.yaml`); fs.writeFileSync(f, edit(fs.readFileSync(f, 'utf8'))); return `apps/${id}`; };
+	// a top-level key Bolt does not know, a company-only key and a missing required key
+	const a = app('g-keys', 'transform', (s) => s.replace('emits: Generic\n', '') + 'scopes:\n  - read\nbogus_key: 1\n');
+	let r = run(d, 'lint', a, '--json'); assert.equal(r.status, 1, r.stdout);
+	for (const c of ['yaml_admin_only_key', 'yaml_key_unknown', 'yaml_key_missing']) assert.ok(errors(r).includes(c), c + r.stdout);
+	assert.notEqual(run(d, 'pack', a, '--key', key, '--out', path.join(d, 'a.boltpack')).status, 0);
+	// pipe steps: a name outside the schema list, a step with two keys, and more steps than the schema allows
+	const b = app('g-pipe', 'transform', (s) => s.replace('    - upper\n', '    - frobnicate\n    - { split: ",", join: ";" }\n' + '    - trim\n'.repeat(31)));
+	r = run(d, 'lint', b, '--json'); assert.equal(r.status, 1, r.stdout);
+	for (const c of ['transform_step_unknown', 'transform_pipe_count']) assert.ok(errors(r).includes(c), c + r.stdout);
+	assert.equal(errors(r).filter((c) => c === 'transform_step_unknown').length, 2, r.stdout);
+	// each finding points at its own line of the app file, not at line 1 or at actions
+	const lineOf = (id, text) => fs.readFileSync(path.join(d, 'apps', id, 'utilities', `${id}.yaml`), 'utf8').split('\n').findIndex((l) => l.includes(text)) + 1;
+	const at = (r_, code) => JSON.parse(r_.stdout).reports[0].findings.filter((x) => x.code === code).map((x) => x.line);
+	assert.deepEqual(at(r, 'transform_step_unknown'), [lineOf('g-pipe', 'frobnicate'), lineOf('g-pipe', 'split:')], r.stdout);
+	assert.deepEqual(at(r, 'transform_pipe_count'), [lineOf('g-pipe', 'pipe:')], r.stdout);
+	const rp = run(d, 'lint', b, '--personal', '--json'); assert.deepEqual(at(rp, 'transform_step_unknown'), [lineOf('g-pipe', 'frobnicate'), lineOf('g-pipe', 'split:')], rp.stdout);
+	const v = JSON.parse(run(d, 'verify', b, '--json').stdout); assert.ok(v.findings.some((x) => x.code === 'transform_step_unknown' && x.fix !== 'See the message.'), JSON.stringify(v.findings));
+	// an empty pipe
+	const e = app('g-empty', 'transform', (s) => s.replace('  pipe:\n    - trim\n    - upper\n', '  pipe: []\n'));
+	r = run(d, 'lint', e, '--json'); assert.equal(r.status, 1, r.stdout); assert.ok(errors(r).includes('transform_pipe_count'), r.stdout);
+	// recognizer: more patterns than the schema allows, and one regex longer than its limit
+	const c = app('g-rec', 'recognizer', (s) => s.replace('    - regex: "(TKT-\\\\d{1,6})"\n', `    - regex: "${'a'.repeat(513)}"\n` + '    - regex: "(TKT-\\\\d{1,6})"\n'.repeat(16)));
+	r = run(d, 'lint', c, '--json'); assert.equal(r.status, 1, r.stdout);
+	for (const x of ['recognize_patterns_count', 'recognize_regex_too_long']) assert.ok(errors(r).includes(x), x + r.stdout);
+	assert.deepEqual(at(r, 'recognize_regex_too_long'), [lineOf('g-rec', 'a'.repeat(513))], r.stdout);
+	assert.deepEqual(at(r, 'recognize_patterns_count'), [lineOf('g-rec', 'patterns:')], r.stdout);
+	// the step names and limits come from schema/user-app.schema.json: the most steps it allows, each name it lists, pass
+	const PIPE = JSON.parse(fs.readFileSync(path.join(REPO, 'schema/user-app.schema.json'), 'utf8')).properties.transform.properties.pipe;
+	const names = PIPE.items.oneOf.find((o) => o.enum).enum;
+	const ok = app('g-all', 'transform', (s) => s.replace('    - trim\n    - upper\n', Array.from({ length: PIPE.maxItems - 1 }, (_, i) => `    - ${names[i % names.length]}\n`).join('') + '    - { split: "," }\n'));
+	r = run(d, 'lint', ok, '--json'); assert.equal(r.status, 0, r.stdout);
+});

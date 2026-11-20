@@ -108,7 +108,7 @@ test('review fixes: scripts-only is empty, comments do not name scripts, long ap
 test('a gallery transform with a composer or utility action still lints clean', () => {
 	const d = fs.mkdtempSync(path.join(os.tmpdir(), 'bolt-yaml-')); run(d, 'new', 'g', '--type', 'transform');
 	const f = path.join(d, 'apps/g/utilities/g.yaml');
-	fs.writeFileSync(f, fs.readFileSync(f, 'utf8') + 'actions:\n  - { id: a, kind: composer, label: A }\n  - { id: b, kind: utility, label: B, target_chip: other }\n');
+	fs.writeFileSync(f, fs.readFileSync(f, 'utf8') + 'actions:\n  - { id: a, kind: composer, label: A, insert: x }\n  - { id: b, kind: utility, label: B, target_chip: other }\n');
 	const r = run(d, 'lint', 'apps/g'); assert.equal(r.status, 0, r.stdout);
 });
 

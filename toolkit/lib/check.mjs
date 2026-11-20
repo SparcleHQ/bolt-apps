@@ -1,8 +1,8 @@
 // bolt-apps check (script apps): run an app's script the way the launcher does, against recorded command output.
-// Built in v0.1: clean subprocess with an empty environment and a temp HOME; stub commands on a controlled PATH;
+// Built: clean subprocess with a minimal environment and a temp HOME; stub commands on a controlled PATH;
 // per-OS fixture sets (--os); hung-command mode with a total-time assertion; hostile-data fuzz; golden snapshots;
 // schema validation of every output; footer button and label limits; the numeric tile rule; text safety scan;
-// vendored-kit divergence guard. Not built: see docs/kit-design.md, section "What check does not do".
+// vendored-kit divergence guard. Not built: see docs/kit-design.md, section 5, "Not built".
 import fs from 'node:fs';
 import { RULES, parseBoltVersion } from './boltrules.mjs';
 import os from 'node:os';

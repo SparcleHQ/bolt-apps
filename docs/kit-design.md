@@ -1,6 +1,6 @@
-# Bolt Apps authoring kit: design (v0.1)
+# Bolt Apps authoring kit: design
 
-Status: v0.1 built for Python, the row contract and the first slice of `bolt-apps check`. This repository is separate from the Bolt binary and the gallery is closed, so the kit ships as source and docs here and changes no product code.
+Status: built for Python (`bolt_app_kit`, version in `bolt_app_kit.__version__`), with the row contract and `bolt-apps check`. This repository is separate from the Bolt binary and the gallery is closed, so the kit ships as source and docs here and changes no product code.
 
 ## 1. Goals and non-goals
 
@@ -14,16 +14,16 @@ Why: the same defects keep coming back when each app reimplements these things. 
 | 2 | Non-numeric tile value shows "-" and "no value" | `tile()` raises on a non-number; `None` means no tile; schema and `check` enforce it | `test_non_numeric_tile_value_raises`, `tile_without_number` |
 | 3 | "All clear" while sections were not read | `headline()` cannot return all clear with an unread probe | `test_headline_refuses_all_clear_when_unread` |
 | 4 | Non-zero exit with no output treated as success; legit exit 1 | `run()` ok only for `ok_rcs`; `empty_ok_rcs` is the explicit opt-in | `test_nonzero_exit_*`, `test_legit_exit_one_*` |
-| 5 | Launcher behaves differently from a shell | `check` runs in a clean subprocess: empty environment, temp HOME, controlled PATH | `the script runs with an empty environment` |
-| 6 | A hung command blows the 20 s bridge limit | One `Deadline` (14 s) shared by every command; `run_parallel` abandons slow tasks | `test_shared_deadline_*`, case "every command hangs" |
+| 5 | Launcher behaves differently from a shell | `check` runs in a clean subprocess: minimal environment, temp HOME, controlled PATH | `the script runs with an empty environment` |
+| 6 | A hung command runs past the app's `bridge.timeout_seconds` | One `Deadline` (14 s) shared by every command; `run_parallel` abandons slow tasks | `test_shared_deadline_*`, case "every command hangs" |
 | 7 | `{{ }}` re-expanding, bidi, zero-width, tag and control characters | `clean_text`, `neutralise_braces`; every builder applies them | `test_hostile_text_is_neutralised`, `text_unsafe`, `text_braces` |
 | 8 | Footer: more buttons or longer labels than [the rules table](../kit/examples/QUICKSTART.md#4-the-rules-table) allows | `row()` and `_action()` raise; schema and `check` enforce | `test_footer_limit_*`, `label_too_long` |
 | 9 | Rounding differs between display, thresholds and badges | `rnd()` = floor(x+0.5), used by every formatter | `test_rounding_one_rule` |
 | 10 | Cache: unchecked shape, symlinks, temp files, no pruning | `Cache`: shape check, `lstat`-checked directory, `O_EXCL|O_NOFOLLOW`, pruning | `CacheTests` |
 | 11 | Origins and hosts truncated generically | `host_label` elides from the left and keeps the registrable domain | `test_origin_never_through_generic_truncation` |
-| 12 | Env-driven test hooks in a shipped script | None exist; a source scan test fails if the kit names an environment variable (it does not catch every possible indirect hook) | `test_no_env_driven_hooks` |
+| 12 | Env-driven test hooks in a shipped script | None exist; a source scan test fails on any `os.environ` or `getenv` use except the PATH lookup and parent-environment copy in `probe.py` and the key lookup in `secrets.py` (it does not catch every possible indirect hook) | `test_no_env_driven_hooks` |
 
-**Non-goals (v0.1).** Enforcing an app's permissions at run time (that is the runtime's job). The gallery or its index. A JavaScript or shell kit (described in section 8, not built). Changing Bolt's manifest format. Running the real launcher.
+**Non-goals.** Enforcing an app's permissions at run time (that is the runtime's job). The gallery or its index. A JavaScript or shell kit (described in section 8, not built). Changing Bolt's manifest format. Running the real launcher.
 
 ## 2. The row contract (language neutral)
 
@@ -34,29 +34,31 @@ Why: the same defects keep coming back when each app reimplements these things. 
 | Row | `title` (required, 160), `subtitle` (200), `body` (markdown, 8000), `icon`, `pane`, `category` (Bolt uses it only to re-select the row after Back; it draws no group heading), `url` (http/https), `copy_text` | Free extra fields are scalars (string, number, boolean) a manifest binds as `{{row.x}}`. |
 | Tile | `kpi_label`, `kpi_value`, `kpi_unit` (4), `kpi_max`, `kpi_note`, `kpi_foot` (80), `kpi_badge` | `kpi_value` and `kpi_max` are a JSON number or `""`. A tile with a label but no number is invalid. |
 | Badges | `badges`: up to 4 of `{label, tone}` | |
-| Actions | `actions`: kinds `url`, `composer`, `utility`, `run`. A `url_template` must start with `http://` or `https://` and a literal host, so a placeholder never supplies the scheme or host | Footer count and label length: [the rules table](../kit/examples/QUICKSTART.md#4-the-rules-table) (the kit's own limit, below Bolt's); a row adds at most the kit limit minus `manifest_actions`. |
+| Actions | `actions`: kinds `url`, `composer`, `utility` (the `run` kind exists only for footer actions written in the app file). A `url_template` must start with `http://` or `https://` and a literal host, so a placeholder never supplies the scheme or host | Footer count and label length: [the rules table](../kit/examples/QUICKSTART.md#4-the-rules-table) (the kit's own limit, below Bolt's); a row adds at most the kit limit minus `manifest_actions`. |
 | Nav | `{"back": true}` or `{"view": token, "arg": token}` | Tokens match the launcher's `NAV_ARG_RE`. A nav row carries no actions. |
 | Icon | one of the launcher's icon names | See below. |
 
-**Icons are generated, not typed.** The launcher resolves icon names in its icon map. `kit/schema/gen-icons.mjs <the launcher's icon map file>` writes `kit/schema/icons.json`, the enum in `row.schema.json` and `kit/python/bolt_app_kit/icons_data.py`. `--check` exits 1 on drift. The Node tests assert that the three generated files agree, and run `--check` against the launcher source when that checkout is present. An unknown icon makes the launcher fall back to a generic plug, so the kit rejects it at build time.
+**Icons are generated, not typed.** The launcher resolves icon names in its icon map. `kit/schema/gen-icons.mjs <the launcher's icon map file>` writes `kit/schema/icons.json`, the enum in `row.schema.json` and `kit/python/bolt_app_kit/icons_data.py`. `--check` exits 1 on drift. The Node tests assert that the three generated files agree and that the parser reads the shapes of the icon map; `--check` against the launcher source is run by hand. An unknown icon makes the launcher fall back to a generic plug, so the kit rejects it at build time.
 
 ## 3. The Python library: `bolt_app_kit`
 
-Pure standard library, Python 3.9+, no environment-driven behaviour. CI tests 3.9 (the minimum, on ubuntu-22.04, because the newest runner image has no 3.9) and 3.13. Located at `kit/python/bolt_app_kit/`.
+Pure standard library, Python 3.9+, no environment-driven test hooks (the only variables it reads are PATH, a copy of the parent environment for `run()`, and the key names an app gives `get_secret`). CI tests 3.9 (the minimum, on ubuntu-22.04, because the newest runner image has no 3.9) and 3.13. Located at `kit/python/bolt_app_kit/`.
 
 | Area | API |
 |---|---|
 | Output | `emit(rows)` validates against the schema, prints compact ASCII JSON, exits without waiting for stray threads. An invalid payload prints one error row and exits 3. Under Bolt that row is never seen: a non-zero exit discards every printed row and the person sees a row titled `<chip> unavailable` whose subtitle is `exit code 3: ` followed by the script's stderr (cut short). The row is what `check` and a terminal show. `validate_rows(rows)` returns the problems. |
-| Builders | `row` (with `badges`), `tile`, `back_row`, `refresh_row`, `note_row`, `error_row`, `unsupported_row`, `action_copy`, `action_chain`, `action_url`, `kv_fields`, `chips`. Contract violations raise `KitError` at build time. |
+| Builders | `row` (with `badges`), `tile`, `safe_row` and `safe_tile` (for a record or value from outside: one odd value costs that field or that tile, never the row or the list), `back_row`, `refresh_row`, `note_row`, `error_row`, `unsupported_row`, `action_copy`, `action_chain`, `action_url`, `kv_fields`, `chips`. Contract violations raise `KitError` at build time. |
 | Formatters | `rnd`, `fmt_num`, `fmt_pct`, `fmt_bytes`, `fmt_duration`, `fmt_count`, `fmt_time`. One rounding rule: `floor(x + 0.5)`. A missing value is the word `unknown`, never `0`. |
-| Text | `clean_text` (control, format, bidi, zero-width, tag, surrogate, private-use, line separators, blank fillers removed; stacked marks capped), `clean_lines`, `neutralise_braces`, `text`, `elide_end`, `elide_left`, `host_label`, `safe_text`, `safe_copy`, `copy_ok`. |
+| Text | `clean_text` (control, format, bidi, zero-width, tag, surrogate, private-use, line separators, blank fillers removed; stacked marks capped), `clean_lines`, `neutralise_braces`, `text`, `elide_end`, `elide_left`, `host_label`, `safe_text`, `safe_copy`, `copy_ok`, `host_full` (the whole cleaned host, to show next to a shortened `host_label`). |
 | Probes | `Deadline`, `run`, `probe`, `Probe`, `run_parallel`, `os_name`, `which`. |
-| Cache | `Cache(app, ttl, shape)` with `get`, `put`, `prune`. |
+| Cache | `Cache(app, ttl, shape)` with `get`, `put`, `age` (seconds since the entry was stored), `prune`. |
+| Keys | `get_secret(app_id, name)` returns a `Secret` (`value`, `source`, and `problem` when a key was found but refused, for example a file other users can read or a key too short to hide); `env_file_path`, `setup_hint` (a one-line setup that never contains a key); `redact` for error text and `redact_tree` for a parsed answer before it is cached, logged or shown. |
+| Hero image | `hero_fields(image)` splits a picture into row fields of at most 4,000 characters; `hero_src_template(parts)` is the matching `bind.hero.src` for the app file. |
 | Headline | `headline(probes, findings)` returns text, tone and `all_clear`; an empty probe set is never all clear. |
 
 **Probes.** `run(cmd, deadline=None, timeout=None, dirs=None, ok_rcs=(0,), empty_ok_rcs=())` takes an argv list only (a string is a `TypeError`: there is no shell). It returns `(ok, rc, out)` and never raises for a missing program, a bad exit or a timeout; `.timed_out` and `.missing` say why. `dirs` resolves the program only in those directories, ignoring PATH. The child runs in its own session so a timeout kills the whole tree. By default the child gets the parent environment with `LC_ALL=C` so output is not translated; pass `env={}` for an empty one. `probe(name, cmd, parse)` returns a `Probe` that is **unread** when the command failed, timed out, produced nothing when output is required, or the parser returned `None` or raised. Its `value` is then `None`: there is nothing to fake.
 
-**Defaults that fail safe.** `probe()` treats empty output as unread unless `require_output=False`; `run()` with no deadline and no timeout still uses a 14 s budget; output over `max_bytes` is a failure, not a truncated success. `validate_rows` (used by `emit`) also enforces the rules a schema cannot say: a tile with text needs a number, the footer count including the manifest's actions, and a nav row has no actions.
+**Defaults that fail safe.** `probe()` treats empty output as unread unless `require_output=False`; `run()` with no deadline and no timeout still uses a 14 s budget; output over `max_bytes` is a failure, not a truncated success. The 14 s budget assumes the app file sets `bridge.timeout_seconds` to 20 or more: Bolt's limit is 1 to 60 s with a default of 10 (`schema/bolt-rules.json`, `timeouts`), and the examples set 20 to 25. `validate_rows` (used by `emit`) also enforces the rules a schema cannot say: a tile with text needs a number, the footer count including the manifest's actions, and a nav row has no actions.
 
 **Hosts.** `host_label` never cuts inside a label: it shows the whole host, or drops whole leading labels, or returns `(host too long)` (show `host_full()` next to it). It has no full public-suffix list: it knows common two-part suffixes (`co.uk`, `com.au`) and a short list of hosting suffixes (`github.io`, `pages.dev`, ...). Punycode (`xn--`) hosts are shown raw and never cut. Scheme and port are not shown, so do not use it where the scheme or port is the point.
 
@@ -92,7 +94,7 @@ An author can ship either, with the same row contract:
 "requires": [{ "interpreter": "python", "min_version": "3.9" }]
 ```
 
-`requires[].interpreter` is one of `python`, `node`, `sh`, `powershell`; `platforms` is optional per entry. **Bolt does not read these yet.** Using them (hide the app on an unsupported OS with a plain reason, check the interpreter at install, record `platforms` in the pack manifest) needs a change in the launcher's manifest contract and its UI. That is a proposal for the runtime. Until then they are documentation that the toolkit validates, and the script protects itself with `unsupported_row`.
+`requires[].interpreter` is one of `python`, `node`, `sh`, `powershell`; `platforms` is optional per entry. **Bolt does not read these yet.** Using them (hide the app on an unsupported OS with a plain reason, check the interpreter at install, record `platforms` in the pack manifest) needs a change in the launcher's manifest contract and its UI. That is a proposal for the runtime. Until then they are documentation that the toolkit validates (`verify` also skips the missing-command warning for a system that `platforms` leaves out), and the script protects itself with `unsupported_row`.
 
 ### The real problem is the interpreter
 
@@ -122,30 +124,32 @@ Not absorbed: the Windows OEM code page for some console tools (decode with `enc
 
 ## 5. The test harness: `bolt-apps check`
 
-`bolt-apps check <app> [--json] [--os macos|linux|windows] [--update-golden]` runs when the app folder has a `check.json`. (Snippet, search and transform apps still go through Bolt's own engines, which are not published; `check` on them says so.)
+`bolt-apps check <app> [--json] [--os macos|linux|windows] [--case text] [--shared] [--update-golden]` runs when the app folder has a `check.json`. (Snippet, search and transform apps still go through Bolt's own engines, which are not published; `check` on them says so.)
 
-**Run it only on code you have read.** `check` executes the app's script and interpreter on your machine. The empty environment, temp HOME and stub PATH make the result repeatable; they are not a sandbox. A script can still read your real home directory, call tools by absolute path and use the network. Paths named in `check.json` must stay inside the app folder (`kit vendor` refuses anything else).
+`--case text` runs only the cases whose name contains the text. `--shared` runs every case on a fresh export of this repository's kit, as Bolt's shared kit would be loaded (`kit export-shared`).
+
+**Run it only on code you have read.** `check` executes the app's script and interpreter on your machine. The minimal environment, temp HOME and stub PATH make the result repeatable; they are not a sandbox. A script can still read your real home directory, call tools by absolute path and use the network. Paths named in `check.json` must stay inside the app folder (`kit vendor` refuses anything else).
 
 **What it does, per case:**
 
 1. Builds a temp directory with a **stub command** for each recorded output (`fixtures/<os>/<cmd>.out`, optional `<cmd>.rc`) and a temp HOME.
-2. Runs the script in a **clean subprocess**: environment is only `PATH` (the stub directory) and `HOME`; the working directory is the temp HOME. A command with no stub is "not found", so the script must handle a missing tool.
+2. Runs the script in a **clean subprocess**: the environment is `PATH` (the stub directory), `HOME` (the temp HOME), `USER`, `LOGNAME`, the variables Bolt itself sets (`runner_env.fixed` in `schema/bolt-rules.json`) and any `env` the case names in `check.json`; the working directory is the temp HOME. A command with no stub is "not found", so the script must handle a missing tool.
 3. For `--os X`, runs only the cases for OS X and starts the script with the Python platform set to X (done by the harness wrapper, never by the script), so the script's `os_name()` picks that OS's commands.
-4. **Hung-command mode**: `"hang": ["df", "lsof"]` makes those stubs sleep. The case asserts the whole run stays under its time budget (default 18 s, under the 20 s bridge limit) and the output still validates and does not say all clear.
+4. **Hung-command mode**: `"hang": ["df", "lsof"]` makes those stubs sleep. The case asserts the whole run stays under its time budget (default 18 s; `check` assumes a `timeout_seconds` of 20 and fails a run still going after 20 s) and the output still validates and does not say all clear.
 5. **Hostile-data fuzz**: `"hostile": true` replaces `@@HOSTILE@@` in the fixtures with a payload (bidi, zero-width, tag, line separator, bell, `{{x}}`). Every case already scans all output for such characters and for `{{`/`}}`.
 6. **Golden snapshots**: the rows must equal `golden/<name>.json`. `--update-golden` writes it; review the diff.
 7. **Schema validation** of every output, and the label, footer (the kit limit minus manifest actions, `manifest_actions` in `check.json`) and numeric-tile rules, with the numbers in [the rules table](../kit/examples/QUICKSTART.md#4-the-rules-table).
 8. Expectations per case: `text_present`, `text_absent`, `max_seconds`, `exit`, `min_rows`, `view_fallback`.
-9. **Kit guard**: the `bolt_app_kit` beside the script must match its lock (`kit_modified`), and match this toolkit's kit when the versions are equal (`kit_diverged`). An older pinned version is an error (`kit_outdated`) unless `check.json` sets `allow_outdated_kit` after the older kit was reviewed. The kit directory must hold exactly the kit's files: a symlink, a subdirectory, a `.so`, `.pyd` or `.pyc`, or any extra file fails `kit_modified` (only `__pycache__` contents are ignored). Paths in `check.json` may not pass through a symlink, and `kit vendor` only replaces a real directory named `bolt_app_kit` inside the app folder. The lock is not signed, so this catches accidents and unreviewed edits, not an author who rewrites the lock and the version on purpose; the pack signature (future, section 6) is what binds the kit to a release.
+9. **Kit guard**: the `bolt_app_kit` beside the script must match its lock (`kit_modified`), and match this toolkit's kit when the versions are equal (`kit_diverged`). An older pinned version is an error (`kit_outdated`) unless `check.json` sets `allow_outdated_kit` after the older kit was reviewed. The kit directory must hold exactly the kit's files: a symlink, a subdirectory, a `.so`, `.pyd` or `.pyc`, or any extra file fails `kit_modified` (only `__pycache__` contents are ignored). Paths in `check.json` may not pass through a symlink, and `kit vendor` only replaces a real directory named `bolt_app_kit` inside the app folder. The lock is not signed, so this catches accidents and unreviewed edits, not an author who rewrites the lock and the version on purpose; the pack signature (section 6) is what binds the kit to a release.
 
-**Built in v0.1:** all of the above, on macOS or Linux hosts, for Python scripts.
+**Built:** all of the above, on macOS or Linux hosts, for Python scripts.
 
 **Not built:**
 - Running on a Windows host (the stubs are `sh` scripts).
 - Real behaviour of another OS. `--os windows` from a Mac tests the app's own logic against recorded output; it is reported as "Fixture-tested only". Path handling, encodings, real tools and the real tree kill are not exercised.
 - The real launcher: row mapping, nav, the footer, tile rendering. `check` approximates the launcher's rules from its source; it can be wrong when the launcher changes.
 - Interpreters other than the one in `check.json`, minimum-version checks, shell or Node scripts.
-- Property-based fuzzing beyond the fixed hostile payload; parallel case execution; the `pack` integration (below).
+- Property-based fuzzing beyond the fixed hostile payload; parallel case execution.
 - A fixture recorder.
 
 **Follow-up (maintainer, not done here):** the fleet has real Linux and Windows machines. The same fixtures can be replayed there live by running the app against the real tools and diffing the rows against the goldens, which turns "fixture-tested only" into "run on that system".
@@ -158,7 +162,7 @@ Not absorbed: the Windows OEM code page for some console tools (decode with `enc
 
 **Divergence guard (both modes):** `check` fails `kit_modified` if the vendored files differ from the lock (edited by hand; in flat mode also a `bolt_app_kit/` folder beside the file, which Python would import instead), `kit_diverged` if the lock claims this toolkit's version but the files differ from a fresh build, and `kit_outdated` if the app is pinned to an older version.
 
-`bolt-apps pack --personal` packs a single-file-script app for your own use (all per-OS commands in one app file, one signature). `platforms` is not recorded in the pack. A kit app packs when the kit is vendored flat (`kit vendor --flat`). `verify` and `lint` count a script as used when an app file runs it, when a used `.py` script imports it, or when a used `.json` file names it in a quoted string (for example `config.json` naming `fixtures.json`); a script nothing uses is still `script_unused`. The gallery still takes tier 1 and 2 only.
+`bolt-apps pack --personal` packs a single-file-script app for your own use (all per-OS commands in one app file, one signature). `platforms`, `requires` and `min_bolt_version` travel in the `listing` of the pack's signed `bundle.json` (a copy of `bolt-app.json`), not in any manifest, and Bolt does not read them. A kit app packs when the kit is vendored flat (`kit vendor --flat`). `verify` and `lint` count a script as used when an app file runs it, when a used `.py` script imports it, or when a used `.json` file names it in a quoted string (for example `config.json` naming `fixtures.json`); a script nothing uses is still `script_unused`. The gallery still takes tier 1 and 2 only.
 
 **Apps bundled with the desktop app.** The sample apps that ship inside the desktop bundle could consume the kit later the same way: a sync script copies the pinned kit into their `scripts/` and a guard test fails when the copy differs from its lock. Not part of this task; no launcher file is touched.
 
@@ -168,16 +172,16 @@ Semantic versions in `bolt_app_kit.__version__`. While the version is `0.x`, a m
 
 ## 8. Other languages
 
-The contract is language neutral: the JSON Schema and `kit/conformance/cases.json` (inputs and expected outputs for every formatter, text function, the tile rule and the validation cases). Any implementation passes the same fixtures.
+The contract is language neutral: the JSON Schema and `kit/conformance/cases.json` (inputs and expected outputs for `fmt_pct`, `fmt_bytes`, `fmt_duration`, `fmt_count`, `fmt_time`, the text functions, the tile rule and the validation cases; `rnd` and `fmt_num` have none). Any implementation passes the same fixtures.
 
 | Kit | State |
 |---|---|
-| Python | Built (v0.1). Runs `cases.json` in `tests/test_conformance.py` |
-| TypeScript/Node | Second. Same `cases.json` and schema; it must pass the same cases and the same `check` fixtures, so the two kits are tested identically |
-| Shell | A tiny emitter (`bolt-apps emit`, or a documented printf pattern) for apps that only print a few rows; no formatters |
+| Python | Built. Runs `cases.json` in `kit/python/tests/test_conformance.py` |
+| TypeScript/Node | Not built. Planned second. Same `cases.json` and schema; it must pass the same cases and the same `check` fixtures, so the two kits are tested identically |
+| Shell | Not built. Planned: a tiny emitter or a documented printf pattern for apps that only print a few rows, with no formatters. There is no `bolt-apps emit` command yet |
 
 The JS validator inside `check` already runs the `validate` cases from `cases.json`, which shows the fixtures are portable.
 
 ## 9. Out of scope
 
-Not built: permissions enforcement and confinement (the runtime), the gallery and its index, a JavaScript kit, Windows hosting for `check`, signing script apps.
+Not built: permissions enforcement and confinement (the runtime), the gallery and its index, a JavaScript kit, Windows hosting for `check`, a reviewed route for publishing script apps (a personal pack is self-signed).

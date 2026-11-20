@@ -240,7 +240,7 @@ export function checkManifests(files, opts = {}) {
 	const scanned = [...used].filter((n) => scripts.has(n)).map((n) => ({ name: n, text: scripts.get(n).toString('utf8') }));
 	// Declared hosts are unioned across every app in the pack; Bolt scans per app, so a multi-app pack may show fewer of these warnings than Bolt (never more).
 	const declaredHosts = []; for (const a of apps) declaredHosts.push(...declaredHostsOf(a.tree));
-	for (const f of files.filter((x) => x.kind === 'user_utility')) scanned.push({ name: path.basename(f.path), text: f.content.toString('utf8') });
+	for (const f of files.filter((x) => x.kind === 'user_utility')) scanned.push({ name: path.basename(f.path), text: f.content.toString('utf8'), app: true });
 	for (const m of scanMentions(scanned, declaredHosts)) add('warning', 'script_mentions', `the install prompt will list: ${m}. A courtesy search, not a verdict: change the text if it is not what the app does${/keychain/.test(m) && /bolt_app_kit\.py/.test(m) ? '. The vendored kit contains the keychain reader; it runs only if your script calls kit.get_secret. The prompt lists it either way, and that is true of what the file can do' : ''}`, 'scripts');
 	return { findings: dedupe(findings), apps, unknownAssess };
 }

@@ -93,8 +93,21 @@ export function assessYaml(yaml, name = 'the app', opts = {}) {
 		else { tier = 3; perms.add(`action:${kind}`); problems.push({ code: 'action_not_allowed', message: `action kind "${kind}" is not one Bolt accepts (${ALLOWED_ACTION_KIND.join(', ')}). Bolt would refuse the whole pack.` }); }
 	}
 	const sd = scriptsDirProblem(yaml, root); if (sd) problems.push(sd);
+	problems.push(...pipeNotSupportedProblems(root));
 	problems.push(...launcherRules(root, opts));
 	return { id, runtime, tier, permissions: [...perms].sort(), reasons, problems, refs: treeRefs(root), unknown: false, tree: root };
+}
+
+// Transform steps the runtime knows by name but does not run yet: it throws "recognized but not yet supported" when the step runs.
+// The app still loads, so this is a warning, like an icon the launcher cannot draw.
+export const PIPE_NOT_SUPPORTED = ['yaml', 'toml', 'env', 'properties', 'camel', 'snake', 'kebab', 'slug', 'flatten', 'rename_cols', 'redact_secrets'];
+export function pipeNotSupportedProblems(root) {
+	const out = [];
+	(get(get(root, 'transform')?.value, 'pipe')?.value?.items || []).forEach((it, i) => {
+		const name = it.t === 's' ? it.v : it.t === 'm' && it.entries.length ? it.entries[0].key : undefined;
+		if (PIPE_NOT_SUPPORTED.includes(name)) out.push({ level: 'warning', code: 'pipe_step_not_supported', message: `transform step ${i + 1} ('${name}') is recognized but not yet supported by this build of Bolt, so the app fails with that message when it runs. Remove the step or use a supported one` });
+	});
+	return out;
 }
 
 // ---- more launcher rules, each mirrored from the launcher source (read, not guessed) ----
@@ -235,13 +248,14 @@ export function dataFilesUsed(used, names, read) {
 // The install prompt's "Mentions" list: a quick text search Bolt runs over the manifest and every script it names
 // (the launcher scan_scripts). Mirrored here so an author sees the same findings
 // before the person installing does. A courtesy, never a boundary. `files` is [{ name, text }].
+const OPEN_RULE = 'open (starts other programs or documents)';
 const SCAN_RULES = [
 	["Bolt's app data folder", /app\.sparcle\.bolt|bolt-startup\.log|local-api\.key|user-utils[/\\]/i],
 	['the .ssh folder', /(^|[^A-Za-z0-9])\.ssh([/\\\s"']|$)/],
 	['credential folders or files (.aws, .gnupg, .kube, .npmrc, .git-credentials, private keys)', /(^|[^A-Za-z0-9])\.(aws|gnupg|kube|npmrc|git-credentials|netrc)\b|\bid_(rsa|ed25519|ecdsa)\b/i],
 	['the system keychain or the security command', /(^|[\s;&|(`"'\[,])security\s+(find|add|delete|dump|import|export|unlock)[a-z-]*|\bkeychain\b|\bsecret-tool\b|\bcmdkey\b/i],
 	['osascript', /\bosascript\b/],
-	['open (starts other programs or documents)', /(^|[;&|`(\s'"\[,])open\s+(-[A-Za-z]+\b|["'/~$])|["']open["']\s*,/],
+	[OPEN_RULE, /(^|[;&|`(\s'"\[,])open\s+(-[A-Za-z]+\b|["'/~$])|["']open["']\s*,/],
 	['recursive forced delete', /\brm\s+(-[a-zA-Z]*r[a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*r|-r\s+-f|-f\s+-r)\b/],
 	['a browser profile folder', /Google[/\\]Chrome|BraveSoftware|Firefox[/\\]Profiles|\.mozilla|Microsoft Edge[/\\]|\.config[/\\](google-chrome|chromium|microsoft-edge)|Login Data\b/i],
 	['the clipboard', /\b(pbpaste|pbcopy|xclip|xsel|wl-paste|Get-Clipboard)\b/i],
@@ -258,13 +272,38 @@ const authorityHost = (auth) => {
 	const at = auth.slice(auth.lastIndexOf('@') + 1), m = /^(.*):(\d+)$/.exec(at);
 	return (m ? m[1] : at).replace(/^[[\]]+|[[\]]+$/g, '').replace(/\.+$/, '').toLowerCase();
 };
+// For the `open` and `curl or wget` rules only. The one thing skipped: in an app file (the caller passes app: true; the
+// default is no skip, and a file under scripts/ is never an app file even if it is named .yaml), a column-0
+// `description:` or `placeholder_examples:` key whose value is one complete line of text, so prose such as
+// `description: Wraps curl so you can fetch pages` does not warn.
+// NOT skipped, on purpose: comment lines in scripts (# or //) and YAML # comments. A line filter cannot tell a comment
+// from a path, a string, a heredoc or a continued line, so a script comment that mentions open or curl is a known
+// remaining false positive. A prose false positive costs a courtesy warning; a hidden command costs the whole scan.
+// Also not skipped: an indented line, a block scalar (| or >), and a quoted value that runs onto more lines.
+// Lines end at \r\n, a lone \r, U+2028 or U+2029 (Python and JS treat those as line ends).
+const LINE_END = /\r\n|[\r\n\u2028\u2029]/;
+const closesQuote = (t, q) => { for (let k = 0; k < t.length; k++) { if (q === '"' && t[k] === '\\') k++; else if (t[k] === q) { if (q === "'" && t[k + 1] === "'") k++; else return true; } } return false; };
+function runnableText(app, text) {
+	if (app !== true) return text;
+	const keep = []; let inQuote = null;
+	for (const l of text.split(LINE_END)) {
+		if (inQuote) { keep.push(l); if (closesQuote(l, inQuote)) inQuote = null; continue; }
+		const m = /^([A-Za-z_][\w-]*)\s*:\s*(.*)$/.exec(l), v = m ? m[2].trim() : '';
+		if (m && (v[0] === '"' || v[0] === "'") && !(v.length > 1 && closesQuote(v.slice(1), v[0]))) inQuote = v[0];
+		const prose = m && /^(description|placeholder_examples)$/.test(m[1]) && v && !/^[|>]/.test(v) && !inQuote
+			&& (v[0] === '[' ? v.endsWith(']') : v[0] === '"' || v[0] === "'" ? v.length > 1 && v.endsWith(v[0]) : true);
+		if (!prose) keep.push(l);
+	}
+	return keep.join('\n');
+}
 export function scanMentions(files, declaredHosts = []) {
 	const declared = (h) => declaredHosts.some((d) => { d = String(d).trim().toLowerCase(); return h === d || h.endsWith(`.${d}`); });
 	const out = new Set();
-	for (const { name, text } of files) {
-		for (const [what, re] of SCAN_RULES) if (re.test(text)) out.add(`${what} (in ${name})`);
+	for (const { name, text, app } of files) {
+		const live = runnableText(app, text);
+		for (const [what, re] of SCAN_RULES) if (re.test(what === OPEN_RULE ? live : text)) out.add(`${what} (in ${name})`);
 		for (const m of text.matchAll(/https?:\/\/[^\s"']+/g)) if (/[@\\]/.test(m[0])) out.add(`a web address with a user name or a backslash in it (in ${name})`);
-		for (const line of text.split('\n').filter((l) => /\b(curl|wget)\b/.test(l))) {
+		for (const line of live.split('\n').filter((l) => /\b(curl|wget)\b/.test(l))) {
 			const auths = [...line.matchAll(/https?:\/\/([^/\\\s"'?#]+)/g)].map((m) => m[1]);
 			if (!auths.length) out.add(`curl or wget with an address not written out here (in ${name})`);
 			for (const a of auths) {

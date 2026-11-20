@@ -187,7 +187,7 @@ function cmdLint(args) {
 	let bad = 0; const reports = [];
 	for (const d of dirs) {
 		const r = lintApp(d, { personal }), errs = r.out.filter((x) => x.level === 'error'); if (errs.length) bad++;
-		reports.push({ app: r.id, ok: !errs.length, findings: r.out });
+		reports.push({ app: r.id, ok: !errs.length, findings: r.out.map((x) => ({ ...x, file: x.path, fix: FIXES[x.code] || x.message })) });   // file and fix as verify --json has them; path stays
 		if (!json) { console.log(`${errs.length ? 'FAIL' : 'ok  '} ${r.id}`); for (const f of r.out) console.log(`     ${f.level} ${f.code}: ${f.message} (${f.path})`); }
 	}
 	if (json) console.log(JSON.stringify({ ok: !bad, reports }, null, 2));
@@ -394,7 +394,7 @@ function cmdVerify(args) {
 		}
 	}
 	const ok = !findings.some((x) => x.level === 'error');
-	if (json) console.log(JSON.stringify({ ok, kind, findings, confirm }, null, 2));
+	if (json) console.log(JSON.stringify({ ok, kind, findings: findings.map((x) => ({ ...x, path: x.file })), confirm }, null, 2));   // path as lint --json has it; file stays
 	else {
 		for (const x of findings) console.log(`${x.level.toUpperCase().padEnd(7)} ${esc(x.code)}  ${esc(x.file || '')}${x.line ? ':' + x.line : ''}\n        ${esc(x.message)}\n        fix: ${esc(x.fix)}`);
 		if (confirm) {

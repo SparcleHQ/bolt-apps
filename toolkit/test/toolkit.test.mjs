@@ -87,3 +87,25 @@ test('numeric-looking ids are quoted in generated YAML and pass lint', () => {
 	assert.match(fs.readFileSync(path.join(d, 'apps/123/utilities/123.yaml'), 'utf8'), /^id: "123"/m);
 	assert.equal(run(d, 'lint', 'apps/123').status, 0);
 });
+
+test('a usage error exits 2 in every command (CHECKER.md: 2 is usage or load error), run, ship, new <template> and doctor included', () => {
+	const d = tmp(), nope = path.join(d, 'nope'); fs.mkdirSync(path.join(d, 'taken'));
+	const cases = [['run'], ['run', nope], ['ship'], ['ship', nope], ['doctor', nope], ['new', 'system-glance', 'Not_An_Id'], ['new', 'system-glance', 'taken', '--dir', d], ['new', 'taken', '--dir', d], ['lint', nope], ['verify'], ['pack'], ['check']];
+	for (const c of cases) { const r = run(d, ...c); assert.equal(r.status, 2, `${c.join(' ')}: ${r.stdout}${r.stderr}`); assert.match(r.stderr, /^bolt-apps: /, c.join(' ')); }
+	assert.match(run(d, 'doctor', nope).stderr, /no app found in .*nope.*\n.*usage: \.\/bolt-apps doctor/);
+	assert.deepEqual(fs.readdirSync(d), ['taken'], 'a usage error writes nothing');
+});
+
+test('lint --json and verify --json findings both carry path, file and fix; the fields each had before are unchanged', () => {
+	const d = tmp(), dir = path.join(d, 'apps', 'my-snip');
+	assert.equal(run(d, 'new', 'my-snip', '--dir', 'apps').status, 0);
+	const j = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')); j.permissions.push('not_a_permission'); fs.writeFileSync(path.join(dir, 'bolt-app.json'), JSON.stringify(j));
+	const l = run(d, 'lint', 'apps/my-snip', '--json'); assert.equal(l.status, 1);
+	const lf = JSON.parse(l.stdout).reports[0].findings.find((x) => x.code === 'permission_unknown');
+	assert.deepEqual(lf, { level: 'error', code: 'permission_unknown', message: 'unknown permission "not_a_permission"', path: 'bolt-app.json', file: 'bolt-app.json', fix: 'Remove or rename this permission.' });
+	const v = run(d, 'verify', 'apps/my-snip', '--json'); assert.equal(v.status, 1);
+	const vf = JSON.parse(v.stdout).findings.find((x) => x.code === 'permission_unknown');
+	assert.deepEqual(vf, { level: 'error', code: 'permission_unknown', message: 'unknown permission "not_a_permission"', file: 'bolt-app.json', fix: 'Remove or rename this permission.', path: 'bolt-app.json' });
+	for (const f of JSON.parse(v.stdout).findings) assert.equal(f.path, f.file);
+	for (const f of JSON.parse(l.stdout).reports[0].findings) { assert.equal(f.file, f.path); assert.ok(typeof f.fix === 'string' && f.fix, JSON.stringify(f)); }
+});

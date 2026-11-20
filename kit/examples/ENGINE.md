@@ -12,7 +12,7 @@ All apps here run the same engine, kept as `scripts/<id>__engine.py` (every file
 python3 scripts/<id>__engine.py --emit-yaml > utilities/<id>.yaml
 ```
 
-If the config is wrong (an unknown icon, a missing key, unreadable JSON), `--emit-yaml` prints the problem on screen (for an icon it also lists the valid names), writes nothing to stdout and exits 1. The shell still creates an empty `utilities/<id>.yaml` for `>`: an empty file means the command failed, so run it again without `> ...` to read the reason. `run`, `lint` and `check` say the same when they meet an app file that is empty or is not YAML.
+If the config is wrong (an unknown icon, a missing key, unreadable JSON), `--emit-yaml` prints the problem on screen (for an icon it also lists the valid names), writes nothing to stdout and exits 1. A line break in a value the app file holds (the app title or description, a form input, a lookup example, a widget, a field label) is such a problem too: the app file keeps each value on one line, so the message names the config key to rewrite. The shell still creates an empty `utilities/<id>.yaml` for `>`: an empty file means the command failed, so run it again without `> ...` to read the reason. `run`, `lint` and `check` say the same when they meet an app file that is empty or is not YAML.
 
 The engine never connects to anything unless `api.fixture_default` is `false` (or `BOLT_APP_FIXTURE=1` is unset and the config says live).
 
@@ -61,7 +61,7 @@ The person types `=chip customers acme`, sees the customers that match (each row
 `on_missing_key` (`setup` or `sample`; see "Three starting states" below), `base_url` (https, or loopback http for tests; required unless the app is sample-only: `api.fixture_default` true, or no `api` section at all), `key_env` (variable name), `env_file` (a `.env` path, must be `chmod 600`), `auth_header`, `auth_prefix` (`"Bearer "`), `fixture_default` (true = sample data, no network), `fixture_file`, `fixture_banner` (show a Sample data row). `allowed_hosts` (extra https hosts an endpoint `path` may name; the key is sent only to the `base_url` host), `auth_in` (`header`, the default, or `query`), `auth_param` (the query parameter name for `auth_in: query`, default `api_key`; the key is stripped from every answer before it is cached or shown, so prefer a header when the API allows one), `user_agent`.
 
 ## `cache`
-`ttl` seconds a result is fresh (a repeat run inside it makes no request), `stale_max` seconds an old copy may be shown when the API fails. A failed call is never cached and never shown as zero.
+`ttl` seconds a result is fresh (a repeat run inside it makes no request), `stale_max` seconds an old copy may be shown when the API fails. A failed call is never cached and never shown as zero: a view whose list did not load and has no old copy shows one "Could not read <view>" row (Enter retries), not an empty list. A detail shows the same row for each linked list that did not load, beside the linked rows that did. A copy holds the rows as read (unwrapped, mapped, each list row cut to the fields `config.json` names, and unused after any edit of `config.json`), and when that is still over the kit cache's 1 MB, a later failure says there is no old copy and why. An answer over 5 MB is not read and shows "<service> sent more than 5 MB, more than this app reads" instead of "returned an error".
 
 ## When the API answers 404
 An HTTP 404 (or 410) on EVERY call of a run, with nothing else to show, means the service is up and has no such thing. The app then shows one row with the typed word in its subtitle and no Retry: "No such <app.noun>" when `noun` is set; in lookup mode "No match" (or the lookup's `none_title`); in views mode without a noun, "The service answered 404 for <endpoint names>". It is never shown as an outage, and an old copy is never shown for it. When only some calls answered 404 and others worked, the data that loaded is kept and a notice says "Some data did not load: <endpoint> answered 404". A 404 mixed with another failure shows the other failure (offline, rejected key, rate limit, "returned an error" for a 5xx). In a chained lookup only the first step, the one that takes the typed word, can say "No such"; a later 404 reads "Found it, but the next lookup answered 404". `demo-notfound` previews the row in sample mode.
@@ -87,12 +87,12 @@ Totals over a field: `{ "endpoint": "tickets", "field_sum": "hours" }` adds the 
 `title`, `subtitle`, `icon`, `body`, `view` (drill to a view; `arg` filters it), `url` (opens a link), `tile`, `extra`, `trend` (list of numbers), `only_if`. `overview.widget` replaces the default tiles pane.
 
 ## `tile`
-`{ label, value (a stat or field name, or a number), max, unit (4 characters), note, foot, badge }`. `badge` is a word or a list of `{ "if": "ready>=80", "badge": "ON TRACK" }` rules, first match wins, last one without `if`.
+`{ label, value (a stat or field name, or a number), max, unit (4 characters), note, foot, badge }`. `badge` is a word or a list of `{ "if": "ready>=80", "badge": "ON TRACK" }` rules, first match wins, last one without `if`. A value that cannot be read gives no tile, and its badge comes only from rules with an `if` on another field: `status==open` still applies, while the last rule without `if` and every rule that has the value's field on its left, or reads that field on its right, are skipped, so a count that did not load is never called CLEAR and a text such as N/A never meets `remaining>=10`. A plain word badge is left out.
 
 ## `views[]`
 `id` (view count: see [the rules table](QUICKSTART.md#4-the-rules-table)), `title`, `icon`, `endpoint`, `sort` (`[{ field, order[], desc }]`), `children` (`[{ view, match }]` drills to rows of another view whose `match` field equals this row's id), `no_children`, `empty`, `widget` (`{ kind, mode, bind }`, copied into the app file; default is a detail preview built from `item.fields`). Pane kinds with app data: card, markdown, entity_preview, chart, table, cards, detail, json_tree, diff, image_grid (the same list as the rules table; chart types are line, bar and sparkline only).
 
-More view options: `id_field` (the row field that holds its id, default `id`), `pane_id` (the pane name the rows use, default the view id), and on a `children` entry `parent_field` (the row field compared to `match`, default the view's `id_field`).
+More view options: `id_field` (the row field that holds its id, default `id`; an id made of letters, digits, underscores, dots and hyphens and at most 64 long is the row's drill arg as it is, any other id drills by an ASCII form of it plus a short hash, so each still opens its own item), `pane_id` (the pane name the rows use, default the view id), and on a `children` entry `parent_field` (the row field compared to `match`, default the view's `id_field`).
 
 `item`: `title`, `subtitle`, `icon`, `url`, `body` (markdown), `copy`, `tile`, `fields` (up to 5 `{ label, value, kind }`), `extra` (named row fields a widget binds as `{{row.name}}`; a value that is exactly `{field}` keeps a number a number), `data_field` (a nested object for a json_tree pane), `trend_field`. A field named `left`, `right` or ending `_lines` keeps line breaks.
 
@@ -106,7 +106,7 @@ What each filter takes and gives:
 | `whenday` | the same | the date only, `2026-11-15`; ISO strings work, so a crates.io or GitHub date needs no other filter |
 | `day` | any text that starts with a date | its first 10 characters (`2026-07-18`) |
 | `hhmm` | an ISO date-time | characters 12 to 16 (`05:30`) |
-| `yes` | a true or false value | Yes or No (it never prints blank, so a missing flag reads `unknown`; show a flag only on rows where it matters) |
+| `yes` | a true or false value, or the text true, false, yes or no in any case | Yes or No (it never prints blank, so a missing flag reads `unknown`; show a flag only on rows where it matters) |
 | `thousands` | a number or digits | `1,720,732,933`; with decimals `1,234.50`; not a number reads `unknown` |
 | `round`, `round1`, `round2` | a number | 0, 1 or 2 decimals, half up |
 | `human` | text | in_progress becomes In progress |
@@ -116,10 +116,10 @@ What each filter takes and gives:
 A `tile` value must be a number (a text value draws a `-` tile), but a tile `label`, `note` and `foot` are templates: put text such as a version in the label (`"Latest {crate.max_stable_version}"`). Numbers in a tile get no separator; put the formatted number in the row title or subtitle with `thousands`.
 
 ## Words typed after the chip (views mode)
-`=chip view`, `=chip view <id>` (detail), `=chip view <word>` (filter by that word), `=chip view demo-offline | demo-stale | demo-auth | demo-nokey | demo-notfound` (preview the error rows in fixture mode). A view whose widget `mode` is `list_data` (chart, table) shows only its data rows, so nothing but data is plotted.
+`=chip view`, `=chip view <id>` (detail; an id of 57 to 64 characters has no forced refresh, so its Reload row reads the failed calls again and takes the rest from the cache), `=chip view <word>` (filter by that word; any word works, `C++` or `a/b` too, and its Retry rows reload the list without the filter), `=chip view demo-offline | demo-stale | demo-auth | demo-nokey | demo-notfound` (preview the error rows in fixture mode). A view whose widget `mode` is `list_data` (chart, table) shows only its data rows, so nothing but data is plotted.
 
 ## `form`
-`inputs[]` (`name`, `type` text, number, date, select or toggle, `label`, `required`, `default`, `placeholder`, `options`, `min`, `max`, `step`, `max_length`, `pattern`), `submit.label`, `store.file` (a local log, kept `0600`; `max_rows`), `record` (what is saved, templates over the input values), `item` (how a saved row becomes a result row), `widget`. Bad input shows one "Not saved" row and saves nothing.
+`inputs[]` (`name`, `type` text, number, date, select or toggle, `label`, `required`, `default`, `placeholder`, `options`, `min`, `max`, `step`, `max_length`, `pattern`), `submit.label`, `store.file` (a local log, kept `0600`; `max_rows`), `record` (what is saved, templates over the input values; an empty input is saved as empty text, not `unknown`), `item` (how a saved row becomes a result row), `widget`. Bad input shows one "Not saved" row and saves nothing.
 
 ## `lookup`
 `endpoint`, `match` (fields compared to the typed word: exact first, then contains), `item`, `widget`, `prompt_title`, `prompt_subtitle`, `none_title`, `examples`.
@@ -154,14 +154,14 @@ Bolt starts a personal app's script with an empty environment except a short all
 | Environment variable | terminal and tests only | handy for CI | never reaches the script under Bolt |
 | `inputs: type: secret` form field | accepted by the launcher; not used by these examples | typed once | the value is passed to the command as a word; not measured for the run log, so do not rely on it |
 
-The engine (and any kit app) reads the key with `kit.get_secret(app_id, NAME, env_file=...)`: environment, then keychain, then the `.env` file. When nothing is found it shows a row with the exact one-line setup (`kit.setup_hint`). `kit.redact(text, [key])` removes the key, `user:password@` in an address and key-like query values from any text before it is shown.
+The engine (and any kit app) reads the key with `kit.get_secret(app_id, NAME, env_file=...)`: environment, then keychain, then the `.env` file. When nothing is found it shows a row with the exact one-line setup (`kit.setup_hint`). A key that is found but refused (the file is a link, belongs to another user or others can read it; the key is too short) and a key file that gives no key (it cannot be read, its line is empty, written another way or missing) each get a row that names that cause, the file `env_file` points at, and the fix for it. `kit.redact(text, [key])` removes the key, `user:password@` in an address and key-like query values from any text before it is shown.
 
 Never put a key: in the app file, in `config.json`, in `fixtures.json`, in a pack, in the cache, in a query word, in row text, in an error message, in a URL you show or log. The runner also masks the values of names it forwards, but a script that reads its own key is on its own: use `redact`.
 
 Expected install-prompt finding: an app that reads the keychain is listed as "the system keychain or the security command". That is true, so it is left in.
 
 ## More options
-- `lookup.steps` + `lookup.rows`: a chain of endpoints; a step's `path` may use `{query}` and `{earlier_step.field}` (the first result of an earlier step), values are URL-quoted. An endpoint `path` that starts with `https://` is used as is (a second host).
+- `lookup.steps` + `lookup.rows`: a chain of endpoints; a step's `path` may use `{query}` and `{earlier_step.field}` (the first result of an earlier step), values are URL-quoted. An endpoint `path` that starts with `https://` is used as is (a second host). The steps run one after another inside one time budget of 14 s for the whole run, so a slow chain ends with "<service> did not answer in time" instead of outlasting the bridge timeout.
 - `maps`: `{ "wmo": { "0": "Clear" } }`, used as `{field|wmo}`. Filter `hhmm` cuts `2026-01-01T05:30` to `05:30`.
 - `trend_path` on an overview or lookup row: a dotted path to a number list for a tile sparkline.
 - Stats `{ endpoint, field_sum }` and `{ endpoint, field_max }` total or maximise a field.

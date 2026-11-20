@@ -5,21 +5,21 @@
    "amount": "18.40",
    "category": "Meals",
    "description": "Team lunch",
-   "billable": "no"
+   "billable": "No"
   },
   {
    "date": "2026-01-02",
    "amount": "240.00",
    "category": "Travel",
    "description": "Train to client site",
-   "billable": "yes"
+   "billable": "Yes"
   },
   {
    "date": "2026-01-02",
    "amount": "59.00",
    "category": "Software",
    "description": "Design tool, monthly",
-   "billable": "no"
+   "billable": "No"
   }
  ]
 }

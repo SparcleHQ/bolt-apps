@@ -21,7 +21,7 @@
   "cache": { "ttl": 45, "stale_max": 86400 },
   "endpoints": {
     "account": { "path": "/v1/account", "kind": "object" },
-    "projects": { "path": "/v1/projects", "map": { "title": "name", "status": "state", "lead": "owner.name" } },
+    "projects": { "path": "/v1/projects", "map": { "title": "name", "status": "state", "lead": "owner.name", "started": "startedAt" } },
     "tickets": { "path": "/v1/tickets", "map": { "title": "summary", "status": "state", "assignee_name": "assignee.name", "project_id": "projectId" } }
   },
   "stats": {

@@ -18,7 +18,7 @@
     "date": "2026-02-01",
     "amount": "5.00",
     "note": "unknown",
-    "billable": "true"
+    "billable": "Yes"
   },
   {
     "title": "Meals · 18.40",
@@ -39,7 +39,7 @@
     "date": "2026-01-03",
     "amount": "18.40",
     "note": "Team lunch",
-    "billable": "no"
+    "billable": "No"
   },
   {
     "title": "Travel · 240.00",
@@ -60,7 +60,7 @@
     "date": "2026-01-02",
     "amount": "240.00",
     "note": "Train to client site",
-    "billable": "yes"
+    "billable": "Yes"
   },
   {
     "title": "Software · 59.00",
@@ -81,6 +81,6 @@
     "date": "2026-01-02",
     "amount": "59.00",
     "note": "Design tool, monthly",
-    "billable": "no"
+    "billable": "No"
   }
 ]

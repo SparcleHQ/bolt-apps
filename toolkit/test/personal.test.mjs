@@ -84,6 +84,23 @@ test('the permissions printed come from the files, not from what bolt-app.json c
 	assert.equal(readPack(path.join(d, 'e.boltpack')).meta.listing.tier, 3);
 });
 
+test('the permissions a personal pack writes into its listing pass lint and verify when bolt-app.json declares them (bare opens_links too)', () => {
+	const d = tmp(), dir = scriptApp(d);
+	write(path.join(dir, 'utilities', 'eagle-info.yaml'), BRIDGE + 'actions:\n  - { id: p, kind: url, label: Any, url_template: "{{link}}" }\n');
+	const out = path.join(d, 'e.boltpack');
+	assert.equal(run(d, 'pack', 'apps/eagle-info', '--personal', '--key', keyed(d), '--out', out).status, 0);
+	const listed = readPack(out).meta.listing.permissions;
+	assert.ok(listed.includes('opens_links'), JSON.stringify(listed));   // a link that is not a fixed https address is listed as plain opens_links (the listing schema allows it)
+	assert.equal(run(d, 'verify', out).status, 0);
+	// The same list in the folder's bolt-app.json: the folder and the pack agree
+	const j = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')); j.permissions = listed; write(path.join(dir, 'bolt-app.json'), JSON.stringify(j));
+	for (const cmd of [['lint', 'apps/eagle-info', '--personal'], ['verify', 'apps/eagle-info']]) { const r = run(d, ...cmd); assert.equal(r.status, 0, `${cmd[0]}: ${r.stdout}${r.stderr}`); assert.doesNotMatch(r.stdout, /permission_unknown/); }
+	// The gallery takes it too (no permission_unknown); a word Bolt does not know is still refused
+	j.permissions = ['opens_links', 'opens_link']; write(path.join(dir, 'bolt-app.json'), JSON.stringify(j));
+	const g = run(d, 'lint', 'apps/eagle-info', '--personal', '--json'), codes = JSON.parse(g.stdout).reports[0].findings.filter((x) => x.code === 'permission_unknown');
+	assert.deepEqual(codes.map((x) => x.message), ['unknown permission "opens_link"']);
+});
+
 test('--personal also packs an ordinary tier 2 app, and a local-service app says its port', () => {
 	const d = tmp(); run(d, 'new', 'up', '--type', 'transform');
 	assert.equal(run(d, 'pack', 'apps/up', '--personal', '--key', keyed(d), '--out', path.join(d, 'u.boltpack')).status, 0);

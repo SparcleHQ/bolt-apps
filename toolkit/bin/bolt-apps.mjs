@@ -154,7 +154,8 @@ export function lintApp(dir, opts = {}) {
 	for (const x of platformFindings(app)) out.push(x);
 	if (!Array.isArray(app.permissions)) E('field_missing', 'permissions must be an array', 'bolt-app.json');
 	const declared = new Set((Array.isArray(app.permissions) ? app.permissions : []).filter((x) => typeof x === 'string'));
-	for (const x of declared) if (!PERMS.includes(x) && !/^opens_links:[a-z0-9.:-]+$/.test(x)) E('permission_unknown', `unknown permission "${x}"`, 'bolt-app.json');
+	// opens_links with no host is what pack --personal lists for a link that is not a fixed https address, and the listing schema allows it
+	for (const x of declared) if (!PERMS.includes(x) && !/^opens_links(:[a-z0-9.:-]+)?$/.test(x)) E('permission_unknown', `unknown permission "${x}"`, 'bolt-app.json');
 	if (!personal) for (const x of perms) if (!declared.has(x)) E('permission_undeclared', `content needs "${x}" but bolt-app.json does not declare it`, 'bolt-app.json');
 	if (personal) {
 		// The install prompt and `verify` show the permissions computed from the app files; bolt-app.json permissions is listing text only.

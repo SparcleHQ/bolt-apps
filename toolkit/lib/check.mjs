@@ -530,7 +530,7 @@ async function checkAppRun(appDir, opts = {}) {
 			if (opts.sharedDir && !(r.kitFile && path.resolve(r.kitFile).startsWith(path.resolve(opts.sharedDir) + path.sep))) E('shared_kit_not_used', `--shared: the script ran on ${r.kitFile && r.kitFile !== '(none)' ? r.kitFile : 'a kit that is not Bolt\'s shared one'}, not the shared kit. The loader uses the shared kit only when the app's own copy has the same bytes, or the app sets WANT_SHARED = True (and KIT_MIN is met). Re-vendor the kit, or use the loader from toolkit/lib/loader.mjs`);
 			secs = r.seconds;
 			const maxS = ex.max_seconds ?? DEFAULT_MAX_S;
-			if (r.killed) E('deadline_exceeded', `the script was still running after ${BRIDGE_LIMIT_S} s (the bridge limit); a global deadline of 14 s must bound every command`);
+			if (r.killed) E('deadline_exceeded', `the script was still running after ${BRIDGE_LIMIT_S} s (check assumes the app file sets bridge.timeout_seconds to ${BRIDGE_LIMIT_S}); a global deadline of 14 s must bound every command`);
 			else if (r.seconds > maxS) E('deadline_exceeded', `took ${r.seconds.toFixed(1)} s; this case allows ${maxS} s`);
 			if (r.rc !== (ex.exit ?? 0)) E('exit_code', `exit ${r.rc}, expected ${ex.exit ?? 0}${r.err ? `; stderr: ${r.err.trim().split('\n').pop().slice(0, 160)}` : ''}`);
 			let rows = null;

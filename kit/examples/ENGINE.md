@@ -302,7 +302,7 @@ When `check` fails after an edit because an old expectation no longer holds, it 
 
 ## Permissions: which list wins
 
-`bolt-app.json` `permissions` is listing text. The install prompt and `verify` show the permissions computed from the app files (`runs_commands`, `inserts_text`, `opens_links:<host>`, `network:localhost:<port>`). A declared `network` or `files` for a bridge script is never computed, shown or checked. `lint --personal` warns with `permissions_differ` when the two disagree and says which words are computed but not declared and which are declared but not computed. Keep a declared word only if it is true of the app.
+`bolt-app.json` `permissions` is listing text. The install prompt and `verify` show the permissions computed from the app files (`runs_commands`, `inserts_text`, `opens_links:<host>`, `network:localhost:<port>`). A declared `network` or `files` for a bridge script is never computed, shown or checked. `lint --personal` warns with `permissions_differ` when a computed word is not declared; the warning names those words and also any declared words that are not computed. Keep a declared word only if it is true of the app.
 
 ## Limits of views mode (so you pick the right template)
 

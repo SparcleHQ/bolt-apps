@@ -6,7 +6,7 @@ import sys
 import threading
 import time
 
-DEFAULT_BUDGET = 14.0   # seconds: the bridge limit is 20 s, this leaves room to print
+DEFAULT_BUDGET = 14.0   # seconds: Bolt stops the script at the app file's bridge.timeout_seconds; with 20 or more this leaves room to print
 MAX_BYTES = 1024 * 1024
 
 

@@ -78,18 +78,21 @@ export function userUtilsDir(env = process.env, platform = process.platform, hom
 	const base = platform === 'darwin' ? path.join(home, 'Library', 'Application Support') : platform === 'win32' ? (env.APPDATA || path.join(home, 'AppData', 'Roaming')) : (env.XDG_CONFIG_HOME || path.join(home, '.config'));
 	return path.join(base, sub, 'user-utils');
 }
-// Names only, never contents and never a write. Lists the files in Bolt's user apps folder that would stop a pack of this app installing (file_exists).
-// Old flat names are the app's own script names without the `<id>__` prefix (a hand copy from before apps were namespaced): never from a pack.
-// An `<id>.yaml` or `scripts/<id>__*` file is what a pack of this app leaves, so names alone cannot say whether it is a problem: kind says which.
+// Names only, never contents and never a write. Lists the files in Bolt's user apps folder that would stop a pack of this app installing (file_exists):
+// a script with the same name as one the pack writes. An `<id>.yaml` or a script of the pack is also what an install of this app leaves, so names alone
+// cannot say whether it is a problem: kind says which.
+// Old flat names are the app's own script names without the `<id>__` prefix (a hand copy from before apps were namespaced, or another app that uses the same
+// common name, such as bolt_app_kit.py). The pack writes only <id>__<name>, so such a file cannot stop it installing: it is listed with blocks: false.
 export function userUtilsClashes(dir, id, appDir) {
 	const out = [];
 	try { if (!fs.statSync(dir).isDirectory()) return out; } catch { return out; }
 	const ls = (d) => { try { return fs.readdirSync(d); } catch { return []; } };
 	const top = ls(dir), scripts = ls(path.join(dir, 'scripts'));
-	for (const f of top) if (f === `${id}.yaml` || f === `${id}.yml`) out.push({ file: path.join(dir, f), kind: 'app file' });
-	for (const f of scripts) if (f.startsWith(`${id}__`)) out.push({ file: path.join(dir, 'scripts', f), kind: 'script' });
-	const own = ls(path.join(appDir || '', 'scripts')).filter((f) => f.startsWith(`${id}__`)).map((f) => f.slice(id.length + 2));
-	for (const f of scripts) if (own.includes(f)) out.push({ file: path.join(dir, 'scripts', f), kind: 'old flat name' });
+	for (const f of top) if (f === `${id}.yaml` || f === `${id}.yml`) out.push({ file: path.join(dir, f), kind: 'app file', blocks: true });
+	const own = ls(path.join(appDir || '', 'scripts')).filter((f) => !f.startsWith('.') && f !== '__pycache__');   // what a pack of this app writes into scripts/ (pack leaves these two out)
+	for (const f of scripts) if (own.includes(f)) out.push({ file: path.join(dir, 'scripts', f), kind: 'script', blocks: true });
+	const flat = own.filter((f) => f.startsWith(`${id}__`)).map((f) => f.slice(id.length + 2));
+	for (const f of scripts) if (flat.includes(f)) out.push({ file: path.join(dir, 'scripts', f), kind: 'old flat name', blocks: false });
 	return out;
 }
 
@@ -386,8 +389,10 @@ Windows %APPDATA%\\app.sparcle.bolt.enterprise\\user-utils, Linux ~/.config/app.
 		const uu = userUtilsDir(), shippedHere = typeof loadShip()[id] === 'string';
 		for (const c of userUtilsClashes(uu, id, dir)) {
 			const how = process.platform === 'win32' ? `del ${q(c.file)}` : `rm ${q(c.file)}`;
-			if (c.kind !== 'old flat name' && shippedHere) { console.log(`     ${c.kind} ${q(c.file)} is in your Bolt user apps folder: expected if you installed a pack of ${id} (a newer version replaces it).`); continue; }
-			chk(false, `${c.kind} in your Bolt user apps folder: ${q(c.file)}`, `${c.kind === 'old flat name' ? 'A hand copy from before scripts were named <app id>__<name>' : `You have not shipped ${id} from here, so this is likely a hand copy`}: Bolt refuses the pack with file_exists. Remove it: ${how}   (or Settings, Desktop, User Apps, Open folder, then delete it). If a pack of ${id} put it there, leave it.`);
+			// A name the pack does not write cannot stop it installing, and another app may use the file: never advise removing it
+			if (!c.blocks) { console.log(`     ${c.kind} ${q(c.file)} is in your Bolt user apps folder. It does not stop this pack installing (the pack names its scripts ${id}__<name>), and another app may use it: leave it unless you know it is left from a hand copy of ${id}.`); continue; }
+			if (shippedHere) { console.log(`     ${c.kind} ${q(c.file)} is in your Bolt user apps folder: expected if you installed a pack of ${id} (a newer version replaces it).`); continue; }
+			chk(false, `${c.kind} in your Bolt user apps folder: ${q(c.file)}`, `You have not shipped ${id} from here, so this is likely a hand copy: Bolt refuses the pack with file_exists. Remove it: ${how}   (or Settings, Desktop, User Apps, Open folder, then delete it). If a pack of ${id} put it there, leave it.`);
 		}
 	} else console.log('\n(give an app folder to also check its key file, lint and verify: ./bolt-apps doctor <app-folder>)');
 	console.log(bad ? `\n${bad} thing(s) to fix.` : '\nAll good.');

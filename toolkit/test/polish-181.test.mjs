@@ -101,6 +101,31 @@ test('doctor: scans the user apps folder by name only and says what to remove; d
 	assert.doesNotMatch(run(home, ['--help']).stdout, /BOLT_USER_UTILS_DIR/);
 });
 
+test('doctor: advises removing only a file the pack would write; another app\'s flat names and an old script of this app are left alone', () => {
+	const home = tmp('p181-home'), dir = tmp('p181-apps'), uu = tmp('p181-uu');
+	assert.equal(run(home, ['new', TEMPLATE, 'my-pipe', '--dir', dir]).status, 0);
+	assert.equal(run(home, ['keygen']).status, 0);   // so the only thing doctor can find is in the user apps folder
+	const app = path.join(dir, 'my-pipe');
+	const helper = fs.readdirSync(path.join(app, 'scripts')).find((f) => f.startsWith('my-pipe__') && f.endsWith('.py') && !/bolt_app_kit/.test(f));
+	// An app installed by hand before scripts were namespaced: its own app file and the common flat names. None of them is a name the pack of my-pipe writes.
+	fs.mkdirSync(path.join(uu, 'scripts')); fs.writeFileSync(path.join(uu, 'eagle-info.yaml'), 'x');
+	for (const f of ['bolt_app_kit.py', helper.slice('my-pipe__'.length), 'my-pipe__old.py']) fs.writeFileSync(path.join(uu, 'scripts', f), 'x');
+	const before = fs.readdirSync(uu, { recursive: true }).sort();
+	const d = run(home, ['doctor', app], { BOLT_USER_UTILS_DIR: uu });
+	assert.equal(d.status, 0, d.stdout + d.stderr);
+	assert.doesNotMatch(d.stdout, /file_exists|rm |del |FIX /, d.stdout);
+	assert.match(d.stdout, /bolt_app_kit\.py is in your Bolt user apps folder\. It does not stop this pack installing/);
+	assert.doesNotMatch(d.stdout, /my-pipe__old\.py/, 'a script the pack does not write is not a clash');
+	assert.deepEqual(userUtilsClashes(uu, 'my-pipe', app).filter((c) => c.blocks), []);
+	// The same name as a script of the pack is a clash, with the exact file to remove
+	fs.writeFileSync(path.join(uu, 'scripts', helper), 'x');
+	const d2 = run(home, ['doctor', app], { BOLT_USER_UTILS_DIR: uu });
+	assert.equal(d2.status, 1, d2.stdout);
+	assert.match(d2.stdout, new RegExp(`FIX  script in your Bolt user apps folder: [^\\n]*${helper.replace(/\./g, '\\.')}`)); assert.match(d2.stdout, /file_exists/);
+	assert.equal((d2.stdout.match(/^FIX /gm) || []).length, 1, d2.stdout);
+	assert.deepEqual(fs.readdirSync(uu, { recursive: true }).sort(), [...before, path.join('scripts', helper)].sort(), 'doctor must not change the folder');
+});
+
 test('userUtilsDir: per OS, with the override', () => {
 	assert.equal(userUtilsDir({}, 'darwin', '/h'), '/h/Library/Application Support/app.sparcle.bolt.enterprise/user-utils');
 	assert.equal(userUtilsDir({ APPDATA: 'C:\\A' }, 'win32', 'C:\\h'), path.join('C:\\A', 'app.sparcle.bolt.enterprise', 'user-utils'));

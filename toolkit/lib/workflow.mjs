@@ -245,7 +245,16 @@ export function runApp(args) {
 	const words = rest.slice(1);
 	const b = bridgeCommand(dir, words); if (b.error) die(b.error);
 	const env = { PATH: process.env.PATH, HOME: os.homedir(), USER: os.userInfo().username, LOGNAME: os.userInfo().username, LANG: process.env.LANG || 'en_US.UTF-8', PYTHONNOUSERSITE: '1', PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1', BOLT_APP_DEBUG: '1' };   // an approximation of the launcher's runner environment: the launcher is the final judge
+	if (process.platform === 'win32') {
+		env.USERPROFILE = os.homedir();
+		env.PYTHONUTF8 = '1';
+		for (const k of ['SYSTEMROOT', 'COMSPEC', 'APPDATA', 'LOCALAPPDATA', 'TEMP', 'TMP', 'PATHEXT']) if (process.env[k]) env[k] = process.env[k];
+	}
 	if (flags.includes('--sample')) env.BOLT_APP_FIXTURE = '1'; else if (flags.includes('--live')) env.BOLT_APP_FIXTURE = '0';
+	if (process.platform === 'win32' && (b.argv[0] === 'python' || b.argv[0] === 'python3')) {
+		const p = pythonCmd();
+		if (p) { b.argv[0] = p.cmd; b.argv.splice(1, 0, ...p.args); }
+	}
 	const r = spawnSync(b.argv[0], b.argv.slice(1), { env, cwd: path.join(dir, 'scripts'), encoding: 'utf8', input: '', timeout: 30000 });
 	if (r.error || r.status !== 0) die(`the script failed (exit ${r.status}). ${r.stderr ? 'Its error output:\n' + r.stderr.trim().split('\n').slice(-12).join('\n') : (r.error ? String(r.error.message) : '')}\n  Command: ${b.argv.map(q).join(' ')}`);
 	let rows; try { rows = JSON.parse(r.stdout); } catch { die(`the script did not print JSON rows. It printed: ${r.stdout.slice(0, 300)}${r.stderr ? '\nstderr: ' + r.stderr.trim().slice(-300) : ''}`); }
@@ -373,19 +382,22 @@ Windows %APPDATA%\\app.sparcle.bolt.enterprise\\user-utils, Linux ~/.config/app.
 	const py = pythonCmd();
 	chk(!!py, `python ${py ? `(${py.label})` : 'not found'}`, `${PYTHON_MISSING}; script apps run with Python 3.`);
 	chk(fs.existsSync(path.join(STATE, 'key.pem')), `signing key (${q(path.join(STATE, 'key.pem'))})`, 'Run: ./bolt-apps keygen   (once; ship also makes it for you)');
-	try { fs.mkdirSync(STATE, { recursive: true, mode: 0o700 }); fs.accessSync(STATE, fs.constants.W_OK); chk(true, '~/.bolt-apps is writable'); } catch { chk(false, '~/.bolt-apps is writable', `Run: mkdir -p ${q(STATE)} && chmod 700 ${q(STATE)}`); }
+	try { fs.mkdirSync(STATE, { recursive: true, mode: 0o700 }); fs.accessSync(STATE, fs.constants.W_OK); chk(true, '~/.bolt-apps is writable'); } catch { chk(false, '~/.bolt-apps is writable', process.platform === 'win32' ? `Create the folder ${q(STATE)} and make sure you can write to it` : `Run: mkdir -p ${q(STATE)} && chmod 700 ${q(STATE)}`); }
 	if (dir && fs.existsSync(path.join(dir, 'bolt-app.json'))) {
 		let id; try { const j = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')); if (!j || typeof j !== 'object' || Array.isArray(j)) { chk(false, 'bolt-app.json is a JSON object', `Make ${q(path.join(dir, 'bolt-app.json'))} an object like { "id": "my-tool", ... } (it is ${j === null ? 'null' : 'not an object'})`); console.log(`\n${bad} thing(s) to fix.`); process.exit(1); } id = j.id; } catch (e) { chk(false, 'bolt-app.json is valid JSON', `Fix ${path.join(dir, 'bolt-app.json')}: ${e.message}`); console.log(`\n${bad} thing(s) to fix.`); process.exit(1); }
 		if (typeof id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(id)) { chk(false, 'bolt-app.json has an id', 'Add "id": "my-tool" (lowercase letters, digits, hyphens) to bolt-app.json.'); console.log(`\n${bad} thing(s) to fix.`); process.exit(1); }
 		const env = path.join(os.homedir(), '.config', id, '.env');
-		if (fs.existsSync(env)) chk((fs.statSync(env).mode & 0o077) === 0, `~/.config/${id}/.env is private`, `Run: chmod 600 ${q(env)}`);
+		if (fs.existsSync(env)) {
+			if (process.platform === 'win32') chk(true, `~/.config/${id}/.env is private (Windows ACLs; use icacls to restrict if needed)`);
+			else chk((fs.statSync(env).mode & 0o077) === 0, `~/.config/${id}/.env is private`, `Run: chmod 600 ${q(env)}`);
+		}
 		if (startMode(dir)) console.log(`     ${startMode(dir)}`);
 		const hits = keyLooking(dir); chk(!hits.length, 'no real-looking key in the app folder', `Remove the key from ${hits.map(q).join(', ')}; keys go in the keychain or ~/.config/${id}/.env.`);
 		const l = bolt(['lint', dir, '--personal']); chk(l.status === 0, 'lint --personal (what blocks a dropped pack)', `Run: ./bolt-apps lint ${q(dir)} --personal   and fix each line it prints.`);
 		if (l.status === 0) { const v = bolt(['verify', dir]); chk(v.status === 0, 'verify (what Bolt checks at install)', `Run: ./bolt-apps verify ${q(dir)}   and fix each line it prints.`); }
 		const uu = userUtilsDir(), shippedHere = typeof loadShip()[id] === 'string';
 		for (const c of userUtilsClashes(uu, id, dir)) {
-			const how = process.platform === 'win32' ? `del ${q(c.file)}` : `rm ${q(c.file)}`;
+			const how = process.platform === 'win32' ? `del "${String(c.file).replace(/"/g, '""')}"` : `rm ${q(c.file)}`;
 			if (c.kind !== 'old flat name' && shippedHere) { console.log(`     ${c.kind} ${q(c.file)} is in your Bolt user apps folder: expected if you installed a pack of ${id} (a newer version replaces it).`); continue; }
 			chk(false, `${c.kind} in your Bolt user apps folder: ${q(c.file)}`, `${c.kind === 'old flat name' ? 'A hand copy from before scripts were named <app id>__<name>' : `You have not shipped ${id} from here, so this is likely a hand copy`}: Bolt refuses the pack with file_exists. Remove it: ${how}   (or Settings, Desktop, User Apps, Open folder, then delete it). If a pack of ${id} put it there, leave it.`);
 		}

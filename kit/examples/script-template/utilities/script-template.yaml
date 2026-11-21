@@ -17,6 +17,7 @@ bridge:
   command:
     macos: "python3 {{scripts_dir}}/script-template__app.py {{view}} {{arg}} {{arg2}} {{arg3}} {{scripts_dir}}/script-template__config.json {{scripts_dir}}/script-template__fixtures.json {{scripts_dir}}/script-template__bolt_app_kit.py"
     linux: "python3 {{scripts_dir}}/script-template__app.py {{view}} {{arg}} {{arg2}} {{arg3}} {{scripts_dir}}/script-template__config.json {{scripts_dir}}/script-template__fixtures.json {{scripts_dir}}/script-template__bolt_app_kit.py"
+    windows: "python {{scripts_dir}}/script-template__app.py {{view}} {{arg}} {{arg2}} {{arg3}} {{scripts_dir}}/script-template__config.json {{scripts_dir}}/script-template__fixtures.json {{scripts_dir}}/script-template__bolt_app_kit.py"
   parse: json
   timeout_seconds: 25
 presentation:

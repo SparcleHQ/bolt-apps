@@ -677,8 +677,8 @@ def emit_yaml(cfg):
          'placeholder_examples: ["Enter for the overview", "items monet", "chart", "table", "pictures cats", "hokusai"]',
          "emits: Generic", "args:", '  - { name: view, from: "query.word(0)", default: overview }', '  - { name: arg, from: "query.word(1)", default: "-" }',
          '  - { name: arg2, from: "query.word(2)", default: "-" }', '  - { name: arg3, from: "query.word(3)", default: "-" }', "bridge:", "  command:"]
-    for osn in ("macos", "linux"):
-        L.append(('    %s: "python3 {{scripts_dir}}/' + _SELF + ' {{view}} {{arg}} {{arg2}} {{arg3}} %s"') % (osn, words))
+    for osn, py in (("macos", "python3"), ("linux", "python3"), ("windows", "python")):
+        L.append(('    %s: "%s {{scripts_dir}}/' + _SELF + ' {{view}} {{arg}} {{arg2}} {{arg3}} %s"') % (osn, py, words))
     L += ["  parse: json", "  timeout_seconds: %d" % app["timeout"], "presentation:", "  widget: list", "  title_field: title", "  subtitle_field: subtitle", "  view_arg: view", "  right_widget:"]
     L += _indent(_TILES, 4)
     L += ["  views:", "    overview:", "      right_widget:"] + _indent(_TILES, 8)

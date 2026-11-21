@@ -19,7 +19,7 @@ const REPO = path.resolve(HERE, '../..');
 const CLI = path.resolve(HERE, '../bin/bolt-apps.mjs');
 const EX = path.join(REPO, 'kit', 'examples');
 const tmp = (p) => fs.mkdtempSync(path.join(os.tmpdir(), p));
-const cli = (home, cwd, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd, encoding: 'utf8', env: { ...process.env, HOME: home } });
+const cli = (home, cwd, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd, encoding: 'utf8', env: { ...process.env, HOME: home, USERPROFILE: home } });
 const KEY = (() => { const d = tmp('ns-key-'); const k = path.join(d, 'key.pem'); const r = spawnSync(process.execPath, [CLI, 'keygen', '--out', k], { encoding: 'utf8' }); assert.equal(r.status, 0, r.stderr); return k; })();
 const examples = fs.readdirSync(EX, { withFileTypes: true }).filter((e) => e.isDirectory() && fs.existsSync(path.join(EX, e.name, 'bolt-app.json'))).map((e) => e.name);
 

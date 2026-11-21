@@ -235,13 +235,17 @@ def nearest_network(cfg, lat, lon):
     return best["id"] if haversine(lat, lon, best["lat"], best["lon"]) <= cfg["bike_network_max_km"] * 1000 else None
 
 
+_GATE_LOCK = threading.Lock()   # in-process: Windows file locks are per process, so threads share one lock too
+
+
 class geocode_gate(object):
     """Nominatim allows one request a second. This lock holds across threads and across processes (a file lock), and the
-    next caller waits until `gap` seconds after the last one finished. On a system without file locks it covers threads only."""
-    _tl = threading.Lock()
+    next caller waits until `gap` seconds after the last one finished. POSIX uses fcntl.flock; Windows uses msvcrt.locking."""
+    _tl = _GATE_LOCK
 
     def __init__(self, root, gap):
         self.root, self.gap, self.fd = root, gap, None
+        self._winlock = False
 
     def __enter__(self):
         geocode_gate._tl.acquire()
@@ -252,10 +256,21 @@ class geocode_gate(object):
                 import fcntl
                 fcntl.flock(self.fd, fcntl.LOCK_EX)
             except ImportError:
-                pass
+                try:
+                    import msvcrt
+                    os.lseek(self.fd, 0, os.SEEK_SET)
+                    msvcrt.locking(self.fd, msvcrt.LK_LOCK, 1)
+                    self._winlock = True
+                except ImportError:
+                    pass
             try:
-                last = float(os.pread(self.fd, 64, 0).decode() or 0)
-            except (ValueError, OSError, AttributeError):
+                if hasattr(os, "pread"):
+                    raw = os.pread(self.fd, 64, 0)
+                else:
+                    os.lseek(self.fd, 0, os.SEEK_SET)
+                    raw = os.read(self.fd, 64)
+                last = float(raw.decode() or 0)
+            except (ValueError, OSError):
                 last = 0.0
             wait = self.gap - (time.time() - last)
             if wait > 0:
@@ -267,8 +282,16 @@ class geocode_gate(object):
 
     def _release(self):
         if self.fd is not None:
+            if self._winlock:
+                try:
+                    import msvcrt
+                    os.lseek(self.fd, 0, os.SEEK_SET)
+                    msvcrt.locking(self.fd, msvcrt.LK_UNLCK, 1)
+                except OSError:
+                    pass
+                self._winlock = False
             try:
-                os.close(self.fd)   # closing drops the file lock
+                os.close(self.fd)   # closing drops a POSIX file lock
             except OSError:
                 pass
             self.fd = None
@@ -277,8 +300,14 @@ class geocode_gate(object):
     def __exit__(self, *exc):
         try:
             if self.fd is not None:
-                os.ftruncate(self.fd, 0)
-                os.pwrite(self.fd, ("%.3f" % time.time()).encode(), 0)
+                stamp = ("%.3f" % time.time()).encode()
+                if hasattr(os, "pwrite"):
+                    os.ftruncate(self.fd, 0)
+                    os.pwrite(self.fd, stamp, 0)
+                else:
+                    os.lseek(self.fd, 0, os.SEEK_SET)
+                    os.write(self.fd, stamp)
+                    os.ftruncate(self.fd, len(stamp))
         except (OSError, AttributeError):
             pass
         self._release()

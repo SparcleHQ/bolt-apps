@@ -33,20 +33,20 @@ def run(app, args, cfg=None, env=None, fixtures=None):
     scripts = os.path.join(EX, app, "scripts")
     for f in os.listdir(scripts):
         if f.endswith(".py"):
-            with open(os.path.join(scripts, f)) as src, open(os.path.join(d, f), "w") as dst:
+            with open(os.path.join(scripts, f), encoding="utf-8") as src, open(os.path.join(d, f), "w", encoding="utf-8") as dst:
                 dst.write(src.read())
     for f in os.listdir(scripts):
         if f.endswith((".json",)):
-            with open(os.path.join(scripts, f)) as src:
+            with open(os.path.join(scripts, f), encoding="utf-8") as src:
                 data = src.read()
             if cfg is not None and f.endswith("__config.json"):
                 data = json.dumps(cfg)
             if fixtures is not None and f.endswith("__fixtures.json"):
                 data = json.dumps(fixtures)
-            with open(os.path.join(d, f), "w") as dst:
+            with open(os.path.join(d, f), "w", encoding="utf-8") as dst:
                 dst.write(data)
     e = dict(os.environ)
-    e.update({"HOME": d, "PYTHONDONTWRITEBYTECODE": "1"})
+    e.update({"HOME": d, "USERPROFILE": d, "PYTHONDONTWRITEBYTECODE": "1"})
     e.pop("BOLT_APP_FIXTURE", None)
     e.update(env or {})
     r = subprocess.run([sys.executable, os.path.join(d, app + "__engine.py")] + args, env=e, capture_output=True, text=True, cwd=d)
@@ -54,12 +54,12 @@ def run(app, args, cfg=None, env=None, fixtures=None):
 
 
 def fixtures_of(app):
-    with open(os.path.join(EX, app, "scripts", app + "__fixtures.json")) as f:
+    with open(os.path.join(EX, app, "scripts", app + "__fixtures.json"), encoding="utf-8") as f:
         return json.load(f)
 
 
 def cfg_of(app):
-    with open(os.path.join(EX, app, "scripts", app + "__config.json")) as f:
+    with open(os.path.join(EX, app, "scripts", app + "__config.json"), encoding="utf-8") as f:
         return json.load(f)
 
 

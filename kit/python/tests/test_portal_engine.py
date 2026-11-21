@@ -51,7 +51,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.send_response(Handler.status)
             self.end_headers()
             return
-        fx = json.load(open(os.path.join(ROOT, "portal-template__fixtures.json")))
+        with open(os.path.join(ROOT, "portal-template__fixtures.json"), encoding="utf-8") as f:
+            fx = json.load(f)
         name = self.path.strip("/").split("/")[-1]
         body = json.dumps(fx["account" if name == "account" else name]).encode()
         self.send_response(200)
@@ -65,18 +66,21 @@ class EngineLive(unittest.TestCase):
         self.home = tempfile.mkdtemp()
         self._env = dict(os.environ)
         os.environ["HOME"] = self.home
+        os.environ["USERPROFILE"] = self.home
         os.environ.pop("EXAMPLE_API_KEY", None)
         os.environ.pop("BOLT_APP_FIXTURE", None)
         self.srv = http.server.HTTPServer(("127.0.0.1", 0), Handler)
         threading.Thread(target=self.srv.serve_forever, daemon=True).start()
         Handler.status, Handler.hits, Handler.seen_keys = 200, [], []
-        cfg = json.load(open(os.path.join(ROOT, "portal-template__config.json")))
+        with open(os.path.join(ROOT, "portal-template__config.json"), encoding="utf-8") as f:
+            cfg = json.load(f)
         cfg["api"]["base_url"] = "http://127.0.0.1:%d" % self.srv.server_port
         cfg["api"]["fixture_default"] = False
         cfg["api"]["on_missing_key"] = "setup"   # these tests are about the real-app path: a missing key is one setup row
         cfg["api"]["env_file"] = os.path.join(self.home, "key.env")
         self.cfg_path = os.path.join(self.home, "config.json")
-        json.dump(cfg, open(self.cfg_path, "w"))
+        with open(self.cfg_path, "w", encoding="utf-8") as f:
+            json.dump(cfg, f)
         self.eng = load_engine()
         self._emit = kit.emit
         kit.emit = fake_emit
@@ -100,7 +104,8 @@ class EngineLive(unittest.TestCase):
 
     def write_env(self, mode=0o600):
         p = os.path.join(self.home, "key.env")
-        open(p, "w").write("EXAMPLE_API_KEY=sekret-value-123\n")
+        with open(p, "w", encoding="utf-8") as f:
+            f.write("EXAMPLE_API_KEY=sekret-value-123\n")
         os.chmod(p, mode)
 
     def test_no_key_row_and_no_request(self):
@@ -118,13 +123,15 @@ class EngineLive(unittest.TestCase):
             for f in files:
                 if f.startswith("key.env") or f == "config.json":
                     continue
-                self.assertNotIn(b"sekret-value-123", open(os.path.join(root, f), "rb").read(), f)
+                with open(os.path.join(root, f), "rb") as fh:
+                    self.assertNotIn(b"sekret-value-123", fh.read(), f)
 
     def test_environment_key_beats_file(self):
         os.environ["EXAMPLE_API_KEY"] = "from-env"
         self.rows("overview")
         self.assertTrue(all(k == "Bearer from-env" for k in Handler.seen_keys))
 
+    @unittest.skipIf(os.name == "nt", "mode bits")
     def test_loose_env_file_permissions_are_refused_with_the_fix(self):
         self.write_env(0o644)
         r = self.rows("overview")
@@ -149,9 +156,11 @@ class EngineLive(unittest.TestCase):
             os.utime(os.path.join(fresh, f), (1, 1))
         for f in os.listdir(fresh):
             p = os.path.join(fresh, f)
-            doc = json.load(open(p))
+            with open(p, encoding="utf-8") as fh:
+                doc = json.load(fh)
             doc["ts"] = 1
-            json.dump(doc, open(p, "w"))
+            with open(p, "w", encoding="utf-8") as fh:
+                json.dump(doc, fh)
         Handler.status = 500
         r = self.rows("tickets")
         t = self.text(r)
@@ -184,9 +193,11 @@ class EngineLive(unittest.TestCase):
         self.assertIn("Could not connect", r[0]["title"])
 
     def test_http_to_a_remote_host_is_refused(self):
-        cfg = json.load(open(self.cfg_path))
+        with open(self.cfg_path, encoding="utf-8") as f:
+            cfg = json.load(f)
         cfg["api"]["base_url"] = "http://api.example.com"
-        json.dump(cfg, open(self.cfg_path, "w"))
+        with open(self.cfg_path, "w", encoding="utf-8") as f:
+            json.dump(cfg, f)
         self.write_env()
         with self.assertRaises(self.eng.ConfigError):
             self.rows("overview")

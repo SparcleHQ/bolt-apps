@@ -18,7 +18,7 @@ class LookupTextOnly(unittest.TestCase):
         w = cfg["lookup"]["widget"]
         self.assertEqual((w["kind"], w["mode"]), ("entity_preview", "selected_row"))
         self.assertIn("tiles_above", w["bind"])
-        with open(os.path.join(EX, "lookup-template", "check.json")) as f:
+        with open(os.path.join(EX, "lookup-template", "check.json"), encoding="utf-8") as f:
             self.assertNotIn("known_empty_tiles", json.load(f))
 
     def test_rows_without_a_number_carry_no_tile_fields_and_have_a_body(self):
@@ -81,7 +81,7 @@ class FieldStats(unittest.TestCase):
                         "flagged": {"endpoint": ep, "where": {"flag": True}}}
         cfg["overview"] = {"rows": [{"title": "Total {total}", "subtitle": "max {biggest}, x {x_total}, none {none}, flagged {flagged}"}]}
         cfg["app"]["noun"] = "thing"
-        with open(os.path.join(EX, "portal-template", "scripts", "portal-template__fixtures.json")) as f:
+        with open(os.path.join(EX, "portal-template", "scripts", "portal-template__fixtures.json"), encoding="utf-8") as f:
             fixtures = json.load(f)
         fixtures.update(fx)
         r = run("portal-template", ["overview"], cfg=cfg, fixtures=fixtures, env={"BOLT_APP_FIXTURE": "1"})
@@ -100,7 +100,7 @@ class Hardening(unittest.TestCase):
         cfg = cfg_of("portal-template")
         cfg["stats"] = stats
         cfg["overview"] = {"rows": [{"title": "T " + rowtpl, "subtitle": "x"}]}
-        with open(os.path.join(EX, "portal-template", "scripts", "portal-template__fixtures.json")) as f:
+        with open(os.path.join(EX, "portal-template", "scripts", "portal-template__fixtures.json"), encoding="utf-8") as f:
             fx = json.load(f)
         fx["tickets"] = rows
         return run("portal-template", ["overview"], cfg=cfg, fixtures=fx, env={"BOLT_APP_FIXTURE": "1"})
@@ -186,7 +186,8 @@ class BackRowPane(unittest.TestCase):
     def test_apps_with_a_field_binding_pane_declare_the_note_view(self):
         for app in ("widget-gallery-2", "pipeline-board", "chart-template", "json-tree-browser", "around", "repo-radar", "script-template"):
             d = os.path.join(EX, app, "utilities")
-            y = open(os.path.join(d, [f for f in os.listdir(d) if f.endswith(".yaml")][0])).read()
+            with open(os.path.join(d, [f for f in os.listdir(d) if f.endswith(".yaml")][0]), encoding="utf-8") as f:
+                y = f.read()
             self.assertIn("\n    note:\n      right_widget:\n        kind: markdown\n        mode: selected_row\n", y, app)
 
 

@@ -5,7 +5,7 @@ import bolt_app_kit as k
 
 def stub(d, name, body):
     p = os.path.join(d, name)
-    with open(p, "w") as f:
+    with open(p, "w", encoding="utf-8") as f:
         f.write("#!/bin/sh\n" + body + "\n")
     os.chmod(p, 0o755)
 
@@ -15,6 +15,7 @@ class SecretTests(unittest.TestCase):
         self.home = tempfile.mkdtemp()
         self.old = dict(os.environ)
         os.environ["HOME"] = self.home
+        os.environ["USERPROFILE"] = self.home
         os.environ.pop("MY_KEY", None)
         self.tools = tempfile.mkdtemp()
 
@@ -25,7 +26,8 @@ class SecretTests(unittest.TestCase):
     def env_file(self, mode=0o600, body="MY_KEY=file-secret-1\n"):
         p = k.env_file_path("demo")
         os.makedirs(os.path.dirname(p), exist_ok=True)
-        open(p, "w").write(body)
+        with open(p, "w", encoding="utf-8") as f:
+            f.write(body)
         os.chmod(p, mode)
 
     def get(self, **kw):
@@ -36,6 +38,7 @@ class SecretTests(unittest.TestCase):
         self.assertFalse(s)
         self.assertEqual(s.problem, "")
 
+    @unittest.skipIf(os.name == "nt", "POSIX stubs")
     def test_env_beats_keychain_beats_file(self):
         self.env_file()
         stub(self.tools, "security", 'echo keychain-secret-2')
@@ -50,12 +53,14 @@ class SecretTests(unittest.TestCase):
         s = self.get(os_="macos")
         self.assertEqual((s.value, s.source), ("file-secret-1", "file"))
 
+    @unittest.skipIf(os.name == "nt", "mode bits")
     def test_loose_file_permissions_are_refused_and_explained(self):
         self.env_file(0o644)
         s = self.get(os_="macos")
         self.assertFalse(s)
         self.assertIn("other users", s.problem)
 
+    @unittest.skipIf(os.name == "nt", "POSIX stubs")
     def test_failing_keychain_tool_is_not_a_hit(self):
         stub(self.tools, "security", 'exit 44')
         self.assertFalse(self.get(os_="macos"))

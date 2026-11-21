@@ -3,7 +3,8 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import bolt_app_kit as k
 
-CASES = json.load(open(os.path.join(os.path.dirname(__file__), "..", "..", "conformance", "cases.json"), encoding="utf-8"))
+with open(os.path.join(os.path.dirname(__file__), "..", "..", "conformance", "cases.json"), encoding="utf-8") as _f:
+    CASES = json.load(_f)
 
 
 def conv(a):

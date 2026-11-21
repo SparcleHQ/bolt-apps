@@ -31,7 +31,7 @@ function sandbox(name, folder = name) {
 	fs.mkdirSync(home); fs.mkdirSync(bin);
 	const cli = path.join(root, 'toolkit', 'bin', 'bolt-apps.mjs');
 	fs.writeFileSync(path.join(bin, 'bolt-apps'), `#!/bin/sh\nexec "${process.execPath}" "${cli}" "$@"\n`, { mode: 0o755 });
-	const env = { PATH: `${bin}:${process.env.PATH}`, HOME: home, LANG: 'C.UTF-8' };
+	const env = { PATH: `${bin}${path.delimiter}${process.env.PATH}`, HOME: home, USERPROFILE: home, LANG: 'C.UTF-8' };
 	const keygen = spawnSync(process.execPath, [cli, 'keygen'], { env, encoding: 'utf8' });
 	assert.equal(keygen.status, 0, keygen.stderr);
 	return { root, app, env, cli };

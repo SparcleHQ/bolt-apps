@@ -38,7 +38,7 @@ function bolt() {
 
 test('first hour: new A, ship A, new B, ship B, edit A, ship A, ship A again, doctor; everything installs side by side', async () => {
 	const home = tmp('journey-home-'), work = tmp('journey-work-');
-	const env = { ...process.env, HOME: home };
+	const env = { ...process.env, HOME: home, USERPROFILE: home };
 	const cli = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: work, encoding: 'utf8', env });
 	const shipped = (r) => { assert.equal(r.status, 0, r.stdout + r.stderr); const m = /Shipped (\S+) (\S+): (\S+\.boltpack)/.exec(r.stdout); assert.ok(m, r.stdout); return { id: m[1], version: m[2], file: m[3] }; };
 	const b = bolt();

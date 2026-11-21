@@ -16,7 +16,7 @@ const REPO = path.resolve(HERE, '../..');
 const CLI = path.resolve(HERE, '../bin/bolt-apps.mjs');
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'bolt-hero-'));
 const cp = (from, to) => fs.cpSync(from, to, { recursive: true });
-const run = (cwd, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd, encoding: 'utf8', env: { ...process.env, HOME: cwd } });
+const run = (cwd, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd, encoding: 'utf8', env: { ...process.env, HOME: cwd, USERPROFILE: cwd } });
 
 const app = (kind, heroLines, schemaVersion = 1) => ['schema_version: ' + schemaVersion, 'runtime: bridge', 'id: demo', 'chip: demo', 'title: "Demo"', 'icon: globe', 'description: "Demo"', 'emits: Generic',
 	'bridge:', '  command:', '    macos: "python3 {{scripts_dir}}/demo__run.py"', '    linux: "python3 {{scripts_dir}}/demo__run.py"', '    windows: "python {{scripts_dir}}/demo__run.py"', '  parse: json', '  timeout_seconds: 20',

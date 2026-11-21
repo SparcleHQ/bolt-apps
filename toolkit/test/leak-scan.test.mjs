@@ -90,7 +90,7 @@ test('leak scan: the detector flags each kind of leak and passes the allowed loo
 
 test('leak scan: every tracked file holds nothing internal', () => {
 	const found = [];
-	for (const f of files()) for (const h of scan(fs.readFileSync(f, 'utf8'), path.relative(REPO, f))) found.push(`${path.relative(REPO, f)}:${h.line} [${h.rule}] ${h.text}`);
+	for (const f of files()) { const rel = path.relative(REPO, f).split(path.sep).join('/'); for (const h of scan(fs.readFileSync(f, 'utf8'), rel)) found.push(`${rel}:${h.line} [${h.rule}] ${h.text}`); }
 	assert.deepEqual(found, [], `leaks found:\n${found.join('\n')}`);
 });
 

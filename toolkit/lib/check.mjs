@@ -8,7 +8,7 @@ import { RULES, parseBoltVersion } from './boltrules.mjs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { pythonCmd } from './python.mjs';
 import { isNavToken, assessYaml } from './assess.mjs';
@@ -328,13 +328,63 @@ export function blankPaneProblems(pres, rows, view) {
 // ---- stubs and the process ----
 const SH_QUOTE = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`;
 const HOSTILE = 'a\u202eb\u200bc{{x}}\u{E0041}d\u2028e\u0007f\u3164g\u2800h';
-function makeStubs(dir, appDir, osName, kase, files) {
+const CMD_QUOTE = (s) => `"${String(s).replace(/"/g, '""')}"`;
+// One dispatcher for every Windows stub: hang, by_args prefix match, default stdout/rc, and @@HOSTILE@@ as raw UTF-8 (never the console code page).
+const STUB_PY = `import json, os, sys, time
+name, args = sys.argv[1], sys.argv[2:]
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "._bolt_stubs.json"), "r", encoding="utf-8") as f:
+    cfg = json.load(f)
+s = cfg.get(name) or {}
+if s.get("hang"):
+    time.sleep(60)
+    raise SystemExit(0)
+
+def emit(entry):
+    text = entry.get("stdout")
+    if text is None:
+        text = ""
+    sys.stdout.buffer.write(text.encode("utf-8"))
+    raise SystemExit(int(entry.get("rc") or 0))
+
+for rule in s.get("by_args") or []:
+    want = [str(a) for a in (rule.get("args") or [])]
+    if want and args[:len(want)] == want:
+        emit(rule)
+emit(s)
+`;
+function makeStubs(dir, appDir, osName, kase, files, py) {
 	const stubs = {};
 	const base = path.join(appDir, 'fixtures', osName);
 	if (fs.existsSync(base)) for (const f of fs.readdirSync(base)) { const m = /^(.+)\.out$/.exec(f); if (m) stubs[m[1]] = { abs: true, file: path.join(base, f), rc: fs.existsSync(path.join(base, `${m[1]}.rc`)) ? Number(fs.readFileSync(path.join(base, `${m[1]}.rc`), 'utf8').trim()) : 0 }; }
 	for (const [n, o] of Object.entries(kase.stubs || {})) stubs[n] = o.file ? { ...o, abs: true, file: path.join(appDir, o.file) } : { ...o };
 	for (const n of kase.hang || []) stubs[n] = { hang: true };
 	fs.mkdirSync(dir, { recursive: true });
+	if (process.platform === 'win32') {
+		const pyArgv = Array.isArray(py) ? py : [py];
+		const pyCmd = pyArgv.map((w) => (/^[A-Za-z0-9._+-]+$/.test(w) ? w : CMD_QUOTE(w))).join(' ');
+		const cfg = {};
+		const load = (d) => { let text = d.file ? fs.readFileSync(d.abs ? d.file : path.join(appDir, d.file), 'utf8') : (d.stdout ?? ''); return text.split('@@HOSTILE@@').join(kase.hostile ? HOSTILE : 'plainname'); };
+		for (const [name, s] of Object.entries(stubs)) {
+			if (!/^[A-Za-z0-9._+-]+$/.test(name)) throw new Error(`bad stub name ${name}`);
+			if (s.missing) continue;
+			if (s.hang) cfg[name] = { hang: true };
+			else {
+				const entry = { stdout: load(s), rc: Number.isInteger(s.rc) ? s.rc : 0 };
+				if ((s.by_args || []).length) entry.by_args = s.by_args.map((r, i) => {
+					if (!Array.isArray(r.args) || !r.args.length) throw new Error(`stub ${name}: by_args rule ${i} needs a non-empty args list`);
+					return { args: r.args.map(String), stdout: load(r), rc: Number.isInteger(r.rc) ? r.rc : 0 };
+				});
+				cfg[name] = entry;
+			}
+			// kit.which uses the faked os_name() for extensions, so a macos/linux fixture looks for `name` not `name.cmd`. Write both.
+			const body = `@echo off\n${pyCmd} "%~dp0._bolt_stub.py" ${name} %*\n`;
+			fs.writeFileSync(path.join(dir, `${name}.cmd`), body);
+			fs.writeFileSync(path.join(dir, name), body);
+		}
+		fs.writeFileSync(path.join(dir, '._bolt_stubs.json'), JSON.stringify(cfg));
+		fs.writeFileSync(path.join(dir, '._bolt_stub.py'), STUB_PY);
+		return;
+	}
 	for (const [name, s] of Object.entries(stubs)) {
 		if (!/^[A-Za-z0-9._+-]+$/.test(name)) throw new Error(`bad stub name ${name}`);
 		if (s.missing) continue;
@@ -358,6 +408,26 @@ script, plat = sys.argv[1], sys.argv[2]
 sys.path.insert(0, os.path.dirname(script))
 sys.argv = [script] + sys.argv[3:]
 import subprocess, shutil, tempfile, threading, json, unicodedata, hashlib, stat, signal, re, math, time
+# Windows stubs are .cmd files; kit.which of a macos/linux fixture returns the extensionless copy, which CreateProcess cannot run.
+# Rewrite a spawn of a file next to ._bolt_stub.py into the dispatcher so hang/by_args still work and proc.kill() hits the sleeper.
+_real_Popen = subprocess.Popen
+def _Popen(args, **kw):
+    if os.name == "nt" and args and not isinstance(args, (str, bytes)):
+        args = list(args)
+        exe0 = os.fspath(args[0])
+        if isinstance(exe0, str):
+            cand = os.path.join(os.path.dirname(os.path.abspath(exe0)), "._bolt_stub.py")
+            if not os.path.isfile(cand) and not os.path.isabs(exe0) and os.sep not in exe0 and "/" not in exe0:
+                p0 = (os.environ.get("PATH") or "").split(os.pathsep)[0]
+                base = os.path.splitext(os.path.basename(exe0))[0]
+                cand2 = os.path.join(p0, "._bolt_stub.py")
+                if os.path.isfile(cand2) and (os.path.isfile(os.path.join(p0, base + ".cmd")) or os.path.isfile(os.path.join(p0, base))):
+                    cand, exe0 = cand2, os.path.join(p0, base)
+            if os.path.isfile(cand):
+                name = os.path.splitext(os.path.basename(exe0))[0]
+                args = [sys.executable, cand, name] + args[1:]
+    return _real_Popen(args, **kw)
+subprocess.Popen = _Popen
 # The platform is faked below so a script takes its macOS, Linux or Windows branch. Import every standard module the examples use BEFORE
 # that, or a module that picks code by platform at import time (urllib.request pulls in _scproxy on darwin) fails on another host.
 import urllib.request, urllib.error, urllib.parse, http.client, socket, ssl, concurrent.futures, calendar, base64, datetime, csv, io, zlib, struct, traceback
@@ -390,12 +460,21 @@ function runScript(pyArg, script, osName, args, env, cwd) {
 	return new Promise((resolve) => {
 		const t0 = Date.now();
 		const [py, ...pyPre] = Array.isArray(pyArg) ? pyArg : [pyArg];
-		const ch = spawn(py, [...pyPre, '-c', WRAPPER, script, PY_PLATFORM[osName], ...args], { env, cwd, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
+		const win = process.platform === 'win32';
+		const ch = spawn(py, [...pyPre, '-c', WRAPPER, script, PY_PLATFORM[osName], ...args], { env, cwd, stdio: ['ignore', 'pipe', 'pipe'], ...(win ? { windowsHide: true } : { detached: true }) });
 		let out = '', err = '', killed = false;
 		ch.stdout.on('data', (d) => { out += d; }); ch.stderr.on('data', (d) => { err += d; });
-		const timer = setTimeout(() => { killed = true; try { process.kill(-ch.pid, 'SIGKILL'); } catch {} }, BRIDGE_LIMIT_S * 1000 + 3000);
+		const killTree = () => {
+			if (win) {
+				if (ch.pid) try { spawnSync('taskkill', ['/PID', String(ch.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true }); } catch {}
+				try { ch.kill(); } catch {}
+			} else {
+				try { process.kill(-ch.pid, 'SIGKILL'); } catch {}
+			}
+		};
+		const timer = setTimeout(() => { killed = true; killTree(); }, BRIDGE_LIMIT_S * 1000 + 3000);
 		ch.on('close', (rc) => {
-			clearTimeout(timer); try { process.kill(-ch.pid, 'SIGKILL'); } catch {}
+			clearTimeout(timer); killTree();
 			const m = /\n@@bolt-check-kit-file@@ (.*)\n$/.exec(err); let kitFile = null;
 			if (m) { kitFile = m[1]; err = err.slice(0, m.index); }   // the probe line is ours, not the script's
 			resolve({ rc, out, err, killed, kitFile, seconds: (Date.now() - t0) / 1000 });
@@ -495,7 +574,6 @@ async function checkAppRun(appDir, opts = {}) {
 	// lookup.rows (a chained lookup) are drawn like overview rows: a row's own `copy` is not read, so Copy puts the row text on the clipboard. Only an `item` (single endpoint) honours `copy`.
 	try { const sd = path.join(appDir, 'scripts'), cf = fs.readdirSync(sd).find((f) => f.endsWith('__config.json')); const ec = cf ? JSON.parse(fs.readFileSync(path.join(sd, cf), 'utf8')) : null; const ig = ec && ec.mode === 'lookup' && ec.lookup && Array.isArray(ec.lookup.rows) ? ec.lookup.rows.map((r, i) => (r && typeof r === 'object' && 'copy' in r ? `lookup.rows[${i}]` : null)).filter(Boolean) : []; if (ig.length) top('warning', 'config_copy_ignored', `${ig.join(', ')} in scripts/${cf} declare "copy", which lookup rows ignore: Copy puts the row's own text on the clipboard. Remove it, or use a lookup with a single endpoint and an "item", where "copy" works (ENGINE.md, "Buttons in lookup mode")`, `scripts/${cf}`); } catch { /* no engine config: nothing to say */ }
 	try { const ud = path.join(appDir, 'utilities'); for (const y of fs.existsSync(ud) ? fs.readdirSync(ud).filter((f) => /\.ya?ml$/.test(f)) : []) { const txt = fs.readFileSync(path.join(ud, y), 'utf8'); try { parseYaml(txt); } catch (e) { top('error', 'app_file_not_yaml', `utilities/${y} cannot be read as YAML (${String(e.message).slice(0, 100)}). ${notYamlHint(txt) || 'Write plain YAML (AGENTS.md section 2), or regenerate it: python3 scripts/<id>__engine.py --emit-yaml > utilities/<id>.yaml'}`, `utilities/${y}`); } } } catch { /* no utilities folder: other checks say so */ }
-	if (host === 'windows') { top('error', 'host_unsupported', 'check v0.1 needs a POSIX host (sh stubs); run it on macOS or Linux', '.'); return report; }
 	const pyc = /^python3?$/.test(cfg.interpreter || '') ? pythonCmd({ skip: [appDir] }) : null;
 	// pyc.cmd is an absolute path: the case runs with a stubbed PATH, and the child must never search its own cwd (the app folder) for python
 	const py = pyc ? [pyc.cmd, ...pyc.args] : (cfg.interpreter ? whichSync(cfg.interpreter) : null);
@@ -521,10 +599,15 @@ async function checkAppRun(appDir, opts = {}) {
 		try {
 			const stubDir = path.join(tmp, 'bin'), home = path.join(tmp, 'home');
 			fs.mkdirSync(home);
-			makeStubs(stubDir, appDir, osName, kase, files);
+			makeStubs(stubDir, appDir, osName, kase, files, py);
 			// Sample mode: a case (or check.json as a whole) sets "fixture": true, so the script runs on its recorded answers while the shipped app stays live.
 			const sample = kase.fixture ?? cfg.fixture;
-			const r = await runScript(py, script, osName, kase.args || [], { ...Object.fromEntries(Object.entries(kase.env || {}).filter(([k]) => /^[A-Z_][A-Z0-9_]*$/.test(k) && k !== 'PATH' && k !== 'HOME').map(([k, v]) => [k, String(v)])), ...RULES.runner_env.fixed, USER: 'bolt', LOGNAME: 'bolt', PATH: stubDir, HOME: home, ...((sample === undefined || sample === 'unset') ? {} : { BOLT_APP_FIXTURE: sample ? '1' : '0' }), ...(opts.sharedDir ? { BOLT_APP_SHARED_DIR: opts.sharedDir } : {}) }, home);
+			const blocked = new Set(['PATH', 'HOME', 'USERPROFILE', 'HOMEDRIVE', 'HOMEPATH']);
+			const fromCase = Object.fromEntries(Object.entries(kase.env || {}).filter(([k]) => /^[A-Z_][A-Z0-9_]*$/.test(k) && !blocked.has(k)).map(([k, v]) => [k, String(v)]));
+			const winRoot = process.platform === 'win32' ? (process.env.SYSTEMROOT || 'C:\\Windows') : '';
+			const homeDrive = process.platform === 'win32' && /^[A-Za-z]:/.test(home) ? home.slice(0, 2) : 'C:';
+			const winEnv = process.platform === 'win32' ? { USERPROFILE: home, HOMEDRIVE: homeDrive, HOMEPATH: home.slice(homeDrive.length), SYSTEMDRIVE: homeDrive, LOGONSERVER: '\\\\BOLT', USERNAME: 'bolt', USERDOMAIN: 'BOLT', SYSTEMROOT: winRoot, WINDIR: winRoot, COMSPEC: process.env.COMSPEC || 'C:\\Windows\\System32\\cmd.exe', PATHEXT: '.COM;.EXE;.BAT;.CMD', TEMP: tmp, TMP: tmp, PYTHONUTF8: '1' } : {};
+			const r = await runScript(py, script, osName, kase.args || [], { ...fromCase, ...RULES.runner_env.fixed, USER: 'bolt', LOGNAME: 'bolt', PATH: stubDir, HOME: home, ...winEnv, ...((sample === undefined || sample === 'unset') ? {} : { BOLT_APP_FIXTURE: sample ? '1' : '0' }), ...(opts.sharedDir ? { BOLT_APP_SHARED_DIR: opts.sharedDir } : {}) }, home);
 			const ex = kase.expect || {};
 			// check --shared: the point is to run on Bolt's shared kit, so prove it. An app that kept its own different copy (or never asks) ran on that copy and says nothing about the shared one.
 			if (opts.sharedDir && !(r.kitFile && path.resolve(r.kitFile).startsWith(path.resolve(opts.sharedDir) + path.sep))) E('shared_kit_not_used', `--shared: the script ran on ${r.kitFile && r.kitFile !== '(none)' ? r.kitFile : 'a kit that is not Bolt\'s shared one'}, not the shared kit. The loader uses the shared kit only when the app's own copy has the same bytes, or the app sets WANT_SHARED = True (and KIT_MIN is met). Re-vendor the kit, or use the loader from toolkit/lib/loader.mjs`);
@@ -565,7 +648,12 @@ async function checkAppRun(appDir, opts = {}) {
 				}
 			}
 		} catch (e) { E('check_error', String(e.message || e)); }
-		finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+		finally {
+			for (let i = 0; i < 12; i++) {
+				try { fs.rmSync(tmp, { recursive: true, force: true }); break; }
+				catch { if (i === 11) break; Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50 * (i + 1)); }
+			}
+		}
 		const tested = osName === host ? 'stubbed commands on this OS, not the real launcher' : `fixtures only: ${osName} behaviour was not run on a ${osName} machine`;
 		report.cases.push({ name: kase.name, os: osName, seconds: Number(secs.toFixed(2)), ok: !f.some((x) => x.level === 'error'), tested, findings: f });
 	}
@@ -573,8 +661,21 @@ async function checkAppRun(appDir, opts = {}) {
 }
 
 function whichSync(name) {
-	if (path.isAbsolute(name)) return fs.existsSync(name) ? name : null;
-	for (const d of (process.env.PATH || '').split(path.delimiter)) { const p = path.join(d, name); try { fs.accessSync(p, fs.constants.X_OK); if (fs.statSync(p).isFile()) return p; } catch {} }
+	if (path.isAbsolute(name)) { try { return fs.statSync(name).isFile() ? name : null; } catch { return null; } }
+	const win = process.platform === 'win32';
+	const exts = win ? ['', '.exe', '.com'] : [''];
+	for (const d of (process.env.PATH || '').split(path.delimiter)) {
+		if (!d) continue;
+		for (const ext of exts) {
+			const p = path.join(d, name + ext);
+			try {
+				if (!fs.statSync(p).isFile()) continue;
+				if (!win) fs.accessSync(p, fs.constants.X_OK);
+				else try { fs.accessSync(p, fs.constants.X_OK); } catch { /* win32 X_OK is not POSIX; a regular file is enough */ }
+				return p;
+			} catch {}
+		}
+	}
 	return null;
 }
 // One line for the whole report when an expectation failed because the app's text changed (a copied template's words, an old golden): which file, and the two ways out.
@@ -586,6 +687,6 @@ export function formatReport(r) {
 	for (const c of r.cases) { L.push(`  ${c.ok ? 'ok  ' : 'FAIL'} [${c.os}] ${c.name}`); for (const f of c.findings) L.push(`       ${f.level} ${f.code}: ${f.message}`); }
 	if (r.cases.some((c) => c.findings.some((f) => ['expected_text_missing', 'golden_mismatch', 'golden_missing'].includes(f.code)))) L.push('', `Hint: ${TEMPLATE_WORDS_HINT}`);
 	const fx = [...new Set(r.cases.filter((c) => c.os !== r.host_os).map((c) => c.os))];
-	L.push('', fx.length ? `Fixture-tested only: ${fx.join(', ')}. That logic was not run on those systems.` : 'All cases ran with stubbed commands on this OS. Not run: the real launcher, Windows, other OS tools.');
+	L.push('', fx.length ? `Fixture-tested only: ${fx.join(', ')}. That logic was not run on those systems.` : (r.host_os === 'windows' ? 'All cases ran with stubbed commands on this OS. Not run: the real launcher, macOS, Linux, other OS tools.' : 'All cases ran with stubbed commands on this OS. Not run: the real launcher, Windows, other OS tools.'));
 	return L.join('\n');
 }

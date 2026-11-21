@@ -10,7 +10,7 @@ One small command, `bolt-apps`, for making a Bolt App on your own machine. No ac
 ./bolt-apps verify my-app.boltpack           # Bolt's install rules, offline
 ```
 
-Then drop the `.boltpack` on the Bolt launcher or on Bolt Apps. Bolt shows the review card (it says the pack is self-signed: expected, install it), then Bolt's own "Install an unverified Bolt pack?" dialog (click Install). Then open Settings, Desktop, User Apps, expand the app and click Review and accept. Do not use Admin settings, Utilities, Bundles: that door takes only bundles signed by Sparcle and answers "Bundle rejected" to everything else. Dropping a pack on the launcher installs User Apps and scripts; Bolt skips snippets and search engines in a pack.
+Then drop the `.boltpack` on the Bolt launcher or on Bolt Apps. Bolt shows the review card (it says the pack is self-signed: expected, install it), then Bolt's own "Install an unverified Bolt pack?" dialog (click Install). Then open Settings, Desktop App, User Apps, expand the app and click Review and accept. Do not use Admin settings, Utilities, Bundles: that door takes only bundles signed by Sparcle and answers "Bundle rejected" to everything else. Dropping a pack on the launcher installs User Apps and scripts; Bolt skips snippets and search engines in a pack.
 
 ## An app for your own use (tier 3, scripts)
 

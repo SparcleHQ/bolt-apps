@@ -345,7 +345,7 @@ export function ship(args) {
   1. Drop ${q(out)} on the Bolt launcher (or on Bolt Apps; not Admin settings).
   2. Bolt shows the review card. It says the pack is self-signed: that is expected, install it. Expect it to rate the app HIGH risk: it runs a script on your computer, and that is normal for a personal script app. It lists what the app can do; read it. Click Install.
   3. Bolt's own "Install an unverified Bolt pack?" dialog follows, on every OS, for a pack you signed yourself. Click Install.
-  4. Then open Bolt Settings, Desktop, User Apps, expand the app, click Review and accept. Every reship changes the files, so you do this each time. An empty list when you press Enter means the app is not approved yet.
+  4. Then open Bolt ${USER_APPS_PATH}, expand the app, click Review and accept. ${USER_APPS_HIDDEN_NOTE} Every reship changes the files, so you do this each time. An empty list when you press Enter means the app is not approved yet.
   5. Open the launcher and type =${chip}.
   ${startMode(dir) || 'Start mode: this app has no engine config, so it starts as its script says.'}
 To change the app: edit it, run bolt-apps ship again, drop the new file. The version rises by itself and replaces the old one; your other apps are not touched.
@@ -387,7 +387,7 @@ Windows %APPDATA%\\app.sparcle.bolt.enterprise\\user-utils, Linux ~/.config/app.
 		for (const c of userUtilsClashes(uu, id, dir)) {
 			const how = process.platform === 'win32' ? `del ${q(c.file)}` : `rm ${q(c.file)}`;
 			if (c.kind !== 'old flat name' && shippedHere) { console.log(`     ${c.kind} ${q(c.file)} is in your Bolt user apps folder: expected if you installed a pack of ${id} (a newer version replaces it).`); continue; }
-			chk(false, `${c.kind} in your Bolt user apps folder: ${q(c.file)}`, `${c.kind === 'old flat name' ? 'A hand copy from before scripts were named <app id>__<name>' : `You have not shipped ${id} from here, so this is likely a hand copy`}: Bolt refuses the pack with file_exists. Remove it: ${how}   (or Settings, Desktop, User Apps, Open folder, then delete it). If a pack of ${id} put it there, leave it.`);
+			chk(false, `${c.kind} in your Bolt user apps folder: ${q(c.file)}`, `${c.kind === 'old flat name' ? 'A hand copy from before scripts were named <app id>__<name>' : `You have not shipped ${id} from here, so this is likely a hand copy`}: Bolt refuses the pack with file_exists. Remove it: ${how}   (or ${USER_APPS_PATH}, Open folder, then delete it). If a pack of ${id} put it there, leave it.`);
 		}
 	} else console.log('\n(give an app folder to also check its key file, lint and verify: ./bolt-apps doctor <app-folder>)');
 	console.log(bad ? `\n${bad} thing(s) to fix.` : '\nAll good.');

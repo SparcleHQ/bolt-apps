@@ -21,7 +21,7 @@ Expect: every case `ok`, then `All cases ran with stubbed commands on this OS.`
 Expect: `ok check`, `ok pack`, `ok verify`, `Shipped my-tool ...: <path>.boltpack`, and the line `Start mode: live. This app needs no key.` Warnings that the listing still says TODO are expected until you write one line each in `bolt-app.json` and the config description.
 
 ## 2. Drop it into Bolt
-Drop the `.boltpack` on the Bolt launcher. Install it (the pack is self-signed: expected), then Settings, Desktop, User Apps, expand the app, Review and accept.
+Drop the `.boltpack` on the Bolt launcher. Install it (the pack is self-signed: expected), then Settings, Desktop App, User Apps, expand the app, Review and accept.
 
 ## 3. What to type in Bolt, and what to see
 | Step | Type or press | Expect |

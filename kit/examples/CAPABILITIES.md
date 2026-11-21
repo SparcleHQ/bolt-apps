@@ -482,7 +482,7 @@ chip: portal-template
 ### Approval after every reship (`platform.reapprove`)
 
 ```
-Settings, Desktop, User Apps, expand the app, Review and accept
+Settings, Desktop App, User Apps, expand the app, Review and accept
 ```
 
 ### A first word that is not a view (a place, a repo, a host) (`nav.free_text`)

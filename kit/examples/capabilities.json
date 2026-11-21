@@ -879,7 +879,7 @@
       "name": "Approval after every reship",
       "status": "supported",
       "example": "kit/examples/portal-template",
-      "snippet": "Settings, Desktop, User Apps, expand the app, Review and accept",
+      "snippet": "Settings, Desktop App, User Apps, expand the app, Review and accept",
       "test": "toolkit/test/namespacing.test.mjs",
       "limit": "A personal app is approved per set of files. Every reship changes the files, so approve again; the first run asks too. On 181 pressing Enter on an unapproved app shows an empty list (fixed on a later build)."
     },

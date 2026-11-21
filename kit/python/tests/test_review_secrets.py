@@ -18,10 +18,12 @@ class KeyFile(unittest.TestCase):
 
     def f(self, body, mode=0o600):
         p = os.path.join(self.d, ".env")
-        open(p, "w").write(body)
+        with open(p, "w", encoding="utf-8") as fh:
+            fh.write(body)
         os.chmod(p, mode)
         return p
 
+    @unittest.skipIf(os.name == "nt", "symlinks")
     def test_symlink_is_refused(self):
         real = self.f("MY_KEY=abc12345\n")
         link = os.path.join(self.d, "link.env")

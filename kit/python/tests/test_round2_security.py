@@ -128,7 +128,7 @@ class ShortKeys(unittest.TestCase):
     def test_a_key_under_three_characters_is_refused(self):
         home = tempfile.mkdtemp(); old = dict(os.environ)
         try:
-            os.environ["HOME"] = home; os.environ["MY_KEY"] = "ab"
+            os.environ["HOME"] = home; os.environ["USERPROFILE"] = home; os.environ["MY_KEY"] = "ab"
             s = k.get_secret("demo", "MY_KEY", tool_dirs=[home])
             self.assertFalse(s); self.assertIn("shorter than", s.problem)
             os.environ["MY_KEY"] = "abc"

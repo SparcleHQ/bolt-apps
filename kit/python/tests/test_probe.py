@@ -9,7 +9,7 @@ SH = "/bin/sh"
 
 def stub(d, name, body):
     p = os.path.join(d, name)
-    with open(p, "w") as f:
+    with open(p, "w", encoding="utf-8") as f:
         f.write("#!/bin/sh\n" + body + "\n")
     os.chmod(p, 0o755)
     return p
@@ -98,7 +98,8 @@ class RunTests(unittest.TestCase):
             proc.wait(timeout=5)
         finally:
             os.environ["PATH"] = old
-        self.assertEqual(open(log).read().split(), ["/PID", str(proc.pid), "/T", "/F"])
+        with open(log, encoding="utf-8") as f:
+            self.assertEqual(f.read().split(), ["/PID", str(proc.pid), "/T", "/F"])
 
 
 class ProbeTests(unittest.TestCase):
@@ -106,12 +107,14 @@ class ProbeTests(unittest.TestCase):
         p = k.probe("n", fn=lambda: None)
         self.assertTrue(p.unread); self.assertIsNone(p.value); self.assertEqual(p.get(7), 7)
 
+    @unittest.skipIf(os.name == "nt", "POSIX stubs")
     def test_parser_error_is_unread(self):
         d = tempfile.mkdtemp()
         stub(d, "c", "echo abc")
         p = k.probe("n", ["c"], parse=int, dirs=[d])
         self.assertTrue(p.unread)
 
+    @unittest.skipIf(os.name == "nt", "POSIX stubs")
     def test_empty_output_unread_when_required(self):
         d = tempfile.mkdtemp()
         stub(d, "c", "true")
@@ -123,14 +126,17 @@ class ProbeTests(unittest.TestCase):
         res = k.run_parallel({"fast": lambda: k.Probe("fast", True, 1), "slow": lambda: (time.sleep(5), k.Probe("slow", True, 2))[1]}, dl)
         self.assertTrue(res["fast"].ok); self.assertTrue(res["slow"].unread and res["slow"].timed_out)
 
+    @unittest.skipIf(os.name == "nt", "POSIX stubs")
     def test_empty_output_is_unread_by_default(self):  # a clean zero from nothing
         d = tempfile.mkdtemp(); stub(d, "c", "true")
         self.assertTrue(k.probe("n", ["c"], parse=lambda t: len(t.splitlines()), dirs=[d]).unread)
 
+    @unittest.skipIf(os.name == "nt", "POSIX stubs")
     def test_parser_type_error_is_unread_not_a_crash(self):
         d = tempfile.mkdtemp(); stub(d, "c", "x")
         self.assertTrue(k.probe("n", ["c"], parse=lambda t: int(None), dirs=[d]).unread)
 
+    @unittest.skipIf(os.name == "nt", "POSIX stubs")
     def test_oversize_output_is_not_ok(self):
         d = tempfile.mkdtemp(); stub(d, "c", "yes | head -c 5000")
         self.assertFalse(k.run(["c"], dirs=[d], max_bytes=100).ok)

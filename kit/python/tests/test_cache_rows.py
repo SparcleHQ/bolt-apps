@@ -32,16 +32,25 @@ class CacheTests(unittest.TestCase):
         c = self.mk()
         c.put("a", {"n": 1})
         path = c._path("a")
-        doc = json.load(open(path)); doc["value"] = {"n": "x"}
-        json.dump(doc, open(path, "w"))
+        with open(path, encoding="utf-8") as f:
+            doc = json.load(f)
+        doc["value"] = {"n": "x"}
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(doc, f)
         self.assertIsNone(c.get("a"))
         self.assertFalse(c.put("b", {"n": "x"}))  # bad shape never written
 
     def test_garbage_and_future_ts_are_misses(self):
         c = self.mk(); c.put("a", {"n": 1})
-        open(c._path("a"), "w").write("{not json")
+        with open(c._path("a"), "w", encoding="utf-8") as f:
+            f.write("{not json")
         self.assertIsNone(c.get("a"))
-        c.put("a", {"n": 1}); doc = json.load(open(c._path("a"))); doc["ts"] = 9e9; json.dump(doc, open(c._path("a"), "w"))
+        c.put("a", {"n": 1})
+        with open(c._path("a"), encoding="utf-8") as f:
+            doc = json.load(f)
+        doc["ts"] = 9e9
+        with open(c._path("a"), "w", encoding="utf-8") as f:
+            json.dump(doc, f)
         self.assertIsNone(c.get("a"))
 
     @unittest.skipIf(os.name == "nt", "symlinks")
@@ -54,7 +63,9 @@ class CacheTests(unittest.TestCase):
     @unittest.skipIf(os.name == "nt", "symlinks")
     def test_symlinked_entry_not_followed(self):
         c = self.mk(); c.put("a", {"n": 1})
-        secret = os.path.join(self.tmp, "secret.json"); open(secret, "w").write('{"v":1,"key":"a","ts":1000,"value":{"n":9}}')
+        secret = os.path.join(self.tmp, "secret.json")
+        with open(secret, "w", encoding="utf-8") as f:
+            f.write('{"v":1,"key":"a","ts":1000,"value":{"n":9}}')
         os.unlink(c._path("a")); os.symlink(secret, c._path("a"))
         self.assertIsNone(c.get("a"))
 
@@ -226,14 +237,18 @@ class RowTests(unittest.TestCase):
 
 class DriftTests(unittest.TestCase):
     def test_icons_match_schema_and_json(self):
-        s = json.load(open(os.path.join(SCHEMA_DIR, "row.schema.json")))
-        j = json.load(open(os.path.join(SCHEMA_DIR, "icons.json")))
+        with open(os.path.join(SCHEMA_DIR, "row.schema.json"), encoding="utf-8") as f:
+            s = json.load(f)
+        with open(os.path.join(SCHEMA_DIR, "icons.json"), encoding="utf-8") as f:
+            j = json.load(f)
         self.assertEqual(set(s["$defs"]["icon"]["enum"]), set(ICONS))
         self.assertEqual(set(j["icons"]), set(ICONS))
 
     def test_packaged_schema_is_the_schema(self):
-        a = json.load(open(os.path.join(SCHEMA_DIR, "row.schema.json")))
-        b = json.load(open(os.path.join(HERE, "..", "bolt_app_kit", "row_schema.json")))
+        with open(os.path.join(SCHEMA_DIR, "row.schema.json"), encoding="utf-8") as f:
+            a = json.load(f)
+        with open(os.path.join(HERE, "..", "bolt_app_kit", "row_schema.json"), encoding="utf-8") as f:
+            b = json.load(f)
         self.assertEqual(a, b)
 
 

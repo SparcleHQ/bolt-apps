@@ -27,12 +27,21 @@ class SkyWatch(unittest.TestCase):
         self.m = load()
         self.home = tempfile.mkdtemp()
         self._h = os.environ.get("HOME")
+        self._up = os.environ.get("USERPROFILE")
         os.environ["HOME"] = self.home
+        os.environ["USERPROFILE"] = self.home
         self.cfg = self.m.load_json("config.json")
         self.fx = self.m.load_json("fixtures.json")
 
     def tearDown(self):
-        os.environ["HOME"] = self._h or ""
+        if self._h is None:
+            os.environ.pop("HOME", None)
+        else:
+            os.environ["HOME"] = self._h
+        if self._up is None:
+            os.environ.pop("USERPROFILE", None)
+        else:
+            os.environ["USERPROFILE"] = self._up
         shutil.rmtree(self.home, ignore_errors=True)
 
     def ctx(self, fixture=True, force=False):

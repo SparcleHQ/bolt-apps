@@ -60,7 +60,7 @@ class Round2(unittest.TestCase):
     def setUp(self):
         self.home = tempfile.mkdtemp()
         self._env = dict(os.environ)
-        os.environ.update({"HOME": self.home, "BOLT_APP_TEST": "1", "ECHO_KEY": KEY})
+        os.environ.update({"HOME": self.home, "USERPROFILE": self.home, "BOLT_APP_TEST": "1", "ECHO_KEY": KEY})
         os.environ.pop("BOLT_APP_FIXTURE", None)
         Echo.hits = []
         self.srv = http.server.HTTPServer(("localhost", 0), Echo)
@@ -74,7 +74,8 @@ class Round2(unittest.TestCase):
                "views": [{"id": "feed", "endpoint": "feed", "item": {"title": "{name}", "subtitle": "{date}", "url": "{link}"}},
                          {"id": "top", "endpoint": "top", "item": {"title": "{title}"}}]}
         self.cfg_path = os.path.join(self.home, "config.json")
-        json.dump(cfg, open(self.cfg_path, "w"))
+        with open(self.cfg_path, "w", encoding="utf-8") as f:
+            json.dump(cfg, f)
         spec = importlib.util.spec_from_file_location("eng_r2", os.path.join(ROOT, "portal-template__engine.py"))
         self.eng = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(self.eng)
@@ -103,8 +104,9 @@ class Round2(unittest.TestCase):
             for f in files:
                 if f == "config.json":
                     continue
-                if KEY.encode() in open(os.path.join(root, f), "rb").read():
-                    found.append(os.path.join(root, f))
+                with open(os.path.join(root, f), "rb") as fh:
+                    if KEY.encode() in fh.read():
+                        found.append(os.path.join(root, f))
         self.assertEqual(found, [], "the key was written to disk")
         self.assertTrue([f for _, _, fs in os.walk(self.home) for f in fs if f != "config.json"], "something was cached")
 
@@ -127,7 +129,8 @@ class Round2(unittest.TestCase):
         self.assertEqual(len([h for h in Echo.hits if h.startswith("/item/")]), 3)   # "..", "." and "" are dropped before the limit
 
     def test_config_problems_are_named(self):
-        cfg = json.load(open(self.cfg_path))
+        with open(self.cfg_path, encoding="utf-8") as f:
+            cfg = json.load(f)
         cfg["api"]["auth_in"] = "cookie"
         cfg["endpoints"]["top"]["hydrate"] = {"path": "/item/x.json"}
         probs = self.eng.validate_config(cfg)

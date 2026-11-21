@@ -15,7 +15,11 @@ import bolt_app_kit as k  # noqa: E402
 class Runaway(unittest.TestCase):
     def test_endless_output_is_cut_and_killed(self):
         t0 = time.time()
-        r = k.run(["yes"], timeout=10, max_bytes=5000)
+        if os.name == "nt":
+            cmd = [sys.executable, "-c", "import sys\nwhile True:\n sys.stdout.write('y'*4096)\n sys.stdout.flush()"]
+        else:
+            cmd = ["yes"]
+        r = k.run(cmd, timeout=10, max_bytes=5000)
         self.assertFalse(r.ok)
         self.assertEqual(r.reason, "output too large")
         self.assertLess(time.time() - t0, 5)

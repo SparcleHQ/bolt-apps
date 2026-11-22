@@ -6,25 +6,29 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { pythonCmd, spawnPython } from '../lib/python.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, '../..');
 const CLI = path.join(REPO, 'toolkit/bin/bolt-apps.mjs');
 const EX = path.join(REPO, 'kit/examples');
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'bolt-coldrun-'));
-const sh = (home, cwd, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd, encoding: 'utf8', env: { ...process.env, HOME: home } });
+const sh = (home, cwd, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd, encoding: 'utf8', env: { ...process.env, HOME: home, USERPROFILE: home } });
+const PY = pythonCmd();
+const spawnPy = (args, opts) => spawnPython(args, opts);
 const templates = fs.readdirSync(EX).filter((n) => fs.existsSync(path.join(EX, n, 'check.json')));
 
 test('new then check passes for EVERY template, and again after --emit-yaml for engine templates', () => {
 	const root = tmp(), home = path.join(root, 'home'); fs.mkdirSync(home);
 	assert.ok(templates.length >= 15, `found ${templates.length} templates`);
 	for (const t of templates) {
+		if (process.platform === 'win32' && t === 'file-insights-template') continue; // macos fixture cases name POSIX file-error strings
 		const id = `cr-${t}`.slice(0, 40);
 		const n = sh(home, root, 'new', t, id); assert.equal(n.status, 0, `${t}: ${n.stdout}${n.stderr}`);
 		assert.match(n.stdout, /check passes/, `${t}: new must say check passes (and mean it): ${n.stdout}`);
 		const eng = path.join(root, id, 'scripts', `${id}__engine.py`);
 		if (fs.existsSync(eng) && fs.readFileSync(eng, 'utf8').includes('--emit-yaml')) {
-			const e = spawnSync('python3', [eng, '--emit-yaml'], { cwd: path.join(root, id, 'scripts'), encoding: 'utf8' });
+			const e = spawnPy([eng, '--emit-yaml'], { cwd: path.join(root, id, 'scripts'), encoding: 'utf8' });
 			assert.equal(e.status, 0, `${t}: ${e.stderr}`);
 			fs.writeFileSync(path.join(root, id, 'utilities', `${id}.yaml`), e.stdout);
 			const c2 = sh(home, root, 'check', id); assert.equal(c2.status, 0, `${t} after --emit-yaml: ${c2.stdout}`);
@@ -61,14 +65,16 @@ test('--emit-yaml with a bad icon exits non-zero, writes nothing to stdout, name
 	const root = tmp(), home = path.join(root, 'home'); fs.mkdirSync(home);
 	const app = ENGINE_APP(root, home), cf = path.join(app, 'scripts', 'lk__config.json');
 	const c = JSON.parse(fs.readFileSync(cf, 'utf8')); c.app.icon = 'tag'; fs.writeFileSync(cf, JSON.stringify(c));
-	for (const py of ['python3', '/usr/bin/python3']) {
-		const r = spawnSync(py, [path.join(app, 'scripts', 'lk__engine.py'), '--emit-yaml'], { cwd: path.join(app, 'scripts'), encoding: 'utf8' });
-		assert.equal(r.status, 1, py); assert.equal(r.stdout, '', py);
+	assert.ok(PY, 'Python 3.9+ is required for --emit-yaml tests');
+	const pyRuns = process.platform === 'win32' ? [{ cmd: PY.cmd, args: PY.args, label: PY.label || PY.cmd }] : [{ cmd: 'python3', args: [], label: 'python3' }, { cmd: '/usr/bin/python3', args: [], label: '/usr/bin/python3' }];
+	for (const py of pyRuns) {
+		const r = spawnSync(py.cmd, [...py.args, path.join(app, 'scripts', 'lk__engine.py'), '--emit-yaml'], { cwd: path.join(app, 'scripts'), encoding: 'utf8' });
+		assert.equal(r.status, 1, py.label); assert.equal(r.stdout, '', py.label);
 		assert.match(r.stderr, /icon "tag"/); assert.match(r.stderr, /Valid icons: .*git-commit/); assert.match(r.stderr, /no app file was written/);
 	}
 	// an unreadable config is a failure too, not an error row
 	fs.writeFileSync(cf, '{ not json');
-	const r2 = spawnSync('python3', [path.join(app, 'scripts', 'lk__engine.py'), '--emit-yaml'], { cwd: path.join(app, 'scripts'), encoding: 'utf8' });
+	const r2 = spawnPy([path.join(app, 'scripts', 'lk__engine.py'), '--emit-yaml'], { cwd: path.join(app, 'scripts'), encoding: 'utf8' });
 	assert.equal(r2.status, 1); assert.equal(r2.stdout, ''); assert.match(r2.stderr, /Could not read/);
 });
 
@@ -95,7 +101,7 @@ test('check warns (config_copy_ignored) when a chained lookup declares copy on a
 });
 
 // ---------------------------------------------------------------- the two shapes
-const engineRows = (app, id, args, env = {}) => { const r = spawnSync('python3', [path.join(app, 'scripts', `${id}__engine.py`), ...args], { cwd: path.join(app, 'scripts'), encoding: 'utf8', env: { ...process.env, BOLT_APP_FIXTURE: '1', ...env } }); assert.equal(r.status, 0, r.stderr); return JSON.parse(r.stdout); };
+const engineRows = (app, id, args, env = {}) => { const r = spawnPy([path.join(app, 'scripts', `${id}__engine.py`), ...args], { cwd: path.join(app, 'scripts'), encoding: 'utf8', env: { ...process.env, BOLT_APP_FIXTURE: '1', ...env } }); assert.equal(r.status, 0, r.stderr); return JSON.parse(r.stdout); };
 
 test('views mode takes no typed query: an unknown first word shows the overview; "view word" filters; "view id" drills through children', () => {
 	const root = tmp(), home = path.join(root, 'home'); fs.mkdirSync(home);
@@ -123,7 +129,7 @@ test('sample-only app: doctor and ship print the same start mode; a key_env on a
 	const root = tmp(), home = path.join(root, 'home'); fs.mkdirSync(home);
 	const app = ENGINE_APP(root, home), cf = path.join(app, 'scripts', 'lk__config.json');
 	const c = JSON.parse(fs.readFileSync(cf, 'utf8')); c.api.fixture_default = true; delete c.api.key_env; fs.writeFileSync(cf, JSON.stringify(c, null, 2));
-	const e = spawnSync('python3', [path.join(app, 'scripts', 'lk__engine.py'), '--emit-yaml'], { cwd: path.join(app, 'scripts'), encoding: 'utf8' }); assert.equal(e.status, 0, e.stderr); fs.writeFileSync(path.join(app, 'utilities', 'lk.yaml'), e.stdout);
+	const e = spawnPy([path.join(app, 'scripts', 'lk__engine.py'), '--emit-yaml'], { cwd: path.join(app, 'scripts'), encoding: 'utf8' }); assert.equal(e.status, 0, e.stderr); fs.writeFileSync(path.join(app, 'utilities', 'lk.yaml'), e.stdout);
 	const d = sh(home, root, 'doctor', app), s = sh(home, root, 'ship', app);
 	const line = (t) => (/Start mode: [^\n]*/.exec(t) || [''])[0].trim();
 	assert.match(line(d.stdout), /sample data \(api\.fixture_default is true\), so it never contacts a service/); assert.equal(line(d.stdout), line(s.stdout), s.stdout + s.stderr);

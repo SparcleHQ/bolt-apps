@@ -8,6 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readPack } from '../bin/bolt-apps.mjs';
+import { spawnPython } from '../lib/python.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CLI = path.resolve(HERE, '../bin/bolt-apps.mjs');
@@ -211,7 +212,7 @@ test('lint refuses an app whose ids disagree: the app file name, the id in it, c
 	fs.renameSync(path.join(ud, 'other.yaml'), path.join(ud, 'zz.yaml'));
 	// config app.id (and chip) changed and the app file generated again from it: bolt-app.json still says zz
 	const j = JSON.parse(fs.readFileSync(cfg, 'utf8')); j.app.id = 'otherid'; j.app.chip = 'otherid'; fs.writeFileSync(cfg, JSON.stringify(j, null, 2));
-	const y = spawnSync('python3', ['scripts/zz__engine.py', '--emit-yaml'], { cwd: app, encoding: 'utf8' }); assert.equal(y.status, 0, y.stderr);
+	const y = spawnPython(['scripts/zz__engine.py', '--emit-yaml'], { cwd: app, encoding: 'utf8' }); assert.equal(y.status, 0, y.stderr);
 	fs.rmSync(path.join(ud, 'zz.yaml')); fs.writeFileSync(path.join(ud, 'otherid.yaml'), y.stdout);
 	r = run(d, 'lint', app, '--personal', '--json'); assert.equal(r.status, 1, r.stdout);
 	for (const c of ['error:config_id_mismatch', 'error:utilities_id_mismatch']) assert.ok(codes(r).includes(c), c + r.stdout);

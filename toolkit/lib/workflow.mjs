@@ -77,8 +77,9 @@ export const staleCloneNote = () => { if (staleShown) return; staleShown = true;
 export function userUtilsDir(env = process.env, platform = process.platform, home = os.homedir()) {
 	if (env.BOLT_USER_UTILS_DIR) return env.BOLT_USER_UTILS_DIR;
 	const sub = 'app.sparcle.bolt.enterprise';
-	const base = platform === 'darwin' ? path.join(home, 'Library', 'Application Support') : platform === 'win32' ? (env.APPDATA || path.join(home, 'AppData', 'Roaming')) : (env.XDG_CONFIG_HOME || path.join(home, '.config'));
-	return path.join(base, sub, 'user-utils');
+	const join = platform === 'win32' ? path.win32.join : path.posix.join;
+	const base = platform === 'darwin' ? join(home, 'Library', 'Application Support') : platform === 'win32' ? (env.APPDATA || join(home, 'AppData', 'Roaming')) : (env.XDG_CONFIG_HOME || join(home, '.config'));
+	return join(base, sub, 'user-utils');
 }
 // Names only, never contents and never a write. A file the pack would write may be from an installed pack or a hand copy.
 // Old flat names are the app's own script names without the `<id>__` prefix (a hand copy from before apps were namespaced, or another app that uses the same

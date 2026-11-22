@@ -12,9 +12,10 @@ import { fileURLToPath } from 'node:url';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const QS = fs.readFileSync(path.join(REPO, 'kit/examples/QUICKSTART.md'), 'utf8');
-const sh = (home, cmd) => spawnSync('sh', ['-c', cmd], { cwd: REPO, encoding: 'utf8', env: { ...process.env, HOME: home } });
+const sh = (home, cmd) => spawnSync('sh', ['-c', cmd], { cwd: REPO, encoding: 'utf8', env: { ...process.env, HOME: home, USERPROFILE: home } });
+const cli = (home, ...a) => spawnSync(process.execPath, [path.join(REPO, 'toolkit/bin/bolt-apps.mjs'), ...a], { encoding: 'utf8', env: { ...process.env, HOME: home, USERPROFILE: home } });
 
-test('QUICKSTART: the four commands and the regenerate line run as written against a fresh app', () => {
+test('QUICKSTART: the four commands and the regenerate line run as written against a fresh app', { skip: process.platform === 'win32' ? 'QUICKSTART commands are POSIX ./bolt-apps and python3' : false }, () => {
 	const home = fs.mkdtempSync(path.join(os.tmpdir(), 'bolt-qs-'));
 	const block = /```sh run\n([\s\S]*?)```/.exec(QS)[1].split('\n').filter((l) => l.trim());
 	assert.equal(block.length, 4);
@@ -48,7 +49,7 @@ test('docs name no stale command or chip', () => {
 
 test('new prints the real file names to edit, not the template\'s', () => {
 	const home = fs.mkdtempSync(path.join(os.tmpdir(), 'bolt-qs-'));
-	const r = sh(home, './bolt-apps new portal-template shiny-tool --dir ~/a');
+	const r = cli(home, 'new', 'portal-template', 'shiny-tool', '--dir', path.join(home, 'a'));
 	assert.equal(r.status, 0, r.stdout + r.stderr);
 	assert.match(r.stdout, /edit: scripts\/shiny-tool__config\.json, scripts\/shiny-tool__fixtures\.json/);
 	assert.doesNotMatch(r.stdout, /edit:[^\n]*portal-template/);

@@ -108,7 +108,7 @@ test('help lists every command and --version prints the version', () => {
 
 test('workflow: new <template> <id> -> run -> ship passes from a fresh copy, with no hand edits', () => {
 	const root = tmp(), home = path.join(root, 'home'); fs.mkdirSync(home);
-	const env = { ...process.env, HOME: home };
+	const env = { ...process.env, HOME: home, USERPROFILE: home };
 	const sh = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: root, encoding: 'utf8', env });
 	const n = sh('new', 'script-template', 'my-tool'); assert.equal(n.status, 0, n.stdout + n.stderr); assert.match(n.stdout, /check passes/);
 	assert.ok(!fs.existsSync(path.join(root, 'my-tool', 'golden', 'left-over.json')));
@@ -122,7 +122,7 @@ test('workflow: new <template> <id> -> run -> ship passes from a fresh copy, wit
 
 test('workflow: run and ship refuse a folder that holds a real-looking key; doctor reports fixes', () => {
 	const root = tmp(), home = path.join(root, 'home'); fs.mkdirSync(home);
-	const env = { ...process.env, HOME: home };
+	const env = { ...process.env, HOME: home, USERPROFILE: home };
 	const sh = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: root, encoding: 'utf8', env });
 	assert.equal(sh('new', 'script-template', 'leaky').status, 0);
 	fs.writeFileSync(path.join(root, 'leaky', 'scripts', 'notes.txt'), 'token ghp_' + 'a'.repeat(36));
@@ -144,7 +144,7 @@ test('check: text_on_disk fails a script that wrote a secret into its cache (the
 
 test('ship and doctor: a bolt-app.json that is JSON null (or a list) gives a plain error, not a crash and not "not valid JSON"', () => {
 	const root = tmp(), home = path.join(root, 'home'); fs.mkdirSync(home);
-	const env = { ...process.env, HOME: home };
+	const env = { ...process.env, HOME: home, USERPROFILE: home };
 	const sh = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: root, encoding: 'utf8', env });
 	assert.equal(sh('new', 'script-template', 'odd').status, 0);
 	for (const body of ['null', '[]', '7']) {
@@ -154,7 +154,7 @@ test('ship and doctor: a bolt-app.json that is JSON null (or a list) gives a pla
 	}
 });
 
-test('the repo-root bolt-apps launcher runs the toolkit from any folder, through a symlink, and says so when node is missing', () => {
+test('the repo-root bolt-apps launcher runs the toolkit from any folder, through a symlink, and says so when node is missing', { skip: process.platform === 'win32' ? 'POSIX ./bolt-apps; Windows uses bolt-apps.cmd (windows-launcher.test.mjs)' : false }, () => {
 	const launcher = path.join(REPO, 'bolt-apps');
 	assert.ok(fs.statSync(launcher).mode & 0o111, 'bolt-apps is executable');
 	const root = tmp();

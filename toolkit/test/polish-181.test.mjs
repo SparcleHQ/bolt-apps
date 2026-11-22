@@ -115,7 +115,7 @@ test('doctor: advises removing only a file the pack would write; another app\'s 
 	const d = run(home, ['doctor', app], { BOLT_USER_UTILS_DIR: uu });
 	assert.equal(d.status, 0, d.stdout + d.stderr);
 	assert.doesNotMatch(d.stdout, /file_exists|rm |del |FIX /, d.stdout);
-	assert.match(d.stdout, /bolt_app_kit\.py is in your Bolt user apps folder\. It does not stop this pack installing/);
+	assert.match(d.stdout, /bolt_app_kit\.py'? is in your Bolt user apps folder\. It does not stop this pack installing/);
 	assert.doesNotMatch(d.stdout, /my-pipe__old\.py/, 'a script the pack does not write is not a clash');
 	assert.deepEqual(userUtilsClashes(uu, 'my-pipe', app).filter((c) => c.blocks), []);
 	// The same name as a script of the pack is a clash, with the exact file to remove
@@ -163,7 +163,7 @@ test('doctor: a case variant clashes only when the packed spelling resolves on d
 
 test('userUtilsDir: per OS, with the override', () => {
 	assert.equal(userUtilsDir({}, 'darwin', '/h'), '/h/Library/Application Support/app.sparcle.bolt.enterprise/user-utils');
-	assert.equal(userUtilsDir({ APPDATA: 'C:\\A' }, 'win32', 'C:\\h'), path.join('C:\\A', 'app.sparcle.bolt.enterprise', 'user-utils'));
+	assert.equal(userUtilsDir({ APPDATA: 'C:\\A' }, 'win32', 'C:\\h'), path.win32.join('C:\\A', 'app.sparcle.bolt.enterprise', 'user-utils'));
 	assert.equal(userUtilsDir({}, 'linux', '/h'), '/h/.config/app.sparcle.bolt.enterprise/user-utils');
 	assert.equal(userUtilsDir({ BOLT_USER_UTILS_DIR: '/x' }, 'linux', '/h'), '/x');
 	assert.deepEqual(userUtilsClashes('/nonexistent-dir', 'a', '/nope'), []);

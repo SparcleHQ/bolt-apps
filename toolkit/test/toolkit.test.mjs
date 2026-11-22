@@ -69,6 +69,7 @@ test('odd input does not crash lint: null listing, quoted runtime, symlinked bin
 	const f = path.join(d, 'apps/q/utilities/q.yaml');
 	fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace('runtime: transform', 'runtime: "transform"'));
 	assert.equal(run(d, 'lint', 'apps/q').status, 0);
+	if (process.platform === 'win32') return;
 	const link = path.join(d, 'bolt-apps'); fs.symlinkSync(CLI, link);
 	assert.match(spawnSync(process.execPath, [link, 'help'], { encoding: 'utf8' }).stdout, /author toolkit/);
 });

@@ -20,7 +20,7 @@ const EXCLUDED = new Set(['script-template']);
 const templates = fs.readdirSync(EX, { withFileTypes: true }).filter((e) => e.isDirectory() && fs.existsSync(path.join(EX, e.name, 'bolt-app.json'))).map((e) => e.name).filter((n) => !EXCLUDED.has(n));
 const PLACEHOLDER = /(^|\.)example\.(com|org|net)$|\.invalid$/;
 const ERRORISH = /could not reach|could not connect|not set up correctly|could not run|try again|offline|not available on this system/i;
-const run = (home, ...a) => spawnSync(process.execPath, [CLI, ...a], { encoding: 'utf8', timeout: 120000, env: { ...process.env, HOME: home, HTTPS_PROXY: 'http://127.0.0.1:9', HTTP_PROXY: 'http://127.0.0.1:9', https_proxy: 'http://127.0.0.1:9', http_proxy: 'http://127.0.0.1:9' } });
+const run = (home, ...a) => spawnSync(process.execPath, [CLI, ...a], { encoding: 'utf8', timeout: 120000, env: { ...process.env, HOME: home, USERPROFILE: home, HTTPS_PROXY: 'http://127.0.0.1:9', HTTP_PROXY: 'http://127.0.0.1:9', https_proxy: 'http://127.0.0.1:9', http_proxy: 'http://127.0.0.1:9' } });
 const say = (r) => /sample/i.test([r.title, r.subtitle, r.kpi_badge, r.kpi_foot, r.kpi_note, r.body].join(' '));
 
 test('every template: an unmodified `new` copy never opens on an error row; placeholder-API templates open on labelled sample data', () => {

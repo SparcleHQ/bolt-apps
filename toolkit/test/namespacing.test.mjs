@@ -14,13 +14,14 @@ import { readPack, tarFile } from '../bin/bolt-apps.mjs';
 import { clockVersion, newer, bump } from '../lib/workflow.mjs';
 import { BOLT_SAYS, markdownTable } from '../lib/boltsays.mjs';
 import { scanMentions, declaredHostsOf, assessYaml } from '../lib/assess.mjs';
+import { spawnPython } from '../lib/python.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, '../..');
 const CLI = path.resolve(HERE, '../bin/bolt-apps.mjs');
 const EX = path.join(REPO, 'kit', 'examples');
 const tmp = (p) => fs.mkdtempSync(path.join(os.tmpdir(), p));
-const cli = (home, cwd, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd, encoding: 'utf8', env: { ...process.env, HOME: home } });
+const cli = (home, cwd, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd, encoding: 'utf8', env: { ...process.env, HOME: home, USERPROFILE: home } });
 const KEY = (() => { const d = tmp('ns-key-'); const k = path.join(d, 'key.pem'); const r = spawnSync(process.execPath, [CLI, 'keygen', '--out', k], { encoding: 'utf8' }); assert.equal(r.status, 0, r.stderr); return k; })();
 const examples = fs.readdirSync(EX, { withFileTypes: true }).filter((e) => e.isDirectory() && fs.existsSync(path.join(EX, e.name, 'bolt-app.json'))).map((e) => e.name);
 
@@ -274,7 +275,7 @@ test('new skips the login lookup for --author and falls back if no login is avai
 	fs.writeFileSync(preload, "require('node:os').userInfo = () => { process.stderr.write('userInfo called\\n'); throw new Error('no login'); };\n");
 	const create = (id, ...args) => {
 		const r = spawnSync(process.execPath, ['--require', preload, CLI, 'new', 'portal-template', id, '--dir', d, ...args], {
-			cwd: d, encoding: 'utf8', env: { ...process.env, HOME: home, USER: 'FixtureUser' },
+			cwd: d, encoding: 'utf8', env: { ...process.env, HOME: home, USERPROFILE: home, USER: 'FixtureUser' },
 		});
 		assert.equal(r.status, 0, r.stdout + r.stderr);
 		const { author } = JSON.parse(fs.readFileSync(path.join(d, id, 'bolt-app.json'), 'utf8'));
@@ -354,7 +355,7 @@ test('a script run under another name says what is wrong in one sentence, not a 
 	const d = tmp('ns-rename-'), home = tmp('ns-home-');
 	assert.equal(cli(home, d, 'new', 'script-template', 'renamed', '--dir', d).status, 0);
 	const sd = path.join(d, 'renamed', 'scripts'); fs.renameSync(path.join(sd, 'renamed__app.py'), path.join(sd, 'app.py'));
-	const r = spawnSync('/usr/bin/python3', ['-I', path.join(sd, 'app.py')], { encoding: 'utf8', env: { HOME: home, PATH: '/usr/bin:/bin' } });
+	const r = spawnPython(['-X', 'utf8', '-I', path.join(sd, 'app.py')], { encoding: 'utf8', env: { ...process.env, HOME: home, USERPROFILE: home } });
 	assert.notEqual(r.status, 0); assert.match(r.stderr, /script files must be named <app id>__<name>/); assert.doesNotMatch(r.stderr, /Traceback|ModuleNotFoundError/);
 });
 
@@ -404,7 +405,7 @@ test('on_missing_key: sample shows the labelled data and a key hint; setup shows
 	assert.equal(cli(home, d, 'new', 'portal-template', 'modeapp', '--dir', d).status, 0);
 	const app = path.join(d, 'modeapp'), cfgp = path.join(app, 'scripts', 'modeapp__config.json'), cfg = JSON.parse(fs.readFileSync(cfgp, 'utf8'));
 	assert.equal(cfg.api.on_missing_key, 'sample');
-	const run = (env) => spawnSync('/usr/bin/python3', ['-I', path.join(app, 'scripts', 'modeapp__engine.py'), 'overview'], { encoding: 'utf8', env: { HOME: home, PATH: '/usr/bin:/bin', ...env } });
+	const run = (env) => spawnPython(['-X', 'utf8', '-I', path.join(app, 'scripts', 'modeapp__engine.py'), 'overview'], { encoding: 'utf8', env: { ...process.env, HOME: home, USERPROFILE: home, ...env } });
 	let rows = JSON.parse(run({}).stdout);
 	// the overview is an entity_preview pane (a tile above only for a row with a number), so the label and the key hint are rows with a body, and a row with a number keeps its tile
 	assert.ok(rows.some((r) => /^SAMPLE DATA/.test(r.title) && /sample data/i.test(r.body || '')), 'a SAMPLE DATA row whose pane says so');
@@ -460,16 +461,19 @@ test('on_missing_key: a loose key file keeps its setup row, an unknown value is 
 	const d = tmp('ns-omk-'), home = tmp('ns-home-');
 	assert.equal(cli(home, d, 'new', 'portal-template', 'omkapp', '--dir', d).status, 0);
 	const app = path.join(d, 'omkapp'), cfgp = path.join(app, 'scripts', 'omkapp__config.json'), cfg = JSON.parse(fs.readFileSync(cfgp, 'utf8'));
-	const run = (args, env = {}) => spawnSync('/usr/bin/python3', ['-I', path.join(app, 'scripts', 'omkapp__engine.py'), ...args], { encoding: 'utf8', env: { HOME: home, PATH: '/usr/bin:/bin', ...env } });
-	const envf = path.join(home, 'loose.env'); fs.writeFileSync(envf, `${cfg.api.key_env}=abc\n`, { mode: 0o644 }); fs.chmodSync(envf, 0o644);
-	cfg.api.env_file = envf; fs.writeFileSync(cfgp, JSON.stringify(cfg, null, 2) + '\n');
-	let rows = JSON.parse(run(['overview']).stdout);
-	assert.match(rows[0].title, /Tighten the permissions/); assert.ok(!rows.some((r) => /SAMPLE DATA/.test(r.title)));
+	const run = (args, env = {}) => spawnPython(['-X', 'utf8', '-I', path.join(app, 'scripts', 'omkapp__engine.py'), ...args], { encoding: 'utf8', env: { ...process.env, HOME: home, USERPROFILE: home, ...env } });
+	let rows;
+	if (process.platform !== 'win32') {
+		const envf = path.join(home, 'loose.env'); fs.writeFileSync(envf, `${cfg.api.key_env}=abc\n`, { mode: 0o644 }); fs.chmodSync(envf, 0o644);
+		cfg.api.env_file = envf; fs.writeFileSync(cfgp, JSON.stringify(cfg, null, 2) + '\n');
+		rows = JSON.parse(run(['overview']).stdout);
+		assert.match(rows[0].title, /Tighten the permissions/); assert.ok(!rows.some((r) => /SAMPLE DATA/.test(r.title)));
+	}
 	delete cfg.api.env_file; cfg.api.on_missing_key = 'maybe'; fs.writeFileSync(cfgp, JSON.stringify(cfg, null, 2) + '\n');
 	rows = JSON.parse(run(['overview']).stdout); assert.match(rows[0].title, /not set up correctly/); assert.match(rows[0].subtitle, /on_missing_key must be setup or sample/);
 	// a chart or table data view gets no label row (it would be a plotted point); the overview does
 	const ct = path.join(EX, 'chart-template'), fx = path.join(ct, 'scripts', 'chart-template__engine.py');
-	const rn = (a) => JSON.parse(spawnSync('/usr/bin/python3', ['-I', fx, ...a], { encoding: 'utf8', env: { HOME: home, PATH: '/usr/bin:/bin' } }).stdout);
+	const rn = (a) => JSON.parse(spawnPython(['-X', 'utf8', '-I', fx, ...a], { encoding: 'utf8', env: { ...process.env, HOME: home, USERPROFILE: home } }).stdout);
 	assert.ok(rn(['overview']).some((r) => /sample data: add your/.test(r.kpi_foot || '')));
 	const cj = JSON.parse(fs.readFileSync(path.join(ct, 'scripts', 'chart-template__config.json'), 'utf8')), dv = cj.views.find((v) => v.widget && v.widget.kind === 'chart');
 	assert.ok(dv, 'chart-template has a chart view'); assert.ok(!rn([dv.id]).some((r) => /SAMPLE DATA/.test(r.title)));

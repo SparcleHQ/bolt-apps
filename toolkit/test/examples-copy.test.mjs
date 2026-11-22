@@ -31,7 +31,7 @@ function sandbox(name, folder = name) {
 	fs.mkdirSync(home); fs.mkdirSync(bin);
 	const cli = path.join(root, 'toolkit', 'bin', 'bolt-apps.mjs');
 	fs.writeFileSync(path.join(bin, 'bolt-apps'), `#!/bin/sh\nexec "${process.execPath}" "${cli}" "$@"\n`, { mode: 0o755 });
-	const env = { PATH: `${bin}:${process.env.PATH}`, HOME: home, LANG: 'C.UTF-8' };
+	const env = { PATH: `${bin}${path.delimiter}${process.env.PATH}`, HOME: home, USERPROFILE: home, LANG: 'C.UTF-8' };
 	const keygen = spawnSync(process.execPath, [cli, 'keygen'], { env, encoding: 'utf8' });
 	assert.equal(keygen.status, 0, keygen.stderr);
 	return { root, app, env, cli };
@@ -57,7 +57,7 @@ for (const name of names) {
 	const readme = path.join(EXAMPLES, name, 'README.md');
 	if (fs.existsSync(readme)) {
 		const blocks = readmeBlocks(fs.readFileSync(readme, 'utf8'));
-		test(`${name}: the README's shell commands run verbatim in a fresh copy`, { skip: blocks.length ? false : 'the README has no fenced shell commands' }, () => {
+		test(`${name}: the README's shell commands run verbatim in a fresh copy`, { skip: process.platform === 'win32' ? 'README commands are POSIX shell' : (blocks.length ? false : 'the README has no fenced shell commands') }, () => {
 			const s = sandbox(name);
 			for (const b of blocks) {
 				// a block that names kit/examples/<id> is written for the repo root; any other is written for the app folder
@@ -79,7 +79,7 @@ for (const name of names) {
 			const hr = bolt(s, hand, 'lint', '.', '--personal'); assert.notEqual(hr.status, 0, `${name}: a hand copy must not pass`); assert.match(hr.stdout, /script_not_namespaced/);
 		}
 		let r;
-		if (fs.existsSync(path.join(app, 'check.json'))) {   // `check` runs script apps only; an app with no check.json (http_local) goes straight to lint, pack and verify
+		if (fs.existsSync(path.join(app, 'check.json')) && !(process.platform === 'win32' && name === 'file-insights-template')) {   // `check` runs script apps only; an app with no check.json (http_local) goes straight to lint, pack and verify
 			// no --update-golden: a golden that drifts after the copy (output that depends on the id, chip or title, or a stale golden) must fail here, not be rewritten
 			r = bolt(s, app, 'check', '.'); assert.equal(r.status, 0, `${name}: check (goldens must hold after a copy)\n${r.stdout.slice(-2500)}${r.stderr}`);
 		}

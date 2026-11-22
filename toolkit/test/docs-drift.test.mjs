@@ -139,7 +139,7 @@ test('docs name the one command form, say Windows is unproven and never name a c
 });
 
 // ---------------------------------------------------------------- runnable shell blocks
-test('every shell block marked "sh run" runs in a fresh copy of the repo', { timeout: 280000 }, () => {
+test('every shell block marked "sh run" runs in a fresh copy of the repo', { timeout: 280000, skip: process.platform === 'win32' ? 'sh run blocks are POSIX' : false }, () => {
 	const blocks = [];
 	for (const f of DOCS) for (const m of read(f).matchAll(/```sh run\n([\s\S]*?)```/g)) blocks.push({ f, code: m[1] });
 	assert.ok(blocks.length >= 1, 'at least the QUICKSTART block');

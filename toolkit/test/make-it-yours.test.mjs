@@ -8,13 +8,14 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { spawnPython } from '../lib/python.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, '../..');
 const CLI = path.join(REPO, 'toolkit/bin/bolt-apps.mjs');
 const EX = path.join(REPO, 'kit/examples');
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'bolt-myo-'));
-const sh = (home, cwd, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd, encoding: 'utf8', env: { ...process.env, HOME: home } });
+const sh = (home, cwd, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd, encoding: 'utf8', env: { ...process.env, HOME: home, USERPROFILE: home } });
 const readJson = (p) => JSON.parse(fs.readFileSync(p, 'utf8'));
 const templates = fs.readdirSync(EX).filter((n) => fs.existsSync(path.join(EX, n, 'check.json')));
 const engineMode = (t) => { const f = path.join(EX, t, 'scripts', `${t}__config.json`); return fs.existsSync(f) && fs.existsSync(path.join(EX, t, 'scripts', `${t}__engine.py`)) ? (readJson(f).mode || 'views') : null; };   // the shared engine only: a script with its own config.json is not one
@@ -120,7 +121,7 @@ test('check refuses a case that names a view the config no longer has (portal co
 	assert.equal(m.set('').status, 0);
 	const cf = path.join(m.app, 'scripts', 'mut-view__config.json'), cfg = readJson(cf);
 	cfg.views = cfg.views.filter((v) => v.id !== 'tickets').map((v) => ({ ...v, children: (v.children || []).filter((c) => c.view !== 'tickets') })); cfg.overview.rows = cfg.overview.rows.filter((r) => r.view !== 'tickets'); fs.writeFileSync(cf, JSON.stringify(cfg, null, 2));
-	const e = spawnSync('python3', [path.join(m.app, 'scripts', 'mut-view__engine.py'), '--emit-yaml'], { cwd: path.join(m.app, 'scripts'), encoding: 'utf8' }); assert.equal(e.status, 0, e.stderr); fs.writeFileSync(path.join(m.app, 'utilities', 'mut-view.yaml'), e.stdout);
+	const e = spawnPython([path.join(m.app, 'scripts', 'mut-view__engine.py'), '--emit-yaml'], { cwd: path.join(m.app, 'scripts'), encoding: 'utf8' }); assert.equal(e.status, 0, e.stderr); fs.writeFileSync(path.join(m.app, 'utilities', 'mut-view.yaml'), e.stdout);
 	const r = m.set(''); assert.equal(r.status, 1, r.stdout); assert.match(r.stdout, /case_unknown_view[^\n]*"tickets" is not a view/);
 	// the opt-in (expect.view_fallback) is exercised by acme-dash's own check.json, whose overview declares its own pane
 });

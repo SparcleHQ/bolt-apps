@@ -46,7 +46,7 @@ Pure standard library, Python 3.9+, no environment-driven test hooks (the only v
 
 | Area | API |
 |---|---|
-| Output | `emit(rows)` validates against the schema, prints compact ASCII JSON, exits without waiting for stray threads. An invalid payload prints one error row and exits 3. Under Bolt that row is never seen: a non-zero exit discards every printed row and the person sees a row titled `<chip> unavailable` whose subtitle is `exit code 3: ` followed by the script's stderr (cut short). The row is what `check` and a terminal show. `validate_rows(rows)` returns the problems. |
+| Output | `emit(rows)` validates against the schema, prints compact ASCII JSON, exits without waiting for stray threads. An invalid payload prints one error row and exits 3. Under Bolt that row is never seen: a non-zero exit discards every printed row and the person sees a row titled `<chip> unavailable` whose subtitle is `exit code 3: ` followed by the script's stderr (cut at 2 KiB, counted in bytes). The row is what `check` and a terminal show. `validate_rows(rows)` returns the problems. |
 | Builders | `row` (with `badges`), `tile`, `safe_row` (retries after dropping optional data fields in a fixed order, so valid fields can be dropped too), `safe_tile` (returns no tile for an invalid value), `back_row`, `refresh_row`, `note_row`, `error_row`, `unsupported_row`, `action_copy`, `action_chain`, `action_url`, `kv_fields`, `chips`. Contract violations raise `KitError` at build time. |
 | Formatters | `rnd`, `fmt_num`, `fmt_pct`, `fmt_bytes`, `fmt_duration`, `fmt_count`, `fmt_time`. One rounding rule: `floor(x + 0.5)`. A missing value is the word `unknown`, never `0`. |
 | Text | `clean_text` (control, format, bidi, zero-width, tag, surrogate, private-use, line separators, blank fillers removed; stacked marks capped), `clean_lines`, `neutralise_braces`, `text`, `elide_end`, `elide_left`, `host_label`, `safe_text`, `safe_copy`, `copy_ok`, `host_full` (the whole cleaned host, to show next to a shortened `host_label`). |
@@ -62,7 +62,7 @@ Pure standard library, Python 3.9+, no environment-driven test hooks (the only v
 
 **Hosts.** `host_label` never cuts inside a label: it shows the whole host, or drops whole leading labels, or returns `(host too long)` (show `host_full()` next to it). It has no full public-suffix list: it knows common two-part suffixes (`co.uk`, `com.au`) and a short list of hosting suffixes (`github.io`, `pages.dev`, ...). Punycode (`xn--`) hosts are shown raw and never cut. Scheme and port are not shown, so do not use it where the scheme or port is the point.
 
-**Known limits.** Text limits count code points, the launcher counts UTF-16 units. Removing unassigned characters depends on the Python Unicode version. Brace neutralising is ASCII only. The windows tree kill needs `taskkill` on PATH or in `C:\Windows\System32`.
+**Known limits.** The kit counts text limits in code points. Bolt does not cut a row's title or subtitle itself; it caps the number of rows (2000), action labels (40 code points), links (2048 characters) and badges (4). Removing unassigned characters depends on the Python Unicode version. Brace neutralising is ASCII only. The windows tree kill needs `taskkill` on PATH or in `C:\Windows\System32`.
 
 **Headline.** `headline({"disk": p1, "ports": p2}, findings=0)` says `Not all sections read: ports` when any probe is unread, then the finding count, and only then `All clear`.
 
@@ -74,7 +74,7 @@ Pure standard library, Python 3.9+, no environment-driven test hooks (the only v
 
 ### Facts (as Bolt behaves)
 
-- The manifest takes a command per OS: `bridge.command.macos | linux | windows`, each optional, at least one required (the launcher's manifest contract and bridge validation). The installed `sysx.yaml` and `posturex.yaml` use `python3` on macOS and Linux and `python` on Windows.
+- The manifest takes a command per OS: `bridge.command.macos | linux | windows`, each optional, at least one required (the launcher's manifest contract and bridge validation). The shipped `sys.yaml` and `posture.yaml` use `python3` on macOS and Linux and `python` on Windows.
 - The manifest has no `platforms` or `requires` field. `requires` is explicitly refused for a User App (the launcher rejects it), and unknown fields are denied.
 - Nothing declares or checks the interpreter: a missing `python3` shows up as a failed command at run time.
 
@@ -164,11 +164,11 @@ Not absorbed: the Windows OEM code page for some console tools (decode with `enc
 
 `bolt-apps pack --personal` packs a single-file-script app for your own use (all per-OS commands in one app file, one signature). `platforms`, `requires` and `min_bolt_version` travel in the `listing` of the pack's signed `bundle.json`, not in the individual app manifests, and Bolt does not read them. The listing comes from `bolt-app.json`, with `tier` and `permissions` recomputed from the app files. A kit app packs when the kit is vendored flat (`kit vendor --flat`). `verify` and `lint` count a script as used when an app file runs it, when a used `.py` script imports it, or when a used `.json` file names it in a quoted string (for example `config.json` naming `fixtures.json`); a script nothing uses is still `script_unused`. The gallery still takes tier 1 and 2 only.
 
-**Apps bundled with the desktop app.** The sample apps that ship inside the desktop bundle could consume the kit later the same way: a sync script copies the pinned kit into their `scripts/` and a guard test fails when the copy differs from its lock. Not part of this task; no launcher file is touched.
+**Apps bundled with the desktop app.** The sample apps that ship inside the desktop bundle do not use the kit yet. Bolt 182 ships the shared kit folder and sets `BOLT_APP_SHARED_DIR` for script apps, but no bundled sample imports it. They could consume it the same way: a sync script copies the pinned kit into their `scripts/` and a guard test fails when the copy differs from its lock. Not part of this task; no launcher file is touched.
 
 ## 7. Versioning and upgrades
 
-Semantic versions in `bolt_app_kit.__version__`. While the version is `0.x`, a minor bump may change an API; each change is listed in the release note. The row contract is versioned separately by its schema (`$id`); a new optional field is not breaking, a new required field is. To upgrade an app: run `bolt-apps kit vendor <app>`, run `check --update-golden`, review the golden diff, run `check`. The lock records what the app was tested with.
+Semantic versions in `bolt_app_kit.__version__`. While the version is `0.x`, a minor bump may change an API; each change is listed in the release note. Rows carry no version of their own. Compatibility is the manifest `schema_version` (1 or 2) and the kit `api` number; a new optional field is not breaking, a new required field is. To upgrade an app: run `bolt-apps kit vendor <app>`, run `check --update-golden`, review the golden diff, run `check`. The lock records what the app was tested with.
 
 ## 8. Other languages
 

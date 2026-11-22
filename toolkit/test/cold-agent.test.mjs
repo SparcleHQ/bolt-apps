@@ -154,7 +154,7 @@ test('ship and doctor: a bolt-app.json that is JSON null (or a list) gives a pla
 	}
 });
 
-test('the repo-root bolt-apps launcher runs the toolkit from any folder, through a symlink, and says so when node is missing', () => {
+test('the repo-root bolt-apps launcher runs the toolkit from any folder, through a symlink, and says so when node is missing', { skip: process.platform === 'win32' && 'the launcher is a POSIX shell script and Windows makes symlinks only with Developer Mode; Windows uses bolt-apps.cmd (windows-launcher.test.mjs)' }, () => {
 	const launcher = path.join(REPO, 'bolt-apps');
 	assert.ok(fs.statSync(launcher).mode & 0o111, 'bolt-apps is executable');
 	const root = tmp();

@@ -69,7 +69,8 @@ test('odd input does not crash lint: null listing, quoted runtime, symlinked bin
 	const f = path.join(d, 'apps/q/utilities/q.yaml');
 	fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace('runtime: transform', 'runtime: "transform"'));
 	assert.equal(run(d, 'lint', 'apps/q').status, 0);
-	const link = path.join(d, 'bolt-apps'); fs.symlinkSync(CLI, link);
+	const link = path.join(d, 'bolt-apps');
+	try { fs.symlinkSync(CLI, link); } catch (e) { if (process.platform !== 'win32' || e.code !== 'EPERM') throw e; return; }   // Windows needs Developer Mode or admin to make a symlink; nothing more to check there
 	assert.match(spawnSync(process.execPath, [link, 'help'], { encoding: 'utf8' }).stdout, /author toolkit/);
 });
 

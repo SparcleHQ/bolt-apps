@@ -163,7 +163,7 @@ test('doctor: a case variant clashes only when the packed spelling resolves on d
 
 test('userUtilsDir: per OS, with the override', () => {
 	assert.equal(userUtilsDir({}, 'darwin', '/h'), '/h/Library/Application Support/app.sparcle.bolt.enterprise/user-utils');
-	assert.equal(userUtilsDir({ APPDATA: 'C:\\A' }, 'win32', 'C:\\h'), path.join('C:\\A', 'app.sparcle.bolt.enterprise', 'user-utils'));
+	assert.equal(userUtilsDir({ APPDATA: 'C:\\A' }, 'win32', 'C:\\h'), path.win32.join('C:\\A', 'app.sparcle.bolt.enterprise', 'user-utils'));
 	assert.equal(userUtilsDir({}, 'linux', '/h'), '/h/.config/app.sparcle.bolt.enterprise/user-utils');
 	assert.equal(userUtilsDir({ BOLT_USER_UTILS_DIR: '/x' }, 'linux', '/h'), '/x');
 	assert.deepEqual(userUtilsClashes('/nonexistent-dir', 'a', '/nope'), []);

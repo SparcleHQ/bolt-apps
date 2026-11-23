@@ -9,6 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
+import { engineEnv } from './engine.mjs';
 import { fileURLToPath } from 'node:url';
 import { pythonCmd } from './python.mjs';
 import { isNavToken, assessYaml } from './assess.mjs';
@@ -631,7 +632,7 @@ async function checkAppRun(appDir, cfg, report, opts) {
 			const winRoot = process.platform === 'win32' ? (process.env.SYSTEMROOT || 'C:\\Windows') : '';
 			const homeDrive = process.platform === 'win32' && /^[A-Za-z]:/.test(home) ? home.slice(0, 2) : 'C:';
 			const winEnv = process.platform === 'win32' ? { USERPROFILE: home, HOMEDRIVE: homeDrive, HOMEPATH: home.slice(homeDrive.length), SYSTEMDRIVE: homeDrive, LOGONSERVER: '\\\\BOLT', USERNAME: 'bolt', USERDOMAIN: 'BOLT', SYSTEMROOT: winRoot, WINDIR: winRoot, COMSPEC: process.env.COMSPEC || 'C:\\Windows\\System32\\cmd.exe', PATHEXT: '.COM;.EXE;.BAT;.CMD', TEMP: tmp, TMP: tmp, PYTHONUTF8: '1' } : {};
-			const r = await runScript(py, script, osName, kase.args || [], { ...fromCase, ...RULES.runner_env.fixed, USER: 'bolt', LOGNAME: 'bolt', PATH: stubDir, HOME: home, ...winEnv, ...((sample === undefined || sample === 'unset') ? {} : { BOLT_APP_FIXTURE: sample ? '1' : '0' }), ...(opts.sharedDir ? { BOLT_APP_SHARED_DIR: opts.sharedDir } : {}) }, home);
+			const r = await runScript(py, script, osName, kase.args || [], { ...fromCase, ...RULES.runner_env.fixed, USER: 'bolt', LOGNAME: 'bolt', PATH: stubDir, HOME: home, ...engineEnv(), ...winEnv, ...((sample === undefined || sample === 'unset') ? {} : { BOLT_APP_FIXTURE: sample ? '1' : '0' }), ...(opts.sharedDir ? { BOLT_APP_SHARED_DIR: opts.sharedDir } : {}) }, home);
 			const ex = kase.expect || {};
 			// check --shared: the point is to run on Bolt's shared kit, so prove it. An app that kept its own different copy (or never asks) ran on that copy and says nothing about the shared one.
 			if (opts.sharedDir && !(r.kitFile && path.resolve(r.kitFile).startsWith(path.resolve(opts.sharedDir) + path.sep))) E('shared_kit_not_used', `--shared: the script ran on ${r.kitFile && r.kitFile !== '(none)' ? r.kitFile : 'a kit that is not Bolt\'s shared one'}, not the shared kit. The loader uses the shared kit only when the app's own copy has the same bytes, or the app sets WANT_SHARED = True (and KIT_MIN is met). Re-vendor the kit, or use the loader from toolkit/lib/loader.mjs`);

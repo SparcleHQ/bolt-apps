@@ -36,12 +36,15 @@ import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FILE_WORDS = tuple(_PFX + w for w in ("config.json", "fixtures.json", "bolt_app_kit.py",))
-VIEWS = ("overview", "services", "alerts", "sources")
+VIEWS = ("overview", "services", "service", "alerts", "sources", "trend")
 APP = "obs"
 NAME = re.compile(r"^[a-z0-9][a-z0-9-]{0,31}\Z")
 HOST = re.compile(r"^[A-Za-z0-9.-]{1,253}\Z")
 SECRET_NAME = re.compile(r"^[A-Z][A-Z0-9_]{2,63}\Z")
 RANK = {"ok": 0, "unknown": 0, "warn": 1, "crit": 2}
+TOKEN = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}\Z")   # what a nav arg may be
+SAFE_NAME = re.compile(r"^[A-Za-z0-9_.:-]{1,64}\Z")   # a service name allowed into a PromQL label or a link
+LINK_KINDS = ("open", "logs", "traces")
 TONE = {"ok": "success", "warn": "warn", "crit": "danger", "unknown": ""}
 WORD = {"ok": "OK", "warn": "WARN", "crit": "CRIT", "unknown": "?"}
 
@@ -88,6 +91,14 @@ def _url_ok(url):
     return (u.scheme == "https" or (u.scheme == "http" and loop)) and named and not u.username and not u.query and not u.fragment and u.path in ("", "/")
 
 
+def _link_ok(tpl):
+    """A link template: https (or http to this computer), at most one placeholder, {service}, and nothing else in braces."""
+    if not isinstance(tpl, str) or len(tpl) > 500 or re.search(r"\{(?!service\})|(?<!\{service)\}", tpl.replace("{service}", "")):
+        return False
+    u = urllib.parse.urlparse(tpl.replace("{service}", "x"))
+    return u.scheme in ("https", "http") and _url_ok("%s://%s" % (u.scheme, u.netloc)) and not u.username
+
+
 def read_sources(cfg):
     """The list of sources: the user's file when there is one, else the two public demos. A source is {name, type, url, auth}. auth is one of
     {"kind": "none"}, {"kind": "bearer", "secret": NAME}, {"kind": "basic", "user": U, "secret": NAME}, {"kind": "header", "header": H, "secret": NAME}.
@@ -119,7 +130,7 @@ def read_sources(cfg):
             for k in ("profile", "region"):
                 if r.get(k) is not None and not re.match(r"^[A-Za-z0-9_.@:-]{1,64}\Z", str(r[k])):
                     raise Fail("setup", "source %s: %s has a character it should not" % (r["name"], k))
-            out.append({"name": r["name"], "type": r["type"], "url": "cli:" + r["type"], "auth": {"kind": "none"}, "project": "", "demo": False, "profile": str(r.get("profile") or ""), "region": str(r.get("region") or "")})
+            out.append({"name": r["name"], "type": r["type"], "url": "cli:" + r["type"], "auth": {"kind": "none"}, "project": "", "demo": False, "links": {}, "trend_query": None, "profile": str(r.get("profile") or ""), "region": str(r.get("region") or "")})
             continue
         if not isinstance(r.get("url"), str) or not _url_ok(r["url"].rstrip("/")):
             raise Fail("setup", "source %s: url must be https://host (or http to this computer), nothing after the host" % r["name"])
@@ -131,7 +142,13 @@ def read_sources(cfg):
             raise Fail("setup", "source %s: auth.secret must name the key, like PROM_TOKEN (UPPER_CASE)" % r["name"])
         if kind == "header" and not re.match(r"^[A-Za-z][A-Za-z0-9-]{0,40}\Z", str(auth.get("header", ""))):
             raise Fail("setup", "source %s: auth.header must be a header name like X-API-Key" % r["name"])
-        out.append({"name": r["name"], "type": r["type"], "url": r["url"].rstrip("/"), "auth": auth, "project": str(r.get("project", "")), "demo": not user})
+        links = r.get("links") or {}
+        if not isinstance(links, dict) or any(k not in LINK_KINDS or not _link_ok(v) for k, v in links.items()):
+            raise Fail("setup", "source %s: links must use open, logs or traces, each an https address with at most {service} in it" % r["name"])
+        tq = r.get("trend_query")
+        if tq is not None and (not isinstance(tq, str) or len(tq) > 300):
+            raise Fail("setup", "source %s: trend_query must be a string of at most 300 characters" % r["name"])
+        out.append({"name": r["name"], "type": r["type"], "url": r["url"].rstrip("/"), "auth": auth, "project": str(r.get("project", "")), "demo": not user, "links": links, "trend_query": tq})
     al = {}
     for k, v in (aliases.items() if isinstance(aliases, dict) else []):
         if isinstance(k, str) and isinstance(v, str):
@@ -394,14 +411,15 @@ def join(results, cfg, aliases):
     """Group every source's services and alerts by normalised name (aliases map one spelling onto another). Each group knows what each source said."""
     groups = {}
     key = lambda n: aliases.get(norm(n, cfg), norm(n, cfg))
+    keyed = {}
     for r in results:
         for sv in r["services"]:
-            g = groups.setdefault(key(sv["name"]), {"name": sv["name"], "by": {}, "alerts": []})
+            g = groups.setdefault(key(sv["name"]), {"name": sv["name"], "by": {}, "alerts": [], "key": key(sv["name"])})
             g["by"][r["name"]] = sv
             if len(sv["name"]) < len(g["name"]):
                 g["name"] = sv["name"]
         for al in r["alerts"]:
-            g = groups.setdefault(key(al["service"]), {"name": al["service"], "by": {}, "alerts": []})
+            g = groups.setdefault(key(al["service"]), {"name": al["service"], "by": {}, "alerts": [], "key": key(al["service"])})
             g["alerts"].append(dict(al, source=r["name"]))
     w = cfg["correlate"]["window_s"]
     out = []
@@ -420,9 +438,47 @@ def join(results, cfg, aliases):
                 flag = "TOGETHER"   # and their alerts started within the window
         elif len(g["by"]) >= 2 and said == set(("ok", "bad")):
             flag = "DISAGREE"    # one tool says fine while another does not
-        out.append({"name": g["name"], "status": worst, "by": g["by"], "alerts": g["alerts"], "firing": firing, "sources": seen, "bad_sources": bad_sources, "flag": flag})
+        out.append({"name": g["name"], "key": g["key"], "status": worst, "by": g["by"], "alerts": g["alerts"], "firing": firing, "sources": seen, "bad_sources": bad_sources, "flag": flag})
     out.sort(key=lambda x: (-RANK[x["status"]], -len(x["firing"]), x["name"].lower()))
     return out
+
+
+# ------------------------------------------------------------------ links and trend
+
+def links_for(g, srcmap):
+    """open, logs and traces addresses for one joined service, from the sources that know it (bad ones first). {service} becomes that source's own name for the service, percent-encoded."""
+    order = sorted(set(list(g["by"]) + [a["source"] for a in g["alerts"]]), key=lambda n: (n not in g["bad_sources"], n))
+    out = {}
+    for n in order:
+        src = srcmap.get(n)
+        if not src:
+            continue
+        svc = g["by"][n]["name"] if n in g["by"] else g["name"]
+        for k, tpl in (src.get("links") or {}).items():
+            if k not in out:
+                out[k] = tpl.replace("{service}", urllib.parse.quote(svc, safe=""))
+    return out
+
+
+DEFAULT_TREND = 'avg(up{job="{service}"})'
+
+
+def trend_points(cfg, src, headers, svc, budget, fx=None):
+    """[(epoch, value)] for the last 3 hours from a Prometheus source: a trend_query with {service}, or the share of targets up. The name goes into a PromQL label, so only plain names are allowed."""
+    if src["type"] != "prometheus" or not SAFE_NAME.match(svc):
+        return []
+    if fx is not None:
+        raw = fx.get("range")
+    else:
+        q = (src.get("trend_query") or DEFAULT_TREND).replace("{service}", svc)
+        end = int(time.time())
+        raw = http_json(cfg, src, headers, "/api/v1/query_range?" + urllib.parse.urlencode({"query": q, "start": end - 10800, "end": end, "step": 300}), budget)
+    try:
+        res = raw["data"]["result"]
+        vals = res[0]["values"] if res else []
+        return [(int(float(a)), float(b)) for a, b in vals][-40:]
+    except (KeyError, TypeError, ValueError, IndexError):
+        return []
 
 
 # ------------------------------------------------------------------ rows
@@ -447,7 +503,7 @@ def banner(results, fixture):
     return rows
 
 
-def service_row(g):
+def service_row(g, srcmap=None, nav=False, trend=None):
     per = " · ".join("%s %s" % (n, WORD[v["status"]].lower()) for n, v in sorted(g["by"].items()))
     extra = " · %d alert%s firing" % (len(g["firing"]), "" if len(g["firing"]) == 1 else "s") if g["firing"] else ""
     lines = ["**%s** (%s)" % (g["name"], g["status"].upper())] + ["- %s: %s%s" % (n, WORD[v["status"]], (", " + v["detail"]) if v["detail"] else "") for n, v in sorted(g["by"].items())]
@@ -458,15 +514,23 @@ def service_row(g):
     triage = "Triage this service. %s is %s across my monitoring tools: %s.%s What are the likely causes and the first three checks?" % (
         g["name"], g["status"].upper(), "; ".join("%s says %s" % (n, v["status"]) for n, v in sorted(g["by"].items())) or "no source lists it",
         (" Firing: " + "; ".join("%s (%s)" % (a["name"], a["summary"]) for a in g["firing"][:3]) + ".") if g["firing"] else "")
-    return kit.safe_row(g["name"], per + extra, icon="Activity", badges=badges, body="\n".join(lines), copy=share, s_status=g["status"].upper(), s_sources=", ".join(g["sources"]) or "-",
+    lk = links_for(g, srcmap or {})
+    kw = dict((k + "_url", v) for k, v in lk.items())
+    if nav:
+        kw["nav"] = {"view": "service", "arg": g["key"]}
+    if trend:
+        kw["trend"] = [round(v, 3) for _, v in trend]
+    return kit.safe_row(g["name"], per + extra, icon="Activity", badges=badges, body="\n".join(lines), copy=False if nav else share, s_status=g["status"].upper(), s_sources=", ".join(g["sources"]) or "-",
                         s_alerts=str(len(g["firing"])), s_signal={"AGREE": "Several tools see a problem", "TOGETHER": "Several tools, started together", "DISAGREE": "Tools disagree", "": "-"}[g["flag"]],
                         share_text=kit.safe_copy(share), triage_text=kit.safe_copy(triage),
-                        tile=kit.safe_tile("Sources seeing a problem", len(g["bad_sources"]), max=max(1, len(g["sources"])), note="of %d that know it" % len(g["sources"]), foot=g["flag"].lower() or "no cross-tool signal"))
+                        tile=kit.safe_tile("Sources seeing a problem", len(g["bad_sources"]), max=max(1, len(g["sources"])), note="of %d that know it" % len(g["sources"]), foot=g["flag"].lower() or "no cross-tool signal"), **kw)
 
 
-def alert_row(a):
+def alert_row(a, srcmap=None):
     share = "%s on %s (%s, %s): %s. %s" % (a["name"], a["service"], a["source"], a["severity"], ago(a["since"]), a["summary"])
-    return kit.safe_row("%s · %s" % (a["name"], a["service"]), "%s · %s · %s" % (a["source"], a["severity"], ago(a["since"])), icon="AlertCircle",
+    src = (srcmap or {}).get(a["source"]) or {}
+    lk = dict((k + "_url", v.replace("{service}", urllib.parse.quote(a["service"], safe=""))) for k, v in (src.get("links") or {}).items())
+    return kit.safe_row("%s · %s" % (a["name"], a["service"]), "%s · %s · %s" % (a["source"], a["severity"], ago(a["since"])), icon="AlertCircle", **lk,
                         badges=[(a["severity"].upper(), TONE[a["severity"]]), (a["state"].upper(), "danger" if a["state"] == "firing" else "warn")], body=a["summary"] or "No summary from the source.", copy=share,
                         s_status=a["severity"].upper(), s_sources=a["source"], s_alerts="1", s_signal=ago(a["since"]), share_text=kit.safe_copy(share),
                         triage_text=kit.safe_copy("Triage this alert from %s. %s on %s, %s, %s. %s What should I check first?" % (a["source"], a["name"], a["service"], a["severity"], ago(a["since"]), a["summary"])))
@@ -496,7 +560,7 @@ def overview_rows(results, groups, fixture, any_demo):
     return rows
 
 
-def build(view, word, results, groups, fixture):
+def build(view, word, results, groups, fixture, srcmap=None, trend=None):
     head = [back()] + banner(results, fixture)
     w = word.lower()
     if view == "services":
@@ -507,10 +571,29 @@ def build(view, word, results, groups, fixture):
             items = [g for g in groups if g["flag"]][:50]
         else:
             items = [g for g in groups if not w or w in g["name"].lower()][:50]
-        return head + ([service_row(g) for g in items] or [kit.note_row("No match", "no service matches %s" % kit.clean_text(word, 40), icon="Activity")])
+        return head + ([service_row(g, srcmap, nav=True) for g in items] or [kit.note_row("No match", "no service matches %s" % kit.clean_text(word, 40), icon="Activity")])
+    if view in ("service", "trend"):
+        g = next((x for x in groups if x["key"] == word), None) if TOKEN.match(word or "") else None
+        if g is None:
+            return [back("Back to services"), kit.note_row("Service not found", "no source lists %s" % kit.clean_text(word, 40), icon="Activity")]
+        pts = [p for ps in (trend or {}).values() for p in ps]
+        if view == "trend":
+            if not pts:
+                return [kit.note_row("No trend", "no source returned a time series for %s" % g["name"], icon="TrendingUp")]
+            return [kit.row(time.strftime("%H:%M", time.localtime(ts)), "%.3f" % v, icon="TrendingUp", t=time.strftime("%H:%M", time.localtime(ts)), v=round(v, 3)) for ts, v in pts]
+        first = next(iter(trend or {}), None)
+        rows = [back("Back to services")] + [service_row(g, srcmap, trend=(trend or {}).get(first) if first else None)] + head[1:]
+        for n, v in sorted(g["by"].items()):
+            lk = dict((k + "_url", tpl.replace("{service}", urllib.parse.quote(v["name"], safe=""))) for k, tpl in ((srcmap or {}).get(n) or {}).get("links", {}).items())
+            rows.append(kit.safe_row("%s: %s" % (n, WORD[v["status"]]), v["detail"] or "no detail", icon="Database", badges=[(WORD[v["status"]], TONE[v["status"]])], body="%s says %s for %s%s" % (n, WORD[v["status"]], v["name"], (": " + v["detail"]) if v["detail"] else ""),
+                                     copy="%s: %s %s" % (n, v["name"], WORD[v["status"]]), s_status=WORD[v["status"]], s_sources=n, s_alerts=str(len([a for a in g["firing"] if a["source"] == n])), s_signal="-", **lk))
+        rows += [alert_row(a, srcmap) for a in g["firing"][:10]]
+        if pts:
+            rows.append(kit.row("Trend, last 3 hours", "%d points · Enter for the chart" % len(pts), icon="TrendingUp", nav={"view": "trend", "arg": g["key"]}, copy=False, body="A line chart of the source's time series.", s_status="-", s_sources=", ".join(trend), s_alerts="-", s_signal="-"))
+        return rows
     if view == "alerts":
         al = sorted([a for g in groups for a in g["firing"] if not w or w in (a["name"] + a["service"]).lower()], key=lambda a: (-RANK[a["severity"]], -(a["since"] or 0)))[:50]
-        return head + ([alert_row(a) for a in al] or [kit.note_row("Nothing firing", "no source reports a firing alert", icon="ShieldCheck", badge="QUIET")])
+        return head + ([alert_row(a, srcmap) for a in al] or [kit.note_row("Nothing firing", "no source reports a firing alert", icon="ShieldCheck", badge="QUIET")])
     rows = [kit.row(r["name"], "%s · %s" % (r["type"], "answering" if r["ok"] and r["stale"] is None else (r["err"] or "no answer")), icon="Database", node=r["name"], kind=r["type"],
                     state="ok" if r["ok"] and r["stale"] is None else ("old copy" if r["ok"] else "down"), ms=r["ms"], services=len(r["services"]), alerts=len([a for a in r["alerts"] if a["state"] == "firing"])) for r in results]
     return rows or [kit.note_row("No sources", "add one in ~/.config/obs/sources.json", icon="Database")]
@@ -526,7 +609,7 @@ def _tile_bind(ind):
 
 _PREVIEW = ["kind: entity_preview", "mode: selected_row", "bind:", '  title: "{{row.title}}"', '  subtitle: "{{row.subtitle}}"', "  tiles_above:"] + _tile_bind(4) + [
     "  fields:", '    - { label: STATUS, value: "{{row.s_status}}" }', '    - { label: SOURCES, value: "{{row.s_sources}}" }', '    - { label: FIRING, value: "{{row.s_alerts}}" }', '    - { label: SIGNAL, value: "{{row.s_signal}}" }',
-    '  body: "{{row.body}}"', "  actions:", '    - "copy"', '    - "triage"']
+    '  body: "{{row.body}}"', "  actions:", '    - "open"', '    - "logs"', '    - "traces"', '    - "copy"', '    - "triage"']
 _TILES = ["kind: cards", "mode: list_data", "bind:", '  layout: "tiles"'] + _tile_bind(2)
 _NOTE = ["kind: markdown", "mode: selected_row", "bind:", '  title: "{{row.title}}"', '  subtitle: "{{row.subtitle}}"', '  body: "{{row.body}}"']
 
@@ -546,11 +629,12 @@ def emit_yaml(cfg):
     L += ["  parse: json", "  timeout_seconds: %d" % app["timeout"], "presentation:", "  widget: list", "  title_field: title", "  subtitle_field: subtitle", "  view_arg: view", "  right_widget:"]
     L += _indent(_PREVIEW, 4)
     L += ["  views:", "    overview:", "      right_widget:"] + _indent(_TILES, 8)
-    L += ["    services:", "      right_widget:"] + _indent(_PREVIEW, 8) + ["    alerts:", "      right_widget:"] + _indent(_PREVIEW, 8)
+    L += ["    services:", "      right_widget:"] + _indent(_PREVIEW, 8) + ["    service:", "      right_widget:"] + _indent(_PREVIEW, 8) + ["    alerts:", "      right_widget:"] + _indent(_PREVIEW, 8)
+    L += ["    trend:", "      right_widget:", "        kind: chart", "        mode: list_data", "        bind:", "          type: line", "          x: t", "          y: v", '          label: "Trend, last 3 hours"']
     L += ["    sources:", "      right_widget:", "        kind: table", "        mode: list_data", "        bind:", "          columns:", "            - { field: node, label: Source }", "            - { field: kind, label: Type }",
           "            - { field: state, label: State }", "            - { field: services, label: Services, align: right }", "            - { field: alerts, label: Firing, align: right }", "            - { field: ms, label: Ms, align: right }"]
     L += ["    note:", "      right_widget:"] + _indent(_NOTE, 8)
-    L += ["actions:", '  - { id: copy, kind: composer, target: row, label: "Copy summary", insert: "{{row.share_text}}" }', '  - { id: triage, kind: composer, target: row, label: "Triage with AI", insert: "{{row.triage_text}}" }']
+    L += ["actions:", '  - { id: open, kind: url, target: row, label: "Open", url_template: "{{row.open_url}}" }', '  - { id: logs, kind: url, target: row, label: "Logs", url_template: "{{row.logs_url}}" }', '  - { id: traces, kind: url, target: row, label: "Traces", url_template: "{{row.traces_url}}" }', '  - { id: copy, kind: composer, target: row, label: "Copy summary", insert: "{{row.share_text}}" }', '  - { id: triage, kind: composer, target: row, label: "Triage with AI", insert: "{{row.triage_text}}" }']
     return "\n".join(L) + "\n"
 
 
@@ -579,7 +663,7 @@ def main(argv):
     fixture = (env == "1") if env in ("0", "1") else bool(cfg["api"]["fixture_default"])
     fx = load_json("fixtures.json") if fixture else {}
     try:
-        sources, aliases = ([dict(r, auth={"kind": "none"}, project="", demo=True) for r in cfg["default_sources"]], {}) if fixture else read_sources(cfg)
+        sources, aliases = ([dict(r, auth={"kind": "none"}, project="", demo=True, links={}, trend_query=None) for r in cfg["default_sources"]], {}) if fixture else read_sources(cfg)
     except Fail as e:
         offline(e.msg, e.kind, view)
     hub = Hub(cfg, fixture, fx, demos)
@@ -588,9 +672,24 @@ def main(argv):
     if not any(r["ok"] for r in results) and view != "sources":
         kit.emit(([back()] if view in ("services", "alerts") else []) + banner(results, fixture) + [kit.refresh_row(view if view in VIEWS else "overview", title="Try again", subtitle="Enter to run again", pane=kit.NOTE_VIEW)])
     groups = join(results, cfg, aliases)
+    srcmap = dict((s_["name"], s_) for s_ in sources)
+    trend = {}
+    if view in ("service", "trend"):
+        g_ = next((x for x in groups if x["key"] == word), None)
+        for n, v in (g_["by"].items() if g_ else []):
+            src = srcmap.get(n)
+            if not src or src["type"] != "prometheus":
+                continue
+            try:
+                hdr = {} if fixture else credentials(cfg, src)[0]
+                pts = trend_points(cfg, src, hdr, v["name"], cfg["api"]["deadline_s"], fx=fx.get(n) if fixture else None)
+            except Fail:
+                pts = []
+            if pts:
+                trend[n] = pts
     if view == "overview":
         kit.emit(overview_rows(results, groups, fixture, any(r["demo"] for r in results)))
-    kit.emit(build(view, word, results, groups, fixture))
+    kit.emit(build(view, word, results, groups, fixture, srcmap, trend))
 
 
 def run(argv):

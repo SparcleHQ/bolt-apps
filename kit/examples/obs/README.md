@@ -4,9 +4,11 @@
 `=obs` is one view over the monitoring tools a team runs. Each source is read by a small adapter into the same model (services with a status, alerts with a severity and a start time). Services are joined across sources by name, so one row says what every tool thinks of `checkout`. It ships on two public demos (Prometheus and Coroot), so it shows real data on the first run.
 
 1. `=obs`: five tiles. Sources answering, healthy services, firing alerts, cross-tool signals, and Check again. Each drills (Enter).
-2. `=obs services [word]`: every service from every source, worst first. A word filters by name. `bad`, `crit`, `warn` and `ok` filter by status; `cross` keeps services where tools agree, started together, or disagree. Pane: status per source and what is firing. Buttons: Copy summary, Triage with AI (puts a ready prompt in the composer).
-3. `=obs alerts`: firing alerts from every source, worst first.
-4. `=obs sources`: a table of each source with its state, service count, firing count and answer time.
+2. `=obs services [word]`: every service from every source, worst first. A word filters by name. `bad`, `crit`, `warn` and `ok` filter by status; `cross` keeps services where tools agree, started together, or disagree. Enter drills into one service.
+3. `=obs service <name>`: the drill. A summary row (tile with a sparkline when a source has a time series), one row per source that knows the service, its firing alerts, and a Trend row. Buttons: Open, Logs, Traces (from the links you configure), Copy summary, Triage with AI (puts a ready prompt in the composer).
+4. `=obs trend <name>`: a line chart of the last 3 hours from a Prometheus source (share of targets up, or your own `trend_query`).
+5. `=obs alerts`: firing alerts from every source, worst first.
+6. `=obs sources`: a table of each source with its state, service count, firing count and answer time.
 
 ## Your own sources
 List them in `~/.config/obs/sources.json`. The file names keys, it never holds them (the app refuses a file others can write):
@@ -24,6 +26,8 @@ List them in `~/.config/obs/sources.json`. The file names keys, it never holds t
 - **URLs** are https, or http to this computer (a port-forward). No redirects are followed.
 - **`aws-cloudwatch`** runs `aws cloudwatch describe-alarms` through the aws CLI you already use, so there is no key in Bolt: it uses your own sign-in (`aws sso login`). The command is an argument list, with no shell.
 - **`aliases`** join two spellings of one service when the names differ.
+- **`links`** (optional, per source) put Open, Logs and Traces buttons on a service, for example `"links": {"logs": "https://logs.example.com/search?q=service:{service}", "open": "https://grafana.example.com/d/abc?var-service={service}"}`. Each address must be https (or http to this computer) and may contain only `{service}`, which is replaced by that source's own name for the service, percent-encoded. A link goes to the vendor's tool; Bolt does not show logs or traces itself.
+- **`trend_query`** (optional, Prometheus sources) is a PromQL query with `{service}` for the trend chart. The service name is allowed into it only when it is a plain name (letters, digits, `_ . : -`).
 - **Sources supported now:** `prometheus`, `coroot`, `aws-cloudwatch`. Others are added as adapters in `scripts/obs__app.py` (`ADAPTERS`).
 
 ## Edit these files
@@ -45,6 +49,7 @@ After editing `obs__config.json` or the pane layout, regenerate the app file: `p
 - The join was tested on synthetic data. The two demos are unrelated systems with no shared service names, so the live demo shows 0 cross-tool signals.
 - The `aws-cloudwatch` adapter was tested only against a stub `aws` that prints the documented JSON shape. It has not run against real AWS.
 - Bearer, basic and header auth were tested as the headers built from a key. No keyed Prometheus or Coroot was read.
+- The service drill, Trend row, line chart and the extra footer buttons (five in all) were checked against the app engine's own rules (`check`, `lint`) and run on the public Prometheus demo, but not in a real Bolt. A button whose link is not configured is expected to do nothing; that was not seen. The `nav` row in the services list carries no buttons (an engine rule), so the buttons live in the drill.
 - Prometheus is read through `/api/v1/query?query=up` and `/api/v1/alerts`; Coroot through its UI API (not a versioned public API), as in the `coroot` example.
 
 Data: Prometheus (Apache-2.0, https://github.com/prometheus/prometheus) via PromLabs' public demo; Coroot (Apache-2.0, https://github.com/coroot/coroot) via its public demo. See the provider's terms.

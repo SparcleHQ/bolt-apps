@@ -45,6 +45,9 @@ presentation:
         - { label: SIGNAL, value: "{{row.s_signal}}" }
       body: "{{row.body}}"
       actions:
+        - "open"
+        - "logs"
+        - "traces"
         - "copy"
         - "triage"
   views:
@@ -83,6 +86,36 @@ presentation:
             - { label: SIGNAL, value: "{{row.s_signal}}" }
           body: "{{row.body}}"
           actions:
+            - "open"
+            - "logs"
+            - "traces"
+            - "copy"
+            - "triage"
+    service:
+      right_widget:
+        kind: entity_preview
+        mode: selected_row
+        bind:
+          title: "{{row.title}}"
+          subtitle: "{{row.subtitle}}"
+          tiles_above:
+            title: "{{row.kpi_label}}"
+            value: "{{row.kpi_value}}"
+            unit: "{{row.kpi_unit}}"
+            max: "{{row.kpi_max}}"
+            subtitle: "{{row.kpi_note}}"
+            badge: "{{row.kpi_badge}}"
+            footer: "{{row.kpi_foot}}"
+          fields:
+            - { label: STATUS, value: "{{row.s_status}}" }
+            - { label: SOURCES, value: "{{row.s_sources}}" }
+            - { label: FIRING, value: "{{row.s_alerts}}" }
+            - { label: SIGNAL, value: "{{row.s_signal}}" }
+          body: "{{row.body}}"
+          actions:
+            - "open"
+            - "logs"
+            - "traces"
             - "copy"
             - "triage"
     alerts:
@@ -107,8 +140,20 @@ presentation:
             - { label: SIGNAL, value: "{{row.s_signal}}" }
           body: "{{row.body}}"
           actions:
+            - "open"
+            - "logs"
+            - "traces"
             - "copy"
             - "triage"
+    trend:
+      right_widget:
+        kind: chart
+        mode: list_data
+        bind:
+          type: line
+          x: t
+          y: v
+          label: "Trend, last 3 hours"
     sources:
       right_widget:
         kind: table
@@ -130,5 +175,8 @@ presentation:
           subtitle: "{{row.subtitle}}"
           body: "{{row.body}}"
 actions:
+  - { id: open, kind: url, target: row, label: "Open", url_template: "{{row.open_url}}" }
+  - { id: logs, kind: url, target: row, label: "Logs", url_template: "{{row.logs_url}}" }
+  - { id: traces, kind: url, target: row, label: "Traces", url_template: "{{row.traces_url}}" }
   - { id: copy, kind: composer, target: row, label: "Copy summary", insert: "{{row.share_text}}" }
   - { id: triage, kind: composer, target: row, label: "Triage with AI", insert: "{{row.triage_text}}" }

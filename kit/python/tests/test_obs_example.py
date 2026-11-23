@@ -121,6 +121,34 @@ except m.Fail as e: assert 'profile' in e.msg
 write('sources.json', json.dumps({'sources': [{'name': 'a', 'type': 'aws-cloudwatch', 'profile': 'prod', 'region': 'eu-west-1'}]}), 0o600)
 sr, _ = m.read_sources(cfg2); assert sr[0]['profile'] == 'prod' and sr[0]['region'] == 'eu-west-1' and sr[0]['auth'] == {'kind': 'none'}
 print('CLI LANE OK')
+
+# 14. links: only https (or loopback http), at most {service}; substitution is percent-encoded; links resolve from the sources that know the service
+for tpl, ok in [('https://logs.example.com/search?q=service:{service}', 1), ('https://x.example.com/{service}/dash', 1), ('http://localhost:3000/d/x?var-service={service}', 1), ('http://x.example.com/{service}', 0),
+                ('https://x.example.com/{host}', 0), ('javascript:alert(1)', 0), ('https://u:p@x.example.com/{service}', 0), ('https://x.example.com/' + 'a' * 600, 0), ('https://x.example.com/{service', 0)]:
+    assert bool(m._link_ok(tpl)) == bool(ok), tpl
+write('sources.json', json.dumps({'sources': [{'name': 'dd', 'type': 'prometheus', 'url': 'https://prom.example.com', 'links': {'logs': 'https://logs.example.com/s?q=service:{service}', 'open': 'https://dash.example.com/{service}'}}]}), 0o600)
+sr, _ = m.read_sources(cfg2); assert sr[0]['links']['logs'].startswith('https://logs.example.com')
+write('sources.json', json.dumps({'sources': [{'name': 'dd', 'type': 'prometheus', 'url': 'https://prom.example.com', 'links': {'logs': 'http://evil.example.com/{service}'}}]}), 0o600)
+try: m.read_sources(cfg2); assert False
+except m.Fail as e: assert 'links must use' in e.msg
+write('sources.json', json.dumps({'sources': [{'name': 'dd', 'type': 'prometheus', 'url': 'https://prom.example.com', 'links': {'shell': 'https://x.example.com/{service}'}}]}), 0o600)
+try: m.read_sources(cfg2); assert False
+except m.Fail as e: assert 'links must use' in e.msg
+S2 = {'dd': {'name': 'dd', 'links': {'logs': 'https://logs.example.com/s?q=service:{service}', 'open': 'https://dash.example.com/{service}'}}, 'cr': {'name': 'cr', 'links': {'traces': 'https://t.example.com/{service}'}}}
+g = m.join([R('dd', [S('checkout api', 'crit')], []), R('cr', [S('checkout api', 'warn')], [])], cfg, {})
+lk = m.links_for(g[0], S2)
+assert lk['logs'] == 'https://logs.example.com/s?q=service:checkout%20api' and lk['open'] == 'https://dash.example.com/checkout%20api' and lk['traces'] == 'https://t.example.com/checkout%20api', lk
+g = m.join([R('dd', [S('a/b?c=d', 'ok')], [])], cfg, {})
+assert m.links_for(g[0], S2)['open'] == 'https://dash.example.com/a%2Fb%3Fc%3Dd'
+# 15. trend: names go into PromQL only when plain; a quote or brace never gets in; the answer is parsed defensively
+assert m.trend_points(cfg, {'type': 'prometheus'}, {}, 'bad"name}', 5, fx={'range': {}}) == []
+assert m.trend_points(cfg, {'type': 'coroot'}, {}, 'ok', 5, fx={'range': {}}) == []
+good = {'data': {'result': [{'values': [[1795400000, '1'], [1795400300, '0.5']]}]}}
+assert m.trend_points(cfg, {'type': 'prometheus'}, {}, 'checkout', 5, fx={'range': good}) == [(1795400000, 1.0), (1795400300, 0.5)]
+assert m.trend_points(cfg, {'type': 'prometheus'}, {}, 'checkout', 5, fx={'range': {'data': {'result': [{'values': [['x', 'y']]}]}}}) == []
+# 16. the nav arg for the drill is a plain token even for odd service names
+assert all(m.TOKEN.match(x['key']) for x in m.join([R('a', [S('Checkout_API', 'ok'), S('a/b c', 'ok')], [])], cfg, {})), 'nav token'
+print('LINKS AND TREND OK')
 print('ALL OK')
 '''
 

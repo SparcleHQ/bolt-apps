@@ -61,7 +61,8 @@
       "kind": "chart",
       "also": [
         "chart-template",
-        "expense-tracker"
+        "expense-tracker",
+        "obs"
       ]
     },
     {
@@ -279,7 +280,10 @@
       "example": "kit/examples/portal-template",
       "snippet": "{\"title\": \"Open tickets\", \"view\": \"tickets\", \"arg\": \"open\"}",
       "test": "kit/examples/portal-template/check.json",
-      "limit": "One Enter. A nav arg is one plain token matching {rules:nav_token_pattern}; no slash. A chain to another app, or a chain a script writes on a row, only pre-fills the next command (second Enter); a fixed-text chain to the same app written in the app file runs directly. Use nav to drill."
+      "limit": "One Enter. A nav arg is one plain token matching {rules:nav_token_pattern}; no slash. A chain to another app, or a chain a script writes on a row, only pre-fills the next command (second Enter); a fixed-text chain to the same app written in the app file runs directly. Use nav to drill.",
+      "also": [
+        "obs"
+      ]
     },
     {
       "id": "nav.back",
@@ -401,7 +405,8 @@
       "limit": "Bolt shows at most {rules:actions.footer_max_bolt} footer buttons; the kit and engine keep to {rules:actions.footer_max_kit} (Open and Copy count). Bolt keeps {rules:actions.label_kept_bolt} label characters; the button shows {rules:actions.label_shown}.",
       "also": [
         "pulse-feed",
-        "cli-wrapper-template"
+        "cli-wrapper-template",
+        "obs"
       ]
     },
     {

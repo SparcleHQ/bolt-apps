@@ -213,6 +213,56 @@ srcs_ = [dict(x, auth={'kind': 'none'}, project='', demo=True, links={}, trend_q
 for s_ in srcs_: assert hub.read(s_, False)['ok'], s_['name']
 assert not os.path.exists(os.path.join(home2, 'Library', 'Caches')) or not any(f for _, _, fs in os.walk(os.path.join(home2, 'Library', 'Caches')) for f in fs if 'obs' in f), 'sample wrote a cache'
 print('NEW ADAPTERS OK')
+
+# 20. text charts: sparkline and bars
+assert m.spark([]) == '' and m.spark([5, 5, 5]) == m.BLOCKS[0] * 3
+sp = m.spark([0, 1, 2, 3, 4, 5, 6, 7]); assert sp == m.BLOCKS and len(sp) == 8
+assert m.spark([1, 9])[0] == m.BLOCKS[0] and m.spark([1, 9])[-1] == m.BLOCKS[-1]
+assert m.bars(0, 5) == '' and m.bars(5, 5, 12) == chr(0x2588) * 12 and len(m.bars(1, 100)) == 1
+# 21. pick_trend: a source's own query wins; otherwise the first candidate that varies; a flat series is the last resort
+def mkpts(vals): return {'data': {'result': [{'values': [[1795400000 + i * 300, str(v)] for i, v in enumerate(vals)]}]}}
+seen = []
+def fake_range(cfg_, src_, hdr_, path, budget):
+    q = urllib.parse.unquote(path.split('query=')[1].split('&')[0]); seen.append(q)
+    if 'http_requests_total' in q: return {'data': {'result': []}}
+    if 'process_cpu' in q: return mkpts([3, 3, 3, 3, 3, 3])
+    if 'up{' in q: return mkpts([1, 1, 1, 1, 1, 1])
+    return mkpts([1, 2, 3, 4, 5, 6])
+import urllib.parse
+orig = m.http_json; m.http_json = fake_range
+try:
+    lab, pts = m.pick_trend(cfg, {'type': 'prometheus', 'trend_query': None, 'prefix': ''}, {}, 'api', 5)
+    assert lab == 'CPU seconds per second' and len(pts) == 6 and len(seen) == 3, (lab, seen)   # every candidate was flat or empty: the first non-empty one is kept
+    seen.clear()
+    lab, pts = m.pick_trend(cfg, {'type': 'prometheus', 'trend_query': 'my_metric{job="{service}"}', 'trend_label': 'my metric', 'prefix': ''}, {}, 'api', 5)
+    assert lab == 'my metric' and [v for _, v in pts] == [1, 2, 3, 4, 5, 6] and len(seen) == 1 and 'my_metric{job="api"}' in seen[0], (lab, seen)
+    assert m.pick_trend(cfg, {'type': 'prometheus', 'trend_query': None, 'prefix': ''}, {}, 'bad"name', 5) == ('', [])   # an unsafe name never reaches a query
+finally: m.http_json = orig
+# 22. history: one point per run at least a minute apart, capped, and reset when the set of sources changes
+os.environ['HOME'] = tempfile.mkdtemp()
+h = m.History(cfg, 'a,b')
+p1 = h.add({'t': 1000, 'firing': 3, 'crit': 1, 'services': 9, 'ok': 8, 'up': 2}); assert len(p1) == 1
+assert len(h.add({'t': 1030, 'firing': 4, 'crit': 1, 'services': 9, 'ok': 8, 'up': 2})) == 1   # too soon
+assert len(h.add({'t': 1100, 'firing': 5, 'crit': 2, 'services': 9, 'ok': 7, 'up': 2})) == 2
+for i in range(80): h.add({'t': 2000 + i * 100, 'firing': i, 'crit': 0, 'services': 9, 'ok': 9, 'up': 2})
+assert len(m.History(cfg, 'a,b').add({'t': 99999, 'firing': 1, 'crit': 0, 'services': 9, 'ok': 9, 'up': 2})) == cfg['history']['keep']
+assert len(m.History(cfg, 'a,b,c').add({'t': 100000, 'firing': 1, 'crit': 0, 'services': 9, 'ok': 9, 'up': 2})) == 1   # a different source list starts fresh
+# 23. chart, health, table and raw views
+res = [R('p', [S('a', 'crit'), S('b', 'ok')], [A('x', 'a', 'crit', now), A('y', 'a', 'warn', now), A('r', 'a', 'warn', now, 'resolved')]), R('q', [S('c', 'warn')], [])]
+grp = m.join(res, cfg, {})
+rows = m.build('chart', '', res, grp, False, {}, {}); assert [(r['src'], r['n']) for r in rows] == [('p', 2), ('q', 0)], rows
+rows = m.build('chart', 'unhealthy', res, grp, False, {}, {}); assert [(r['src'], r['n']) for r in rows] == [('p', 1), ('q', 1)], rows
+rows = m.build('table', '', res, grp, False, {}, {}); assert [r['sev'] for r in rows] == ['CRIT', 'WARN'] and rows[0]['alert'] == 'x' and rows[0]['source'] == 'p', rows
+# the drill lives in services: arg key.<name>
+dr = m.build('services', 'key.a', res, grp, False, {}, {}); assert dr[1]['title'].startswith('a') and any(r['title'] == 'p: CRIT' for r in dr), [r['title'] for r in dr]
+assert m.build('services', 'key.nope', res, grp, False, {}, {})[-1]['title'] == 'Service not found'
+lst = m.build('services', '', res, grp, False, {}, {}); assert all(r['nav']['view'] == 'services' and r['nav']['arg'].startswith('key.') and m.TOKEN.match(r['nav']['arg']) for r in lst if r.get('nav') and 'view' in r['nav']), lst
+# the overview: tiles carry a trend only once there are 3 points
+ov = m.overview_rows(res, grp, False, False, [{'t': 1, 'firing': 1, 'crit': 0, 'services': 3, 'ok': 2, 'up': 2}] * 2); assert 'trend' not in ov[2]
+ov = m.overview_rows(res, grp, False, False, [{'t': i, 'firing': i, 'crit': 0, 'services': 3, 'ok': 3 - i, 'up': 2} for i in range(4)])
+assert ov[2]['kpi_value'] is not None and ov[2]['trend'] == [0, 1, 2, 3] and ov[2]['delta'] == 3 and ov[1]['trend'] == [3, 2, 1, 0], (ov[2].get('trend'), ov[2].get('delta'))
+assert [r['nav']['view'] for r in ov if r.get('nav')][-4:] == ['chart', 'chart', 'table', 'overview']   # the last row is Check again
+print('RICH PANELS OK')
 print('ALL OK')
 '''
 

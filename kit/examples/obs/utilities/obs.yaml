@@ -64,34 +64,10 @@ presentation:
           subtitle: "{{row.kpi_note}}"
           badge: "{{row.kpi_badge}}"
           footer: "{{row.kpi_foot}}"
+          delta: "{{row.delta}}"
+          delta_label: "{{row.since}}"
+          trend: "{{row.trend}}"
     services:
-      right_widget:
-        kind: entity_preview
-        mode: selected_row
-        bind:
-          title: "{{row.title}}"
-          subtitle: "{{row.subtitle}}"
-          tiles_above:
-            title: "{{row.kpi_label}}"
-            value: "{{row.kpi_value}}"
-            unit: "{{row.kpi_unit}}"
-            max: "{{row.kpi_max}}"
-            subtitle: "{{row.kpi_note}}"
-            badge: "{{row.kpi_badge}}"
-            footer: "{{row.kpi_foot}}"
-          fields:
-            - { label: STATUS, value: "{{row.s_status}}" }
-            - { label: SOURCES, value: "{{row.s_sources}}" }
-            - { label: FIRING, value: "{{row.s_alerts}}" }
-            - { label: SIGNAL, value: "{{row.s_signal}}" }
-          body: "{{row.body}}"
-          actions:
-            - "open"
-            - "logs"
-            - "traces"
-            - "copy"
-            - "triage"
-    service:
       right_widget:
         kind: entity_preview
         mode: selected_row
@@ -166,6 +142,26 @@ presentation:
             - { field: services, label: Services, align: right }
             - { field: alerts, label: Firing, align: right }
             - { field: ms, label: Ms, align: right }
+    chart:
+      right_widget:
+        kind: chart
+        mode: list_data
+        bind:
+          type: bar
+          x: src
+          y: n
+          label: "Count by source"
+    table:
+      right_widget:
+        kind: table
+        mode: list_data
+        bind:
+          columns:
+            - { field: sev, label: Level }
+            - { field: alert, label: Alert }
+            - { field: service, label: Service }
+            - { field: source, label: Source }
+            - { field: age, label: Minutes, align: right }
     note:
       right_widget:
         kind: markdown

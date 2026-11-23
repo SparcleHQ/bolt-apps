@@ -120,6 +120,47 @@
       "expect": {
         "min_rows": 1
       }
+    },
+    {
+      "name": "chart: bars of firing alerts by source",
+      "os": "macos",
+      "args": [
+        "chart"
+      ],
+      "expect": {
+        "min_rows": 4
+      }
+    },
+    {
+      "name": "table: firing alerts as a table",
+      "os": "macos",
+      "args": [
+        "table"
+      ],
+      "expect": {
+        "min_rows": 3
+      }
+    },
+    {
+      "name": "overview: charts and trends",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "expect": {
+        "min_rows": 8
+      }
+    },
+    {
+      "name": "chart: unhealthy services by source",
+      "os": "macos",
+      "args": [
+        "chart",
+        "unhealthy"
+      ],
+      "expect": {
+        "min_rows": 4
+      }
     }
   ]
 }

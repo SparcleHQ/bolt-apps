@@ -36,7 +36,7 @@ import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FILE_WORDS = tuple(_PFX + w for w in ("config.json", "fixtures.json", "bolt_app_kit.py",))
-VIEWS = ("overview", "services", "service", "alerts", "sources", "trend")
+VIEWS = ("overview", "services", "alerts", "sources", "trend", "chart", "table")   # at most 8 views in an app file; the service drill lives inside services (arg key.<name>)
 APP = "obs"
 NAME = re.compile(r"^[a-z0-9][a-z0-9-]{0,31}\Z")
 HOST = re.compile(r"^[A-Za-z0-9.-]{1,253}\Z")
@@ -148,10 +148,11 @@ def read_sources(cfg):
         links = r.get("links") or {}
         if not isinstance(links, dict) or any(k not in LINK_KINDS or not _link_ok(v) for k, v in links.items()):
             raise Fail("setup", "source %s: links must use open, logs or traces, each an https address with at most {service} in it" % r["name"])
+        tl = r.get("trend_label")
         tq = r.get("trend_query")
         if tq is not None and (not isinstance(tq, str) or len(tq) > 300):
             raise Fail("setup", "source %s: trend_query must be a string of at most 300 characters" % r["name"])
-        out.append({"name": r["name"], "type": r["type"], "url": r["url"].rstrip("/"), "auth": auth, "project": str(r.get("project", "")), "demo": not user, "links": links, "trend_query": tq, "prefix": prefix})
+        out.append({"name": r["name"], "type": r["type"], "url": r["url"].rstrip("/"), "auth": auth, "project": str(r.get("project", "")), "demo": not user, "links": links, "trend_query": tq, "trend_label": s(tl, 40) if isinstance(tl, str) else "", "prefix": prefix})
     al = {}
     for k, v in (aliases.items() if isinstance(aliases, dict) else []):
         if isinstance(k, str) and isinstance(v, str):
@@ -556,14 +557,14 @@ def links_for(g, srcmap):
 DEFAULT_TREND = 'avg(up{job="{service}"})'
 
 
-def trend_points(cfg, src, headers, svc, budget, fx=None):
+def trend_points(cfg, src, headers, svc, budget, fx=None, query=None):
     """[(epoch, value)] for the last 3 hours from a Prometheus source: a trend_query with {service}, or the share of targets up. The name goes into a PromQL label, so only plain names are allowed."""
     if src["type"] != "prometheus" or not SAFE_NAME.match(svc):
         return []
     if fx is not None:
         raw = fx.get("range")
     else:
-        q = (src.get("trend_query") or DEFAULT_TREND).replace("{service}", svc)
+        q = (query or src.get("trend_query") or DEFAULT_TREND).replace("{service}", svc)
         end = int(time.time())
         raw = http_json(cfg, src, headers, src.get("prefix", "") + "/api/v1/query_range?" + urllib.parse.urlencode({"query": q, "start": end - 10800, "end": end, "step": 300}), budget)
     try:
@@ -572,6 +573,63 @@ def trend_points(cfg, src, headers, svc, budget, fx=None):
         return [(int(float(a)), float(b)) for a, b in vals][-40:]
     except (KeyError, TypeError, ValueError, IndexError):
         return []
+
+
+def pick_trend(cfg, src, headers, svc, budget, fx=None):
+    """(label, points): the source's own trend_query if it names one, else the first candidate in config that has at least 5 points and is not a flat line; the last resort is whatever came back first."""
+    if fx is not None:
+        return s(fx.get("range_label"), 40) or "trend", trend_points(cfg, src, headers, svc, budget, fx=fx)
+    cands = [(src.get("trend_label") or "your query", src["trend_query"])] if src.get("trend_query") else [(c["label"], c["query"]) for c in cfg["trend"]]
+    first = ("", [])
+    for label, q in cands:
+        try:
+            pts = trend_points(cfg, src, headers, svc, budget, query=q)
+        except Fail:
+            continue
+        if len(pts) >= 5 and max(v for _, v in pts) != min(v for _, v in pts):
+            return label, pts
+        if pts and not first[1]:
+            first = (label, pts)
+    return first
+
+
+BLOCKS = "\u2581\u2582\u2583\u2584\u2585\u2586\u2587\u2588"
+
+
+def spark(vals):
+    """A text sparkline from block characters, so a trend shows in any pane that draws text."""
+    if not vals:
+        return ""
+    lo, hi = min(vals), max(vals)
+    if hi == lo:
+        return BLOCKS[0] * len(vals)
+    return "".join(BLOCKS[min(7, int((v - lo) / (hi - lo) * 7.999))] for v in vals)
+
+
+def bars(n, mx, width=12):
+    return "\u2588" * max(1, int(round(width * n / float(mx)))) if n and mx else ""
+
+
+class History(object):
+    """A local history of the overview numbers, one point per run at least a minute apart, kept in the kit cache for a week. It starts when you install the app: nothing here is fetched from any source."""
+    def __init__(self, cfg, sig):
+        ok = lambda v: isinstance(v, dict) and isinstance(v.get("pts"), list)
+        self.c = kit.Cache(APP, 7 * 86400, ok, root=kit.cache.default_root(APP) + "/history")
+        self.keep, self.gap, self.sig = cfg["history"]["keep"], cfg["history"]["min_gap_s"], sig
+
+    def add(self, snap):
+        cur = self.c.get("history") or {}
+        pts = cur.get("pts", []) if cur.get("sig") == self.sig else []
+        if not pts or snap["t"] - pts[-1]["t"] >= self.gap:
+            pts = (pts + [snap])[-self.keep:]
+            self.c.put("history", {"sig": self.sig, "pts": pts})
+        return pts
+
+
+def snapshot(results, groups):
+    firing = [a for g in groups for a in g["firing"]]
+    return {"t": int(time.time()), "firing": len(firing), "crit": sum(1 for a in firing if a["severity"] == "crit"), "services": len(groups),
+            "ok": sum(1 for g in groups if g["status"] == "ok"), "up": sum(1 for r in results if r["ok"] and r["stale"] is None)}
 
 
 # ------------------------------------------------------------------ rows
@@ -596,12 +654,20 @@ def banner(results, fixture):
     return rows
 
 
-def service_row(g, srcmap=None, nav=False, trend=None):
+def service_row(g, srcmap=None, nav=False, trend=None, label=""):
     per = " · ".join("%s %s" % (n, WORD[v["status"]].lower()) for n, v in sorted(g["by"].items()))
     extra = " · %d alert%s firing" % (len(g["firing"]), "" if len(g["firing"]) == 1 else "s") if g["firing"] else ""
     lines = ["**%s** (%s)" % (g["name"], g["status"].upper())] + ["- %s: %s%s" % (n, WORD[v["status"]], (", " + v["detail"]) if v["detail"] else "") for n, v in sorted(g["by"].items())]
     if g["firing"]:
         lines += ["", "**Firing now**"] + ["- %s (%s, %s): %s" % (a["name"], a["source"], a["severity"], a["summary"] or "no summary") for a in g["firing"][:5]]
+    if g["firing"]:
+        crit = sum(1 for a in g["firing"] if a["severity"] == "crit")
+        warn = len(g["firing"]) - crit
+        mx = max(crit, warn, 1)
+        lines += ["", "**Severity**", "`crit  %-12s %d`" % (bars(crit, mx), crit), "`warn  %-12s %d`" % (bars(warn, mx), warn)]
+    if trend:
+        vals = [v for _, v in trend]
+        lines += ["", "**Trend, last 3 hours%s**" % ((" (" + label + ")") if label else ""), "`%s`" % spark(vals), "low %.3g, high %.3g, now %.3g" % (min(vals), max(vals), vals[-1])]
     share = "%s: %s across %s%s" % (g["name"], g["status"].upper(), ", ".join(g["sources"]) or "no source", ("; firing: " + ", ".join(a["name"] for a in g["firing"][:4])) if g["firing"] else "")
     badges = [(WORD[g["status"]], TONE[g["status"]])] + ([(g["flag"], "danger" if g["flag"] != "DISAGREE" else "warn")] if g["flag"] else [])
     triage = "Triage this service. %s is %s across my monitoring tools: %s.%s What are the likely causes and the first three checks?" % (
@@ -610,7 +676,7 @@ def service_row(g, srcmap=None, nav=False, trend=None):
     lk = links_for(g, srcmap or {})
     kw = dict((k + "_url", v) for k, v in lk.items())
     if nav:
-        kw["nav"] = {"view": "service", "arg": g["key"]}
+        kw["nav"] = {"view": "services", "arg": "key." + g["key"]}
     if trend:
         kw["trend"] = [round(v, 3) for _, v in trend]
     return kit.safe_row(g["name"], per + extra, icon="Activity", badges=badges, body="\n".join(lines), copy=False if nav else share, s_status=g["status"].upper(), s_sources=", ".join(g["sources"]) or "-",
@@ -629,7 +695,7 @@ def alert_row(a, srcmap=None):
                         triage_text=kit.safe_copy("Triage this alert from %s. %s on %s, %s, %s. %s What should I check first?" % (a["source"], a["name"], a["service"], a["severity"], ago(a["since"]), a["summary"])))
 
 
-def overview_rows(results, groups, fixture, any_demo):
+def overview_rows(results, groups, fixture, any_demo, hist=None):
     up = sum(1 for r in results if r["ok"] and r["stale"] is None)
     total = len(groups)
     ok = sum(1 for g in groups if g["status"] == "ok")
@@ -646,6 +712,20 @@ def overview_rows(results, groups, fixture, any_demo):
         kit.row("Cross-tool: %d services" % len(multi), "two or more tools agree there is a problem, or disagree", icon="ShieldAlert", nav={"view": "services"}, badge="LOOK" if multi else "NONE",
                 tile=kit.safe_tile("Cross-tool signals", len(multi), max=max(1, total), note="agree, together or disagree", foot="joined by service name"), body="Services where tools agree, started together, or disagree."),
     ]
+    def tk(vals):
+        return {"trend": vals[-24:], "delta": vals[-1] - vals[0], "since": "over %d runs" % len(vals)} if len(vals) >= 3 else {}
+    hist = hist or []
+    rows[1] = dict(rows[1], **tk([p["ok"] for p in hist]))
+    rows[2] = dict(rows[2], **tk([p["firing"] for p in hist]))
+    unhealthy = sum(1 for r in results for sv in r["services"] if RANK[sv["status"]] > 0)
+    rows += [
+        kit.row("Alerts by source: a chart", "%d firing, as bars" % len(firing), icon="AlertCircle", nav={"view": "chart"}, badge="CHART",
+                tile=kit.safe_tile("Firing by source", len(firing), max=max(len(firing), 1), note="across %d sources" % len(results), foot="Enter for the bar chart"), body="Press Enter for the bar chart."),
+        kit.row("Unhealthy by source: a chart", "%d services need attention" % unhealthy, icon="Layers", nav={"view": "chart", "arg": "unhealthy"}, badge="CHART",
+                tile=kit.safe_tile("Unhealthy by source", unhealthy, max=max(unhealthy, 1), note="warn or critical", foot="Enter for the bar chart"), body="Press Enter for the bar chart."),
+        kit.row("Alert table: sortable", "%d firing or pending, worst first" % len([a for g in groups for a in g["alerts"] if a["state"] in ("firing", "pending")]), icon="List", nav={"view": "table"}, badge="TABLE",
+                tile=kit.safe_tile("Alert table", len(firing), max=max(len(firing), 1), note="rows", foot="Enter for the table"), body="Press Enter for a sortable table."),
+    ]
     tag = ("SAMPLE" if fixture else ("DEMO" if any_demo else ""))
     if tag:
         rows[0] = dict(rows[0], kpi_badge=tag, kpi_foot=kit.text("public demo data" if not fixture else "recorded answers", 80))
@@ -654,6 +734,8 @@ def overview_rows(results, groups, fixture, any_demo):
 
 
 def build(view, word, results, groups, fixture, srcmap=None, trend=None):
+    if view == "services" and (word or "").lower().startswith("key."):
+        view, word = "service", word[4:]
     head = [back()] + banner(results, fixture)
     w = word.lower()
     if view == "services":
@@ -665,24 +747,37 @@ def build(view, word, results, groups, fixture, srcmap=None, trend=None):
         else:
             items = [g for g in groups if not w or w in g["name"].lower()][:50]
         return head + ([service_row(g, srcmap, nav=True) for g in items] or [kit.note_row("No match", "no service matches %s" % kit.clean_text(word, 40), icon="Activity")])
+    if view == "chart":   # =obs chart (firing alerts by source) or =obs chart unhealthy (unhealthy services by source)
+        bad = (word or "").lower() == "unhealthy"
+        per = {}
+        for r in results:
+            per[r["name"]] = sum(1 for sv in r["services"] if RANK[sv["status"]] > 0) if bad else len([a for a in r["alerts"] if a["state"] == "firing"])
+        what = "unhealthy services" if bad else "firing alerts"
+        return [kit.row(n, "%d %s" % (c, what), icon="Layers" if bad else "AlertCircle", src=n, n=c) for n, c in sorted(per.items(), key=lambda x: (-x[1], x[0]))] or [kit.note_row("No sources", "nothing to chart", icon="Database")]
+    if view == "table":
+        now = int(time.time())
+        al = sorted([a for g in groups for a in g["alerts"] if a["state"] in ("firing", "pending")], key=lambda a: (-RANK[a["severity"]], -(a["since"] or 0)))[:50]
+        return [kit.row("%s · %s" % (a["name"], a["service"]), "%s · %s" % (a["source"], a["severity"]), icon="AlertCircle", sev=WORD[a["severity"]], alert=a["name"], service=a["service"], source=a["source"],
+                        age=int((now - a["since"]) // 60) if a["since"] else 0) for a in al] or [kit.note_row("Nothing firing", "no source reports a firing alert", icon="ShieldCheck", badge="QUIET")]
     if view in ("service", "trend"):
         g = next((x for x in groups if x["key"] == word), None) if TOKEN.match(word or "") else None
         if g is None:
             return [back("Back to services"), kit.note_row("Service not found", "no source lists %s" % kit.clean_text(word, 40), icon="Activity")]
-        pts = [p for ps in (trend or {}).values() for p in ps]
+        pts = [p for lp in (trend or {}).values() for p in lp[1]]
         if view == "trend":
             if not pts:
                 return [kit.note_row("No trend", "no source returned a time series for %s" % g["name"], icon="TrendingUp")]
             return [kit.row(time.strftime("%H:%M", time.localtime(ts)), "%.3f" % v, icon="TrendingUp", t=time.strftime("%H:%M", time.localtime(ts)), v=round(v, 3)) for ts, v in pts]
         first = next(iter(trend or {}), None)
-        rows = [back("Back to services")] + [service_row(g, srcmap, trend=(trend or {}).get(first) if first else None)] + head[1:]
+        lab, fpts = (trend or {}).get(first, ("", [])) if first else ("", [])
+        rows = [back("Back to services")] + [service_row(g, srcmap, trend=fpts, label=lab)] + head[1:]
         for n, v in sorted(g["by"].items()):
             lk = dict((k + "_url", tpl.replace("{service}", urllib.parse.quote(v["name"], safe=""))) for k, tpl in ((srcmap or {}).get(n) or {}).get("links", {}).items())
             rows.append(kit.safe_row("%s: %s" % (n, WORD[v["status"]]), v["detail"] or "no detail", icon="Database", badges=[(WORD[v["status"]], TONE[v["status"]])], body="%s says %s for %s%s" % (n, WORD[v["status"]], v["name"], (": " + v["detail"]) if v["detail"] else ""),
                                      copy="%s: %s %s" % (n, v["name"], WORD[v["status"]]), s_status=WORD[v["status"]], s_sources=n, s_alerts=str(len([a for a in g["firing"] if a["source"] == n])), s_signal="-", **lk))
         rows += [alert_row(a, srcmap) for a in g["firing"][:10]]
         if pts:
-            rows.append(kit.row("Trend, last 3 hours", "%d points · Enter for the chart" % len(pts), icon="TrendingUp", nav={"view": "trend", "arg": g["key"]}, copy=False, body="A line chart of the source's time series.", s_status="-", s_sources=", ".join(trend), s_alerts="-", s_signal="-"))
+            rows.append(kit.row("Trend, last 3 hours", "%s · %d points · Enter for the chart" % (lab or "series", len(pts)), icon="TrendingUp", nav={"view": "trend", "arg": g["key"]}, copy=False, body="A line chart of the source's time series.", s_status="-", s_sources=", ".join(trend), s_alerts="-", s_signal="-"))
         return rows
     if view == "alerts":
         now = int(time.time())
@@ -705,7 +800,7 @@ def _tile_bind(ind):
 _PREVIEW = ["kind: entity_preview", "mode: selected_row", "bind:", '  title: "{{row.title}}"', '  subtitle: "{{row.subtitle}}"', "  tiles_above:"] + _tile_bind(4) + [
     "  fields:", '    - { label: STATUS, value: "{{row.s_status}}" }', '    - { label: SOURCES, value: "{{row.s_sources}}" }', '    - { label: FIRING, value: "{{row.s_alerts}}" }', '    - { label: SIGNAL, value: "{{row.s_signal}}" }',
     '  body: "{{row.body}}"', "  actions:", '    - "open"', '    - "logs"', '    - "traces"', '    - "copy"', '    - "triage"']
-_TILES = ["kind: cards", "mode: list_data", "bind:", '  layout: "tiles"'] + _tile_bind(2)
+_TILES = ["kind: cards", "mode: list_data", "bind:", '  layout: "tiles"'] + _tile_bind(2) + ['  delta: "{{row.delta}}"', '  delta_label: "{{row.since}}"', '  trend: "{{row.trend}}"']
 _NOTE = ["kind: markdown", "mode: selected_row", "bind:", '  title: "{{row.title}}"', '  subtitle: "{{row.subtitle}}"', '  body: "{{row.body}}"']
 
 
@@ -724,10 +819,13 @@ def emit_yaml(cfg):
     L += ["  parse: json", "  timeout_seconds: %d" % app["timeout"], "presentation:", "  widget: list", "  title_field: title", "  subtitle_field: subtitle", "  view_arg: view", "  right_widget:"]
     L += _indent(_PREVIEW, 4)
     L += ["  views:", "    overview:", "      right_widget:"] + _indent(_TILES, 8)
-    L += ["    services:", "      right_widget:"] + _indent(_PREVIEW, 8) + ["    service:", "      right_widget:"] + _indent(_PREVIEW, 8) + ["    alerts:", "      right_widget:"] + _indent(_PREVIEW, 8)
+    L += ["    services:", "      right_widget:"] + _indent(_PREVIEW, 8) + ["    alerts:", "      right_widget:"] + _indent(_PREVIEW, 8)
     L += ["    trend:", "      right_widget:", "        kind: chart", "        mode: list_data", "        bind:", "          type: line", "          x: t", "          y: v", '          label: "Trend, last 3 hours"']
     L += ["    sources:", "      right_widget:", "        kind: table", "        mode: list_data", "        bind:", "          columns:", "            - { field: node, label: Source }", "            - { field: kind, label: Type }",
           "            - { field: state, label: State }", "            - { field: services, label: Services, align: right }", "            - { field: alerts, label: Firing, align: right }", "            - { field: ms, label: Ms, align: right }"]
+    L += ["    chart:", "      right_widget:", "        kind: chart", "        mode: list_data", "        bind:", "          type: bar", "          x: src", "          y: n", '          label: "Count by source"']
+    L += ["    table:", "      right_widget:", "        kind: table", "        mode: list_data", "        bind:", "          columns:", "            - { field: sev, label: Level }", "            - { field: alert, label: Alert }", "            - { field: service, label: Service }",
+          "            - { field: source, label: Source }", "            - { field: age, label: Minutes, align: right }"]
     L += ["    note:", "      right_widget:"] + _indent(_NOTE, 8)
     L += ["actions:", '  - { id: open, kind: url, target: row, label: "Open", url_template: "{{row.open_url}}" }', '  - { id: logs, kind: url, target: row, label: "Logs", url_template: "{{row.logs_url}}" }', '  - { id: traces, kind: url, target: row, label: "Traces", url_template: "{{row.traces_url}}" }', '  - { id: copy, kind: composer, target: row, label: "Copy summary", insert: "{{row.share_text}}" }', '  - { id: triage, kind: composer, target: row, label: "Triage with AI", insert: "{{row.triage_text}}" }']
     return "\n".join(L) + "\n"
@@ -748,8 +846,9 @@ def main(argv):
     demos = [w for w in words if w == "demo-offline"]
     words = [w for w in words if w not in demos]
     first = words[0].lower() if words else ""
+    alias = first == "service"   # =obs service <name> is the drill typed by hand
     view = first if first in VIEWS else ("services" if first else "overview")
-    rest = words[1:] if first in VIEWS else words
+    rest = words[1:] if (first in VIEWS or alias) else words
     word = kit.clean_text(" ".join(rest), 40)
     refresh = word == "refresh"
     if refresh:
@@ -758,7 +857,7 @@ def main(argv):
     fixture = (env == "1") if env in ("0", "1") else bool(cfg["api"]["fixture_default"])
     fx = load_json("fixtures.json") if fixture else {}
     try:
-        sources, aliases = ([dict(r, auth={"kind": "none"}, project="", demo=True, links={}, trend_query=None) for r in cfg["default_sources"]], {}) if fixture else read_sources(cfg)
+        sources, aliases = ([dict(r, auth={"kind": "none"}, project="", demo=True, links={}, trend_query=r.get("trend_query"), trend_label=r.get("trend_label", ""), prefix=r.get("path", "")) for r in cfg["default_sources"]], {}) if fixture else read_sources(cfg)
     except Fail as e:
         offline(e.msg, e.kind, view)
     hub = Hub(cfg, fixture, fx, demos)
@@ -769,21 +868,24 @@ def main(argv):
     groups = join(results, cfg, aliases)
     srcmap = dict((s_["name"], s_) for s_ in sources)
     trend = {}
-    if view in ("service", "trend"):
-        g_ = next((x for x in groups if x["key"] == word), None)
+    if alias:
+        word = "key." + aliases.get(norm(word, cfg), norm(word, cfg))
+    if (view == "services" and word.lower().startswith("key.")) or view == "trend":
+        g_ = next((x for x in groups if x["key"] == (word[4:] if word.lower().startswith("key.") else word)), None)
         for n, v in (g_["by"].items() if g_ else []):
             src = srcmap.get(n)
             if not src or src["type"] != "prometheus":
                 continue
             try:
                 hdr = {} if fixture else credentials(cfg, src)[0]
-                pts = trend_points(cfg, src, hdr, v["name"], cfg["api"]["deadline_s"], fx=fx.get(n) if fixture else None)
+                lab, pts = pick_trend(cfg, src, hdr, v["name"], cfg["api"]["deadline_s"], fx=fx.get(n) if fixture else None)
             except Fail:
-                pts = []
+                lab, pts = "", []
             if pts:
-                trend[n] = pts
+                trend[n] = (lab, pts)
     if view == "overview":
-        kit.emit(overview_rows(results, groups, fixture, any(r["demo"] for r in results)))
+        hist = fx.get("history", []) if fixture else History(cfg, ",".join(sorted(s_["name"] for s_ in sources))).add(snapshot(results, groups))
+        kit.emit(overview_rows(results, groups, fixture, any(r["demo"] for r in results), hist))
     kit.emit(build(view, word, results, groups, fixture, srcmap, trend))
 
 

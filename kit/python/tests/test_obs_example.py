@@ -152,19 +152,25 @@ print('LINKS AND TREND OK')
 
 # 17. the new adapters, on small synthetic answers shaped like the real ones
 SPD = {'page': {'name': 'Acme'}, 'status': {'indicator': 'minor', 'description': 'Partially Degraded Service'},
-       'components': [{'name': 'API', 'status': 'operational', 'group': False, 'group_id': None}, {'name': 'Core', 'status': 'operational', 'group': True, 'group_id': None},
-                      {'name': 'Core: EU', 'status': 'major_outage', 'group': False, 'group_id': 'g1'}, {'name': 'Core: US', 'status': 'operational', 'group': False, 'group_id': 'g1'},
+       'components': [{'name': 'API', 'status': 'operational', 'group': False, 'group_id': None}, {'id': 'g1', 'name': 'Core', 'status': 'operational', 'group': True, 'group_id': None},
+                      {'id': 'c1', 'name': 'Core: EU', 'status': 'major_outage', 'group': False, 'group_id': 'g1'}, {'id': 'c2', 'name': 'Core: US', 'status': 'operational', 'group': False, 'group_id': 'g1'},
                       {'name': 'Search', 'status': 'degraded_performance', 'group': False, 'group_id': None}],
        'incidents': [{'name': 'EU outage', 'impact': 'critical', 'status': 'investigating', 'created_at': '2026-11-23T01:00:00.000Z', 'incident_updates': [{'body': 'We are looking into it.'}], 'components': [{'name': 'Core: EU'}]},
                      {'name': 'Slow search', 'impact': 'minor', 'status': 'identified', 'created_at': '2026-11-23T02:00:00.000Z', 'incident_updates': [], 'components': []}]}
 r = m.statuspage_read(cfg, {'name': 'acme', 'url': 'https://x.example.com'}, {}, 5, fx={'summary': SPD})
 names = {x['name']: x['status'] for x in r['services']}
-assert names == {'Acme': 'warn', 'API': 'ok', 'Core': 'ok', 'Core: EU': 'crit', 'Search': 'warn'}, names   # a healthy child (Core: US) is left out
+assert names == {'Acme': 'warn', 'API': 'ok', 'Core': 'crit', 'Search': 'warn'}, names   # children roll up into their group: the group is as bad as its worst child
 assert [(a['name'], a['service'], a['severity']) for a in r['alerts']] == [('EU outage', 'Core: EU', 'crit'), ('Slow search', 'Acme', 'warn')], r['alerts']
 assert r['alerts'][0]['since'] and r['alerts'][0]['summary'] == 'We are looking into it.'
 # an incident.io style page with no incidents key still reads
 r = m.statuspage_read(cfg, {'name': 'x', 'url': 'https://x.example.com'}, {}, 5, fx={'summary': {'page': {'name': 'Y'}, 'status': {'indicator': 'none', 'description': 'ok'}, 'components': [{'name': 'Chat', 'status': 'operational'}]}})
 assert r['alerts'] == [] and [x['name'] for x in r['services']] == ['Y', 'Chat']
+core = [x for x in m.statuspage_read(cfg, {'name': 'acme', 'url': 'https://x.example.com'}, {}, 5, fx={'summary': SPD})['services'] if x['name'] == 'Core'][0]
+assert core['detail'].startswith('1 of 2 components not operational: Core: EU'), core
+# a group with 200 children is one service, not 200
+BIG = {'page': {'name': 'Big'}, 'status': {'indicator': 'none', 'description': 'ok'}, 'components': [{'id': 'g', 'name': 'Network', 'status': 'operational', 'group': True, 'group_id': None}] + [{'id': 'c%d' % i, 'name': 'City %d' % i, 'status': 'degraded_performance' if i % 2 else 'operational', 'group': False, 'group_id': 'g'} for i in range(200)]}
+rb = m.statuspage_read(cfg, {'name': 'b', 'url': 'https://x.example.com'}, {}, 5, fx={'summary': BIG})
+assert [x['name'] for x in rb['services']] == ['Big', 'Network'] and rb['services'][1]['status'] == 'warn' and rb['services'][1]['detail'].startswith('100 of 200 components not operational'), rb['services']
 try: m.statuspage_read(cfg, {'name': 'x', 'url': 'https://x.example.com'}, {}, 5, fx={'summary': {'nope': 1}}); assert False
 except m.Fail as e: assert e.kind == 'fail'
 ND = {'hostname': 'h1.example.com', 'alarms': {'a.b': {'name': 'disk_full', 'chart': 'disk.sda', 'status': 'CRITICAL', 'value': 97.5, 'units': '%', 'last_status_change': 1795400000, 'info': 'disk almost full'},

@@ -354,11 +354,21 @@ def statuspage_read(cfg, src, headers, budget, fx=None):
     page = s(raw["page"].get("name"), 60) or src["name"]
     ind = (raw.get("status") or {}).get("indicator")
     services = [{"name": page, "status": SP_INDICATOR.get(ind, "unknown"), "detail": s((raw.get("status") or {}).get("description"), 100)}]
+    kids = {}   # a status page can list hundreds of child components (Cloudflare lists every city): roll each group up into one service instead
     for c in comps:
-        if not isinstance(c, dict) or not c.get("name"):
+        if isinstance(c, dict) and c.get("group_id") and c.get("name"):
+            kids.setdefault(c["group_id"], []).append(c)
+    rank = {"ok": 0, "unknown": 0, "warn": 1, "crit": 2}
+    for c in comps:
+        if not isinstance(c, dict) or not c.get("name") or c.get("group_id"):
             continue
         st = SP_STATUS.get(c.get("status"), "unknown")
-        if c.get("group_id") and st == "ok":
+        if c.get("group") and c.get("id") in kids:
+            ch = kids[c["id"]]
+            bad = [k for k in ch if SP_STATUS.get(k.get("status"), "unknown") in ("warn", "crit")]
+            worst = max([st] + [SP_STATUS.get(k.get("status"), "unknown") for k in bad], key=lambda x: rank[x])
+            names = ", ".join(s(k["name"], 30) for k in bad[:3])
+            services.append({"name": s(c["name"], 80), "status": worst, "detail": s(("%d of %d components not operational: %s%s" % (len(bad), len(ch), names, ", ..." if len(bad) > 3 else "")) if bad else "all %d components operational" % len(ch), 120)})
             continue
         services.append({"name": s(c["name"], 80), "status": st, "detail": s(str(c.get("status", "")).replace("_", " "), 40)})
     alerts = []

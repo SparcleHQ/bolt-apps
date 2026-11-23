@@ -944,6 +944,7 @@
       "backing": "remote HTTP APIs (Prometheus, Coroot) and a CLI (aws), each behind a small adapter",
       "widgets": [
         "cards",
+        "chart",
         "entity_preview",
         "table"
       ],
@@ -956,7 +957,10 @@
         "parallel reads, one source failing never blanks the rest",
         "stale copy per source",
         "status filter words",
-        "composer action that pre-fills an AI triage prompt"
+        "composer action that pre-fills an AI triage prompt",
+        "a drill from a joined list into one service, with a row per source",
+        "link templates per source (open, logs, traces) with one safe placeholder",
+        "a Prometheus range query drawn as a line chart, name allow-listed before it enters PromQL"
       ],
       "sources": [
         "Prometheus HTTP API (demo.promlabs.com by default)",

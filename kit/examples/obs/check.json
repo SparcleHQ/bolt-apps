@@ -87,6 +87,39 @@
       "expect": {
         "min_rows": 3
       }
+    },
+    {
+      "name": "service drill: summary, sources, alerts",
+      "os": "macos",
+      "args": [
+        "service",
+        "demo"
+      ],
+      "expect": {
+        "min_rows": 4
+      }
+    },
+    {
+      "name": "trend: a chart of points",
+      "os": "macos",
+      "args": [
+        "trend",
+        "demo"
+      ],
+      "expect": {
+        "min_rows": 5
+      }
+    },
+    {
+      "name": "service not found",
+      "os": "macos",
+      "args": [
+        "service",
+        "nosuchservice"
+      ],
+      "expect": {
+        "min_rows": 1
+      }
     }
   ]
 }

@@ -5,7 +5,7 @@ id: obs
 chip: obs
 title: "Observability"
 icon: Activity
-description: "One view over your monitoring tools: services, firing alerts and incidents from every source, joined by service name. Ships on public demos; add your own in ~/.config/obs/sources.json."
+description: "One view over your monitoring tools: services and firing alerts from every source, joined by service name. Ships on eight public demos (Prometheus, VictoriaMetrics, Grafana, Netdata, Coroot and three vendor status pages); add your own in ~/.config/obs/sources.json."
 placeholder_examples: ["Enter for the overview", "services bad", "services cross", "alerts", "sources"]
 emits: Generic
 args:

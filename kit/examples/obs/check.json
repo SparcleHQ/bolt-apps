@@ -53,7 +53,7 @@
         "alerts"
       ],
       "expect": {
-        "min_rows": 3
+        "min_rows": 6
       }
     },
     {
@@ -63,7 +63,7 @@
         "sources"
       ],
       "expect": {
-        "min_rows": 2
+        "min_rows": 8
       }
     },
     {

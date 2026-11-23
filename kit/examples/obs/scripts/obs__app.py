@@ -142,13 +142,16 @@ def read_sources(cfg):
             raise Fail("setup", "source %s: auth.secret must name the key, like PROM_TOKEN (UPPER_CASE)" % r["name"])
         if kind == "header" and not re.match(r"^[A-Za-z][A-Za-z0-9-]{0,40}\Z", str(auth.get("header", ""))):
             raise Fail("setup", "source %s: auth.header must be a header name like X-API-Key" % r["name"])
+        prefix = r.get("path") or ""
+        if prefix and (not isinstance(prefix, str) or not re.match(r"^/[A-Za-z0-9_./-]{1,100}\Z", prefix) or ".." in prefix or prefix.endswith("/")):
+            raise Fail("setup", "source %s: path must look like /select/0/prometheus (no .. and no trailing slash)" % r["name"])
         links = r.get("links") or {}
         if not isinstance(links, dict) or any(k not in LINK_KINDS or not _link_ok(v) for k, v in links.items()):
             raise Fail("setup", "source %s: links must use open, logs or traces, each an https address with at most {service} in it" % r["name"])
         tq = r.get("trend_query")
         if tq is not None and (not isinstance(tq, str) or len(tq) > 300):
             raise Fail("setup", "source %s: trend_query must be a string of at most 300 characters" % r["name"])
-        out.append({"name": r["name"], "type": r["type"], "url": r["url"].rstrip("/"), "auth": auth, "project": str(r.get("project", "")), "demo": not user, "links": links, "trend_query": tq})
+        out.append({"name": r["name"], "type": r["type"], "url": r["url"].rstrip("/"), "auth": auth, "project": str(r.get("project", "")), "demo": not user, "links": links, "trend_query": tq, "prefix": prefix})
     al = {}
     for k, v in (aliases.items() if isinstance(aliases, dict) else []):
         if isinstance(k, str) and isinstance(v, str):
@@ -229,8 +232,14 @@ def _epoch(iso):
 
 def prom_read(cfg, src, headers, budget, fx=None):
     get = (lambda p: fx[p]) if fx is not None else (lambda p: http_json(cfg, src, headers, p, budget))
-    up = get("up") if fx is not None else get("/api/v1/query?query=" + urllib.parse.quote("up"))
-    al = get("alerts") if fx is not None else get("/api/v1/alerts")
+    pre = src.get("prefix", "")
+    up = get("up") if fx is not None else get(pre + "/api/v1/query?query=" + urllib.parse.quote("up"))
+    try:
+        al = get("alerts") if fx is not None else get(pre + "/api/v1/alerts")
+    except Fail as e:
+        if e.kind == "auth":
+            raise
+        al = {"status": "success", "data": {"alerts": []}}   # services still count when a server has no alerts endpoint
     if not isinstance(up, dict) or up.get("status") != "success" or not isinstance(al, dict) or al.get("status") != "success":
         raise Fail("fail", "not a Prometheus answer")
     jobs = {}
@@ -297,6 +306,89 @@ def coroot_read(cfg, src, headers, budget, fx=None):
     return {"services": services, "alerts": alerts}
 
 
+SP_STATUS = {"operational": "ok", "degraded_performance": "warn", "partial_outage": "warn", "under_maintenance": "warn", "major_outage": "crit"}
+SP_INDICATOR = {"none": "ok", "minor": "warn", "major": "crit", "critical": "crit", "maintenance": "warn"}
+SP_IMPACT = {"critical": "crit", "major": "crit", "minor": "warn", "none": "warn", "maintenance": "warn"}
+
+
+def statuspage_read(cfg, src, headers, budget, fx=None):
+    """Any Atlassian Statuspage (githubstatus.com, cloudflarestatus.com, status.openai.com and many vendors): GET /api/v2/summary.json, no key.
+    The page itself is one service; its top-level components are services (a child component is listed only when it is not operational), and open incidents are alerts."""
+    raw = fx["summary"] if fx is not None else http_json(cfg, src, headers, "/api/v2/summary.json", budget)
+    comps = raw.get("components") if isinstance(raw, dict) else None
+    if not isinstance(comps, list) or not isinstance(raw.get("page"), dict):
+        raise Fail("fail", "not a Statuspage answer")
+    page = s(raw["page"].get("name"), 60) or src["name"]
+    ind = (raw.get("status") or {}).get("indicator")
+    services = [{"name": page, "status": SP_INDICATOR.get(ind, "unknown"), "detail": s((raw.get("status") or {}).get("description"), 100)}]
+    for c in comps:
+        if not isinstance(c, dict) or not c.get("name"):
+            continue
+        st = SP_STATUS.get(c.get("status"), "unknown")
+        if c.get("group_id") and st == "ok":
+            continue
+        services.append({"name": s(c["name"], 80), "status": st, "detail": s(str(c.get("status", "")).replace("_", " "), 40)})
+    alerts = []
+    for i in raw.get("incidents") or []:
+        if not isinstance(i, dict) or not i.get("name"):
+            continue
+        ups = i.get("incident_updates") or []
+        body = s((ups[0] or {}).get("body"), 200) if ups and isinstance(ups[0], dict) else ""
+        affected = [c.get("name") for c in (i.get("components") or []) if isinstance(c, dict) and c.get("name")]
+        alerts.append({"name": s(i["name"], 90), "service": s(affected[0], 80) if affected else page, "severity": SP_IMPACT.get(i.get("impact"), "warn"), "since": _epoch(i.get("created_at")),
+                       "summary": body or s(i.get("status"), 30), "state": "firing"})
+    return {"services": services, "alerts": alerts}
+
+
+ND_STATUS = {"CRITICAL": "crit", "WARNING": "warn"}
+
+
+def netdata_read(cfg, src, headers, budget, fx=None):
+    """A Netdata agent or parent, no key on a public one: GET /api/v1/alarms?active. The host is one service; every WARNING or CRITICAL alarm is an alert."""
+    raw = fx["alarms"] if fx is not None else http_json(cfg, src, headers, "/api/v1/alarms?active", budget)
+    al = raw.get("alarms") if isinstance(raw, dict) else None
+    if not isinstance(al, dict):
+        raise Fail("fail", "not a Netdata answer")
+    host = s(raw.get("hostname"), 60) or src["name"]
+    alerts, worst = [], "ok"
+    for k, a in al.items():
+        if not isinstance(a, dict) or a.get("status") not in ND_STATUS:
+            continue
+        sev = ND_STATUS[a["status"]]
+        worst = "crit" if sev == "crit" or worst == "crit" else "warn"
+        val = a.get("value")
+        alerts.append({"name": s("%s (%s)" % (a.get("name") or k, a.get("chart")) if a.get("chart") else (a.get("name") or k), 90), "service": host, "severity": sev, "since": a.get("last_status_change") if isinstance(a.get("last_status_change"), int) else None,
+                       "summary": s(a.get("info"), 160) or ("%s on %s: %s %s" % (s(a.get("name"), 50), s(a.get("chart"), 50), val if isinstance(val, (int, float)) and not isinstance(val, bool) else "?", s(a.get("units"), 10))),
+                       "state": "firing"})
+    return {"services": [{"name": host, "status": worst, "detail": "%d active alarm%s" % (len(alerts), "" if len(alerts) == 1 else "s")}], "alerts": alerts}
+
+
+def grafana_read(cfg, src, headers, budget, fx=None):
+    """Grafana-managed alert rules: GET /api/prometheus/grafana/api/v1/rules (anonymous on a public Grafana; a service-account token otherwise).
+    A folder is a service whose status is its worst rule; a firing or pending rule is an alert, attached to its service_name, service, app or job label when it has one."""
+    raw = fx["rules"] if fx is not None else http_json(cfg, src, headers, "/api/prometheus/grafana/api/v1/rules", budget)
+    groups = (raw.get("data") or {}).get("groups") if isinstance(raw, dict) else None
+    if not isinstance(groups, list):
+        raise Fail("fail", "not a Grafana rules answer")
+    folders, alerts = {}, []
+    for g in groups:
+        if not isinstance(g, dict):
+            continue
+        folder = s(g.get("file"), 70) or s(g.get("name"), 70) or "alerts"
+        cur = folders.setdefault(folder, "ok")
+        for r in g.get("rules") or []:
+            if not isinstance(r, dict) or r.get("state") not in ("firing", "pending"):
+                continue
+            lab, ann = r.get("labels") or {}, r.get("annotations") or {}
+            sev = "crit" if r["state"] == "firing" and _sev(lab.get("severity")) == "crit" else "warn"
+            folders[folder] = "crit" if sev == "crit" or folders[folder] == "crit" else "warn"
+            act = next((a.get("activeAt") for a in (r.get("alerts") or []) if isinstance(a, dict) and a.get("activeAt")), None)
+            svc = s(lab.get("service_name") or lab.get("service") or lab.get("app") or lab.get("job") or folder, 70)
+            alerts.append({"name": s(r.get("name"), 90) or "alert rule", "service": svc, "severity": sev, "since": _epoch(act),
+                           "summary": s(ann.get("summary") or ann.get("description"), 200) or ("rule is %s in %s" % (r["state"], folder)), "state": "firing" if r["state"] == "firing" else "pending"})
+    return {"services": [{"name": f, "status": st, "detail": "worst rule state"} for f, st in folders.items()], "alerts": alerts}
+
+
 CLI_TYPES = ("aws-cloudwatch",)
 CLI_DIRS = ("/opt/homebrew/bin", "/usr/local/bin", os.path.expanduser("~/.local/bin"), "/usr/bin", "/bin")
 
@@ -355,7 +447,7 @@ def aws_read(cfg, src, headers, budget, fx=None):
     return {"services": [], "alerts": alerts}
 
 
-ADAPTERS = {"prometheus": prom_read, "coroot": coroot_read, "aws-cloudwatch": aws_read}
+ADAPTERS = {"prometheus": prom_read, "coroot": coroot_read, "statuspage": statuspage_read, "netdata": netdata_read, "grafana": grafana_read, "aws-cloudwatch": aws_read}
 
 
 # ------------------------------------------------------------------ one source, safely: fresh cache, network, old copy
@@ -392,13 +484,14 @@ class Hub(object):
             return self._fallback(res, key, e.msg, e.kind, t0)
         except Exception:
             return self._fallback(res, key, "unexpected answer", "fail", t0)
-        self.fresh.put(key, data)
-        self.old.put(key, data)
+        if not self.fixture:   # sample answers never go into the real cache, or a live run would show them as if they were yours
+            self.fresh.put(key, data)
+            self.old.put(key, data)
         res.update(ok=True, services=data["services"], alerts=data["alerts"], ms=int((time.time() - t0) * 1000))
         return res
 
     def _fallback(self, res, key, why, kind, t0):
-        old = self.old.get(key)
+        old = None if self.fixture else self.old.get(key)
         res.update(err=why, kind=kind, ms=int((time.time() - t0) * 1000))
         if old is not None:
             res.update(ok=True, stale=self.old.age(key) or 0, services=old["services"], alerts=old["alerts"])
@@ -472,7 +565,7 @@ def trend_points(cfg, src, headers, svc, budget, fx=None):
     else:
         q = (src.get("trend_query") or DEFAULT_TREND).replace("{service}", svc)
         end = int(time.time())
-        raw = http_json(cfg, src, headers, "/api/v1/query_range?" + urllib.parse.urlencode({"query": q, "start": end - 10800, "end": end, "step": 300}), budget)
+        raw = http_json(cfg, src, headers, src.get("prefix", "") + "/api/v1/query_range?" + urllib.parse.urlencode({"query": q, "start": end - 10800, "end": end, "step": 300}), budget)
     try:
         res = raw["data"]["result"]
         vals = res[0]["values"] if res else []
@@ -531,7 +624,7 @@ def alert_row(a, srcmap=None):
     src = (srcmap or {}).get(a["source"]) or {}
     lk = dict((k + "_url", v.replace("{service}", urllib.parse.quote(a["service"], safe=""))) for k, v in (src.get("links") or {}).items())
     return kit.safe_row("%s · %s" % (a["name"], a["service"]), "%s · %s · %s" % (a["source"], a["severity"], ago(a["since"])), icon="AlertCircle", **lk,
-                        badges=[(a["severity"].upper(), TONE[a["severity"]]), (a["state"].upper(), "danger" if a["state"] == "firing" else "warn")], body=a["summary"] or "No summary from the source.", copy=share,
+                        badges=[(a["severity"].upper(), TONE[a["severity"]]), (a["state"].upper(), {"firing": "danger", "pending": "warn", "resolved": "success"}.get(a["state"], ""))], body=a["summary"] or "No summary from the source.", copy=share,
                         s_status=a["severity"].upper(), s_sources=a["source"], s_alerts="1", s_signal=ago(a["since"]), share_text=kit.safe_copy(share),
                         triage_text=kit.safe_copy("Triage this alert from %s. %s on %s, %s, %s. %s What should I check first?" % (a["source"], a["name"], a["service"], a["severity"], ago(a["since"]), a["summary"])))
 
@@ -592,8 +685,10 @@ def build(view, word, results, groups, fixture, srcmap=None, trend=None):
             rows.append(kit.row("Trend, last 3 hours", "%d points · Enter for the chart" % len(pts), icon="TrendingUp", nav={"view": "trend", "arg": g["key"]}, copy=False, body="A line chart of the source's time series.", s_status="-", s_sources=", ".join(trend), s_alerts="-", s_signal="-"))
         return rows
     if view == "alerts":
-        al = sorted([a for g in groups for a in g["firing"] if not w or w in (a["name"] + a["service"]).lower()], key=lambda a: (-RANK[a["severity"]], -(a["since"] or 0)))[:50]
-        return head + ([alert_row(a, srcmap) for a in al] or [kit.note_row("Nothing firing", "no source reports a firing alert", icon="ShieldCheck", badge="QUIET")])
+        now = int(time.time())
+        live = lambda a: a["state"] in ("firing", "pending") or (a["state"] == "resolved" and a["since"] and now - a["since"] < 86400)   # firing, pending, and resolved in the last day
+        al = sorted([a for g in groups for a in g["alerts"] if live(a) and (not w or w in (a["name"] + a["service"]).lower())], key=lambda a: ({"firing": 0, "pending": 1}.get(a["state"], 2), -RANK[a["severity"]], -(a["since"] or 0)))[:50]
+        return head + ([alert_row(a, srcmap) for a in al] or [kit.note_row("Nothing firing", "no source reports an alert, firing or recent", icon="ShieldCheck", badge="QUIET")])
     rows = [kit.row(r["name"], "%s · %s" % (r["type"], "answering" if r["ok"] and r["stale"] is None else (r["err"] or "no answer")), icon="Database", node=r["name"], kind=r["type"],
                     state="ok" if r["ok"] and r["stale"] is None else ("old copy" if r["ok"] else "down"), ms=r["ms"], services=len(r["services"]), alerts=len([a for a in r["alerts"] if a["state"] == "firing"])) for r in results]
     return rows or [kit.note_row("No sources", "add one in ~/.config/obs/sources.json", icon="Database")]

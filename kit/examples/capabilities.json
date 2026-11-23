@@ -45,7 +45,8 @@
       "also": [
         "acme-dash",
         "pulse-feed",
-        "coroot"
+        "coroot",
+        "obs"
       ]
     },
     {
@@ -75,7 +76,8 @@
       "kind": "table",
       "also": [
         "table-template",
-        "coroot"
+        "coroot",
+        "obs"
       ]
     },
     {
@@ -89,7 +91,8 @@
       "limit": "Layout tiles (a tile per row, at most {rules:widgets.tile_cap} rows, and a row with no number draws an empty \"-\" tile) or the default grid (up to {rules:widgets.row_cap} cards, no number needed); tile label cut at {rules:tile.label_cut} characters. The 24 cap applies only to bind.layout tiles.",
       "kind": "cards",
       "also": [
-        "coroot"
+        "coroot",
+        "obs"
       ]
     },
     {
@@ -356,7 +359,8 @@
       "test": "kit/python/tests/test_cache_rows.py",
       "limit": "ttl seconds a result is fresh; stale_max seconds an old copy may be shown with its age. A failed call is never cached or shown as zero.",
       "also": [
-        "coroot"
+        "coroot",
+        "obs"
       ]
     },
     {
@@ -679,7 +683,8 @@
       "limit": "Lookup order: environment (terminal only), keychain, then a 0600 .env file. A shell variable does not reach the script under Bolt.",
       "also": [
         "around",
-        "repo-radar"
+        "repo-radar",
+        "obs"
       ]
     },
     {

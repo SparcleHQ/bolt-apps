@@ -1,0 +1,92 @@
+{
+  "script": "scripts/obs__app.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/obs__bolt_app_kit.py",
+  "fixture": true,
+  "cases": [
+    {
+      "name": "overview: tiles",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "expect": {
+        "min_rows": 5
+      }
+    },
+    {
+      "name": "services: joined list",
+      "os": "macos",
+      "args": [
+        "services"
+      ],
+      "expect": {
+        "min_rows": 3
+      }
+    },
+    {
+      "name": "services: a word filters",
+      "os": "macos",
+      "args": [
+        "services",
+        "demo"
+      ],
+      "expect": {
+        "min_rows": 3
+      }
+    },
+    {
+      "name": "a bare word filters services",
+      "os": "macos",
+      "args": [
+        "coroot"
+      ],
+      "expect": {
+        "min_rows": 3
+      }
+    },
+    {
+      "name": "alerts: firing across sources",
+      "os": "macos",
+      "args": [
+        "alerts"
+      ],
+      "expect": {
+        "min_rows": 3
+      }
+    },
+    {
+      "name": "sources: table",
+      "os": "macos",
+      "args": [
+        "sources"
+      ],
+      "expect": {
+        "min_rows": 2
+      }
+    },
+    {
+      "name": "offline: every source down",
+      "os": "macos",
+      "args": [
+        "overview",
+        "demo-offline"
+      ],
+      "expect": {
+        "min_rows": 2
+      }
+    },
+    {
+      "name": "services bad: only unhealthy",
+      "os": "macos",
+      "args": [
+        "services",
+        "bad"
+      ],
+      "expect": {
+        "min_rows": 3
+      }
+    }
+  ]
+}

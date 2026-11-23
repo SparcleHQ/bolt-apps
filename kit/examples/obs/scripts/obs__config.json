@@ -1,0 +1,26 @@
+{
+  "app": {
+    "id": "obs",
+    "chip": "obs",
+    "title": "Observability",
+    "icon": "Activity",
+    "description": "One view over your monitoring tools: services, firing alerts and incidents from every source, joined by service name. Ships on public demos; add your own in ~/.config/obs/sources.json.",
+    "timeout": 25,
+    "service": "your monitoring sources"
+  },
+  "api": {
+    "env_file": "~/.config/obs/.env",
+    "sources_file": "~/.config/obs/sources.json",
+    "user_agent": "bolt-app-obs/1.0",
+    "call_timeout_s": 8,
+    "deadline_s": 14,
+    "max_bytes": 3000000,
+    "fixture_default": false
+  },
+  "cache": { "ttl": 45, "stale_max": 86400 },
+  "default_sources": [
+    { "name": "prom-demo", "type": "prometheus", "url": "https://demo.promlabs.com" },
+    { "name": "coroot-demo", "type": "coroot", "url": "https://demo.coroot.com" }
+  ],
+  "correlate": { "window_s": 1800, "strip_suffixes": ["deployment", "statefulset", "svc", "service"] }
+}

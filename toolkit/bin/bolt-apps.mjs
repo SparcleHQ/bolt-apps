@@ -243,7 +243,7 @@ function cmdNew(args) {
 	if (args.includes('--author') && (!suppliedAuthor?.trim() || suppliedAuthor.startsWith('--'))) die('--author requires a non-empty name');
 	const author = suppliedAuthor ?? loginName();
 	const authorNote = suppliedAuthor === null ? 'The default author is your login name when available. Review author.name in bolt-app.json and change it if needed before sharing the pack.' : '';
-	if (args.length >= 2 && !args[0].startsWith('--') && !args[1].startsWith('--') && hasTemplate(args[0])) return newFromTemplate(args[0], args[1], flag(args, '--dir', '.'), author, authorNote);
+	if (args.length >= 2 && !args[0].startsWith('--') && !args[1].startsWith('--') && hasTemplate(args[0])) return newFromTemplate(args[0], args[1], flag(args, '--dir', '.'), author, authorNote, { thin: args.includes('--thin') });
 	const id = args.find((a) => !a.startsWith('--') && args[args.indexOf(a) - 1] !== '--type' && args[args.indexOf(a) - 1] !== '--dir' && args[args.indexOf(a) - 1] !== '--author');
 	const type = flag(args, '--type', 'snippet'), root = flag(args, '--dir', 'apps');
 	if (!id || !ID.test(id)) die(`usage: ./bolt-apps new <id> [--type ${Object.keys(TEMPLATES).join('|')}] [--dir apps] [--author "Your name"]\n  id: lowercase letters, digits and hyphens`);
@@ -390,7 +390,7 @@ function cmdVerify(args) {
 // ---------- main ----------
 const HELP = `bolt-apps: author toolkit for Bolt Apps
 
-  new <template> <id> [--dir .] [--author "Your name"]   copy a template (new --list shows them): renamed, check passes, next steps printed
+  new <template> <id> [--dir .] [--author "Your name"] [--thin]   copy a template (new --list shows them): renamed, check passes, next steps printed; --thin keeps no engine copy in the app (the pack carries it)
   new <id> [--type snippet|search|transform|recognizer]   start a gallery app from a small template
   run <app-folder> [view [word]] [--sample|--live] [--json]  run the app as Bolt would and show the rows (the debug loop)
   regen <app-folder>                                      write utilities/<id>.yaml from an engine app's config (after editing config.json)

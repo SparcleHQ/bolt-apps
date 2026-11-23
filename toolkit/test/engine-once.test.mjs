@@ -84,9 +84,12 @@ test('the converted app uses the canonical thin entry byte for byte', () => {
 	assert.equal(fs.readFileSync(path.join(THIN, 'scripts/acme-dash__engine.py'), 'utf8'), fs.readFileSync(path.join(REPO, 'kit/python/bolt_app_engine_entry.py'), 'utf8'));
 });
 
-test('bolt-apps new gives a template app the thin entry, outside the clone too, and it checks, runs and packs', () => {
+test('bolt-apps new --thin gives a template app the thin entry, outside the clone too, and it checks, runs and packs; without --thin it keeps its own copy', () => {
+	const plain = tmp();
+	assert.equal(spawnSync(process.execPath, [CLI, 'new', 'table-template', 'plain-demo'], { cwd: plain, encoding: 'utf8' }).status, 0);
+	assert.ok(fs.readFileSync(path.join(plain, 'plain-demo/scripts/plain-demo__engine.py'), 'utf8').split('\n').length > 1000, 'new without --thin is unchanged');
 	const root = tmp();
-	const n = spawnSync(process.execPath, [CLI, 'new', 'table-template', 'thin-demo'], { cwd: root, encoding: 'utf8' });
+	const n = spawnSync(process.execPath, [CLI, 'new', 'table-template', 'thin-demo', '--thin'], { cwd: root, encoding: 'utf8' });
 	assert.equal(n.status, 0, n.stdout + n.stderr);
 	const dir = path.join(root, 'thin-demo');
 	assert.equal(fs.readFileSync(path.join(dir, 'scripts/thin-demo__engine.py'), 'utf8'), fs.readFileSync(path.join(REPO, 'kit/python/bolt_app_engine_entry.py'), 'utf8'));

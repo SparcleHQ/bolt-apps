@@ -316,7 +316,7 @@ test('scripts_dir_form: lint --personal and verify refuse a comment mention; the
 		const r = spawnSync('node', [CLI, cmd, d, '--personal', '--json'], { encoding: 'utf8' });
 		assert.equal(r.status, 1, cmd); assert.match(r.stdout, /scripts_dir_form/);
 	}
-	for (const app of ['acme-dash', 'portal-template']) assert.ok(!/scripts_dir/.test(fs.readFileSync(path.join(root, 'kit', 'examples', app, 'utilities', `${app}.yaml`), 'utf8').replace(/\{\{scripts_dir\}\}\/[a-z0-9-]+__(engine\.py|config\.json|fixtures\.json|bolt_app_kit\.py)/g, '')));
+	for (const app of ['acme-dash', 'portal-template']) assert.ok(!/scripts_dir/.test(fs.readFileSync(path.join(root, 'kit', 'examples', app, 'utilities', `${app}.yaml`), 'utf8').replace(/\{\{scripts_dir\}\}\/[a-z0-9-]+__(engine\.py|config\.json|fixtures\.json|bolt_app_kit\.py|bolt_app_engine\.py)/g, '')));
 });
 
 test('a check.json load error is a finding in both library modes and exits 2 in the CLI', async (t) => {

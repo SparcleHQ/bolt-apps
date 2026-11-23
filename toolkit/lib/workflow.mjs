@@ -112,7 +112,7 @@ export function newList() {
 	for (const a of apps) console.log(`  ${a.id.padEnd(24)} ${a.need || a.layout}\n  ${''.padEnd(24)} edit: ${(a.edit || []).join(', ')}`);
 	console.log(`\nStart with the one whose "need" matches. Not sure: ${DOCS}`);
 }
-export function newFromTemplate(template, id, root, author, authorNote = '') {
+export function newFromTemplate(template, id, root, author, authorNote = '', opts = {}) {
 	staleCloneNote();
 	const src = path.join(EXAMPLES, template);
 	if (!fs.existsSync(path.join(src, 'bolt-app.json'))) die(`no template "${template}". Run: ./bolt-apps new --list`, 2);
@@ -160,7 +160,7 @@ export function newFromTemplate(template, id, root, author, authorNote = '') {
 		+ `> If you build on someone else's app, keep their author credit and record the original app ID in \`derived_from\` in \`bolt-app.json\`.\n\n${s}`);
 	const cfgName = `scripts/${id}__config.json`;
 	edit(cfgName, (t) => { const j = JSON.parse(t); if (j.app) { j.app.id = id; j.app.chip = chip; j.app.title = title; j.app.description = `TODO describe your app: one line on what =${chip} shows.`; } return JSON.stringify(j, null, 2) + '\n'; });
-	thinIfShared(dir, id);   // the template's private engine copy becomes the short entry: the engine is kept once in the toolkit and the pack carries it
+	if (opts.thin) thinIfShared(dir, id);   // --thin: the template's private engine copy becomes the short entry; the engine is kept once in the toolkit and the pack carries it
 	// regenerate the app file from the config when the template has an emitter, else rewrite id, chip and title in place
 	const sd = path.join(dir, 'scripts');
 	const emitter = fs.existsSync(sd) ? fs.readdirSync(sd).filter((f) => f.endsWith('.py') && !f.endsWith('__bolt_app_kit.py')).find((f) => fs.readFileSync(path.join(sd, f), 'utf8').includes('--emit-yaml')) : null;

@@ -1,7 +1,7 @@
 # obs
 
 ## What this shows
-`=obs` is one view over the monitoring tools a team runs. Each source is read by a small adapter into the same model (services with a status, alerts with a severity and a start time). Services are joined across sources by name, so one row says what every tool thinks of `checkout`. It ships on two public demos (Prometheus and Coroot), so it shows real data on the first run.
+`=obs` is one view over the monitoring tools a team runs. Each source is read by a small adapter into the same model (services with a status, alerts with a severity and a start time). Services are joined across sources by name, so one row says what every tool thinks of `checkout`. It ships on eight real public demos and status pages, so it shows live data on the first run: Prometheus (demo.promlabs.com), the VictoriaMetrics playground, Grafana's play site, a Netdata demo, Coroot's demo, and the GitHub, Cloudflare and OpenAI status pages.
 
 1. `=obs`: five tiles. Sources answering, healthy services, firing alerts, cross-tool signals, and Check again. Each drills (Enter).
 2. `=obs services [word]`: every service from every source, worst first. A word filters by name. `bad`, `crit`, `warn` and `ok` filter by status; `cross` keeps services where tools agree, started together, or disagree. Enter drills into one service.
@@ -28,7 +28,8 @@ List them in `~/.config/obs/sources.json`. The file names keys, it never holds t
 - **`aliases`** join two spellings of one service when the names differ.
 - **`links`** (optional, per source) put Open, Logs and Traces buttons on a service, for example `"links": {"logs": "https://logs.example.com/search?q=service:{service}", "open": "https://grafana.example.com/d/abc?var-service={service}"}`. Each address must be https (or http to this computer) and may contain only `{service}`, which is replaced by that source's own name for the service, percent-encoded. A link goes to the vendor's tool; Bolt does not show logs or traces itself.
 - **`trend_query`** (optional, Prometheus sources) is a PromQL query with `{service}` for the trend chart. The service name is allowed into it only when it is a plain name (letters, digits, `_ . : -`).
-- **Sources supported now:** `prometheus`, `coroot`, `aws-cloudwatch`. Others are added as adapters in `scripts/obs__app.py` (`ADAPTERS`).
+- **Sources supported now:** `prometheus` (also VictoriaMetrics, Mimir and Thanos: add `"path": "/select/0/prometheus"` or the server's prefix), `grafana` (Grafana-managed alert rules; a service-account token as `bearer` on a private Grafana), `netdata` (active alarms), `statuspage` (any Atlassian Statuspage, no key: GitHub, Cloudflare, Datadog's and many vendors' status pages), `coroot`, `aws-cloudwatch`. Others are added as adapters in `scripts/obs__app.py` (`ADAPTERS`).
+- **Alerts view:** firing and pending alerts first, then incidents resolved in the last 24 hours, so a source that is quiet right now (Coroot's demo) still shows what just happened.
 
 ## Edit these files
 - `scripts/obs__config.json`: the demo sources, timeouts, cache times, the join window (30 minutes) and which name suffixes are ignored.
@@ -46,10 +47,11 @@ After editing `obs__config.json` or the pane layout, regenerate the app file: `p
 
 ## What was not verified
 - Installed and run in a real Bolt on macOS by a maintainer on 2026-11-22 (the Bolt build number was not recorded, so index.json says "not verified in real Bolt", the only wording its test allows). Windows is unproven.
-- The join was tested on synthetic data. The two demos are unrelated systems with no shared service names, so the live demo shows 0 cross-tool signals.
+- The join was tested on synthetic data. The eight demos are unrelated systems with no shared service names, so the live demo shows 0 cross-tool signals.
+- The Grafana, Netdata, VictoriaMetrics and status-page adapters were written against live answers from those public demos and run on them. None was run against a private instance, and their keyed (bearer) paths were not run against a real server. Datadog's own status page refused an anonymous request (HTTP 403) when probed, so it is not a default source.
 - The `aws-cloudwatch` adapter was tested only against a stub `aws` that prints the documented JSON shape. It has not run against real AWS.
 - Bearer, basic and header auth were tested as the headers built from a key. No keyed Prometheus or Coroot was read.
 - The service drill, Trend row, line chart and the extra footer buttons (five in all) were checked against the app engine's own rules (`check`, `lint`) and run on the public Prometheus demo, but not in a real Bolt. A button whose link is not configured is expected to do nothing; that was not seen. The `nav` row in the services list carries no buttons (an engine rule), so the buttons live in the drill.
 - Prometheus is read through `/api/v1/query?query=up` and `/api/v1/alerts`; Coroot through its UI API (not a versioned public API), as in the `coroot` example.
 
-Data: Prometheus (Apache-2.0, https://github.com/prometheus/prometheus) via PromLabs' public demo; Coroot (Apache-2.0, https://github.com/coroot/coroot) via its public demo. See the provider's terms.
+Data: Prometheus (Apache-2.0) via PromLabs' public demo; VictoriaMetrics (Apache-2.0) via its public playground; Grafana (AGPL-3.0, read through its HTTP API) via play.grafana.org; Netdata (GPL-3.0, read through its HTTP API) via a public demo; Coroot (Apache-2.0) via its public demo; GitHub, Cloudflare and OpenAI status pages (Atlassian Statuspage and a compatible format). See each provider's terms.

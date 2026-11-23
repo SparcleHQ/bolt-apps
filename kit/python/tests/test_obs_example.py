@@ -149,6 +149,70 @@ assert m.trend_points(cfg, {'type': 'prometheus'}, {}, 'checkout', 5, fx={'range
 # 16. the nav arg for the drill is a plain token even for odd service names
 assert all(m.TOKEN.match(x['key']) for x in m.join([R('a', [S('Checkout_API', 'ok'), S('a/b c', 'ok')], [])], cfg, {})), 'nav token'
 print('LINKS AND TREND OK')
+
+# 17. the new adapters, on small synthetic answers shaped like the real ones
+SPD = {'page': {'name': 'Acme'}, 'status': {'indicator': 'minor', 'description': 'Partially Degraded Service'},
+       'components': [{'name': 'API', 'status': 'operational', 'group': False, 'group_id': None}, {'name': 'Core', 'status': 'operational', 'group': True, 'group_id': None},
+                      {'name': 'Core: EU', 'status': 'major_outage', 'group': False, 'group_id': 'g1'}, {'name': 'Core: US', 'status': 'operational', 'group': False, 'group_id': 'g1'},
+                      {'name': 'Search', 'status': 'degraded_performance', 'group': False, 'group_id': None}],
+       'incidents': [{'name': 'EU outage', 'impact': 'critical', 'status': 'investigating', 'created_at': '2026-11-23T01:00:00.000Z', 'incident_updates': [{'body': 'We are looking into it.'}], 'components': [{'name': 'Core: EU'}]},
+                     {'name': 'Slow search', 'impact': 'minor', 'status': 'identified', 'created_at': '2026-11-23T02:00:00.000Z', 'incident_updates': [], 'components': []}]}
+r = m.statuspage_read(cfg, {'name': 'acme', 'url': 'https://x.example.com'}, {}, 5, fx={'summary': SPD})
+names = {x['name']: x['status'] for x in r['services']}
+assert names == {'Acme': 'warn', 'API': 'ok', 'Core': 'ok', 'Core: EU': 'crit', 'Search': 'warn'}, names   # a healthy child (Core: US) is left out
+assert [(a['name'], a['service'], a['severity']) for a in r['alerts']] == [('EU outage', 'Core: EU', 'crit'), ('Slow search', 'Acme', 'warn')], r['alerts']
+assert r['alerts'][0]['since'] and r['alerts'][0]['summary'] == 'We are looking into it.'
+# an incident.io style page with no incidents key still reads
+r = m.statuspage_read(cfg, {'name': 'x', 'url': 'https://x.example.com'}, {}, 5, fx={'summary': {'page': {'name': 'Y'}, 'status': {'indicator': 'none', 'description': 'ok'}, 'components': [{'name': 'Chat', 'status': 'operational'}]}})
+assert r['alerts'] == [] and [x['name'] for x in r['services']] == ['Y', 'Chat']
+try: m.statuspage_read(cfg, {'name': 'x', 'url': 'https://x.example.com'}, {}, 5, fx={'summary': {'nope': 1}}); assert False
+except m.Fail as e: assert e.kind == 'fail'
+ND = {'hostname': 'h1.example.com', 'alarms': {'a.b': {'name': 'disk_full', 'chart': 'disk.sda', 'status': 'CRITICAL', 'value': 97.5, 'units': '%', 'last_status_change': 1795400000, 'info': 'disk almost full'},
+                                           'c.d': {'name': 'cpu', 'chart': 'system.cpu', 'status': 'WARNING', 'value': 81, 'units': '%'}, 'e.f': {'name': 'ok_one', 'chart': 'x', 'status': 'CLEAR'}}}
+r = m.netdata_read(cfg, {'name': 'nd', 'url': 'https://x.example.com'}, {}, 5, fx={'alarms': ND})
+assert r['services'] == [{'name': 'h1.example.com', 'status': 'crit', 'detail': '2 active alarms'}], r['services']
+assert sorted((a['name'], a['severity']) for a in r['alerts']) == [('cpu (system.cpu)', 'warn'), ('disk_full (disk.sda)', 'crit')]
+assert [a for a in r['alerts'] if a['severity'] == 'warn'][0]['summary'].startswith('cpu on system.cpu: 81')
+GR = {'data': {'groups': [{'name': 'g', 'file': 'Payments', 'rules': [{'name': 'High errors', 'state': 'firing', 'labels': {'severity': 'critical', 'service_name': 'checkout'}, 'annotations': {'summary': 'errors up'}, 'alerts': [{'activeAt': '2026-11-23T00:00:00Z'}]},
+                                                                      {'name': 'Slow', 'state': 'pending', 'labels': {}, 'annotations': {}, 'alerts': []}, {'name': 'Fine', 'state': 'inactive', 'labels': {}}]},
+                                         {'name': 'g2', 'file': 'Search', 'rules': [{'name': 'Fine', 'state': 'inactive', 'labels': {}}]}]}}
+r = m.grafana_read(cfg, {'name': 'gf', 'url': 'https://x.example.com'}, {}, 5, fx={'rules': GR})
+assert {x['name']: x['status'] for x in r['services']} == {'Payments': 'crit', 'Search': 'ok'}, r['services']
+assert [(a['name'], a['service'], a['state']) for a in r['alerts']] == [('High errors', 'checkout', 'firing'), ('Slow', 'Payments', 'pending')], r['alerts']
+# pending alerts do not make a service red by themselves in the join, and resolved ones are not firing
+g = m.join([R('gf', [S('Payments', 'ok')], [dict(A('Slow', 'Payments', 'warn', now), state='pending')])], cfg, {})
+assert g[0]['status'] == 'ok' and not g[0]['firing']
+# 18. a Prometheus-compatible server on a path prefix; a server with no alerts endpoint still gives its services
+write('sources.json', json.dumps({'sources': [{'name': 'vm', 'type': 'prometheus', 'url': 'https://vm.example.com', 'path': '/select/0/prometheus'}]}), 0o600)
+sr, _ = m.read_sources(cfg2); assert sr[0]['prefix'] == '/select/0/prometheus'
+for bad in ('/a/../b', 'noslash', '/trail/', '/x y', '/' + 'a' * 120):
+    write('sources.json', json.dumps({'sources': [{'name': 'vm', 'type': 'prometheus', 'url': 'https://vm.example.com', 'path': bad}]}), 0o600)
+    try: m.read_sources(cfg2); assert False, bad
+    except m.Fail as e: assert 'path must look like' in e.msg
+UPQ = {'status': 'success', 'data': {'result': [{'metric': {'job': 'api'}, 'value': [1, '1']}, {'metric': {'job': 'api'}, 'value': [1, '0']}]}}
+calls = []
+def fake(cfg_, src_, hdr_, path, budget):
+    calls.append(path)
+    if path.endswith('/api/v1/alerts'): raise m.Fail('notfound', 'answered 404')
+    return UPQ
+orig = m.http_json; m.http_json = fake
+try:
+    r = m.prom_read(cfg, {'name': 'vm', 'prefix': '/select/0/prometheus', 'url': 'https://vm.example.com'}, {}, 5)
+finally: m.http_json = orig
+assert calls[0].startswith('/select/0/prometheus/api/v1/query') and calls[1] == '/select/0/prometheus/api/v1/alerts', calls
+assert r['services'] == [{'name': 'api', 'status': 'warn', 'detail': '1 of 2 targets up'}] and r['alerts'] == []
+def fake_auth(cfg_, src_, hdr_, path, budget): raise m.Fail('auth', 'answered 401')
+m.http_json = fake_auth
+try: m.prom_read(cfg, {'name': 'vm', 'prefix': '', 'url': 'https://vm.example.com'}, {}, 5); assert False
+except m.Fail as e: assert e.kind == 'auth'
+finally: m.http_json = orig
+# 19. sample mode never writes the real cache
+home2 = tempfile.mkdtemp(); os.environ['HOME'] = home2
+fxs = m.load_json('fixtures.json'); hub = m.Hub(cfg, True, fxs, [])
+srcs_ = [dict(x, auth={'kind': 'none'}, project='', demo=True, links={}, trend_query=None, prefix=x.get('path', '')) for x in cfg['default_sources']]
+for s_ in srcs_: assert hub.read(s_, False)['ok'], s_['name']
+assert not os.path.exists(os.path.join(home2, 'Library', 'Caches')) or not any(f for _, _, fs in os.walk(os.path.join(home2, 'Library', 'Caches')) for f in fs if 'obs' in f), 'sample wrote a cache'
+print('NEW ADAPTERS OK')
 print('ALL OK')
 '''
 

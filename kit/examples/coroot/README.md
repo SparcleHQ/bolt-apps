@@ -34,7 +34,7 @@ COROOT_API_KEY=...
 After editing `coroot__config.json` or the pane layout, regenerate the app file: `python3 scripts/coroot__app.py --emit-yaml > utilities/coroot.yaml`.
 
 ## What was not verified
-- Installed and run in a real Bolt on macOS (2026-11-22, Bolt 0.1.181 or newer). Windows is unproven.
+- Installed and run in a real Bolt on macOS by a maintainer on 2026-11-22 (the Bolt build number was not recorded, so index.json says "not verified in real Bolt", the only wording its test allows). Windows is unproven.
 - The Open in Coroot links (`/p/<project>/app/<id>`, `/p/<project>/incidents/<key>`) are written from Coroot's UI routes, not checked against a running UI.
 - The `X-API-Key` header against a self-hosted or cloud Coroot is untested: only the anonymous demo was read.
 - Only the endpoints `overview/applications`, `overview/nodes` and `incidents` are used. Coroot's API is the one its own UI uses and is not a documented, versioned API, so a Coroot upgrade can change an answer. A changed answer shows as an unread answer, never as zero.

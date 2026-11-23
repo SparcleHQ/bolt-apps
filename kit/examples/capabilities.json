@@ -44,7 +44,8 @@
       "kind": "entity_preview",
       "also": [
         "acme-dash",
-        "pulse-feed"
+        "pulse-feed",
+        "coroot"
       ]
     },
     {
@@ -73,7 +74,8 @@
       "limit": "Up to 40 columns; totals sum, avg, min, max, count; the engine hands it at most {rules:rows.engine_max} rows.",
       "kind": "table",
       "also": [
-        "table-template"
+        "table-template",
+        "coroot"
       ]
     },
     {
@@ -85,7 +87,10 @@
       "snippet": "{\"kind\": \"cards\", \"mode\": \"list_data\", \"bind\": {\"layout\": \"tiles\"}}",
       "test": "kit/examples/acme-dash/check.json",
       "limit": "Layout tiles (a tile per row, at most {rules:widgets.tile_cap} rows, and a row with no number draws an empty \"-\" tile) or the default grid (up to {rules:widgets.row_cap} cards, no number needed); tile label cut at {rules:tile.label_cut} characters. The 24 cap applies only to bind.layout tiles.",
-      "kind": "cards"
+      "kind": "cards",
+      "also": [
+        "coroot"
+      ]
     },
     {
       "id": "widget.detail",
@@ -349,7 +354,10 @@
       "example": "kit/examples/portal-template",
       "snippet": "\"cache\": {\"ttl\": 45, \"stale_max\": 86400}",
       "test": "kit/python/tests/test_cache_rows.py",
-      "limit": "ttl seconds a result is fresh; stale_max seconds an old copy may be shown with its age. A failed call is never cached or shown as zero."
+      "limit": "ttl seconds a result is fresh; stale_max seconds an old copy may be shown with its age. A failed call is never cached or shown as zero.",
+      "also": [
+        "coroot"
+      ]
     },
     {
       "id": "pane.per_row",

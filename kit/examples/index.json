@@ -930,7 +930,7 @@
         "scripts/coroot__app.py"
       ],
       "check": "./bolt-apps check kit/examples/coroot",
-      "verified": "installed and run in real Bolt on macOS; self-hosted key auth not verified",
+      "verified": "not verified in real Bolt",
       "edit_in_script": [
         "scripts/coroot__app.py: the n_* readers, app_row(), incident_row(), overview_rows()"
       ]

@@ -934,6 +934,45 @@
       "edit_in_script": [
         "scripts/coroot__app.py: the n_* readers, app_row(), incident_row(), overview_rows()"
       ]
+    },
+    {
+      "id": "obs",
+      "need": "join several monitoring tools into one view of what is unhealthy and firing, by service name",
+      "layout": "tiles that drill to a joined service list, a firing-alert list and a source table; cross-tool flags (agree, together, disagree)",
+      "mode": "custom script on the flat kit",
+      "script": "scripts/obs__app.py",
+      "backing": "remote HTTP APIs (Prometheus, Coroot) and a CLI (aws), each behind a small adapter",
+      "widgets": [
+        "cards",
+        "entity_preview",
+        "table"
+      ],
+      "techniques": [
+        "adapters into one model",
+        "join by normalised service name with aliases",
+        "sources listed in a file that names keys, never holds them",
+        "bearer, basic and header auth from the keychain or a private .env",
+        "a CLI source that uses the person's own sign-in",
+        "parallel reads, one source failing never blanks the rest",
+        "stale copy per source",
+        "status filter words",
+        "composer action that pre-fills an AI triage prompt"
+      ],
+      "sources": [
+        "Prometheus HTTP API (demo.promlabs.com by default)",
+        "Coroot HTTP API (demo.coroot.com by default)",
+        "aws CLI (cloudwatch describe-alarms)"
+      ],
+      "edit": [
+        "scripts/obs__config.json",
+        "scripts/obs__fixtures.json",
+        "scripts/obs__app.py"
+      ],
+      "check": "./bolt-apps check kit/examples/obs",
+      "verified": "not verified in real Bolt",
+      "edit_in_script": [
+        "scripts/obs__app.py: the *_read adapters, ADAPTERS, join(), service_row(), alert_row()"
+      ]
     }
   ],
   "side_by_side": "four kit apps (acme-dash, pulse-feed, expense-tracker, unit-convert) installed side by side with no owned_by_other: maintainer drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; tested on the files before the chip change (chip now equals id), so not re-run on these files; not run on the shipped 181 binary"

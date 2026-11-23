@@ -1,0 +1,3308 @@
+{
+ "prom-demo": {
+  "up": {
+   "status": "success",
+   "data": {
+    "resultType": "vector",
+    "result": [
+     {
+      "metric": {
+       "__name__": "up",
+       "instance": "demo-service-2:10002",
+       "job": "demo"
+      },
+      "value": [
+       1795402246.441,
+       "1"
+      ]
+     },
+     {
+      "metric": {
+       "__name__": "up",
+       "instance": "node-exporter:9100",
+       "job": "node"
+      },
+      "value": [
+       1795402246.441,
+       "1"
+      ]
+     },
+     {
+      "metric": {
+       "__name__": "up",
+       "instance": "demo-service-1:10001",
+       "job": "demo"
+      },
+      "value": [
+       1795402246.441,
+       "1"
+      ]
+     },
+     {
+      "metric": {
+       "__name__": "up",
+       "instance": "prometheus:9090",
+       "job": "prometheus"
+      },
+      "value": [
+       1795402246.441,
+       "1"
+      ]
+     },
+     {
+      "metric": {
+       "__name__": "up",
+       "instance": "demo-service-0:10000",
+       "job": "demo"
+      },
+      "value": [
+       1795402246.441,
+       "1"
+      ]
+     },
+     {
+      "metric": {
+       "__name__": "up",
+       "instance": "cadvisor:8080",
+       "job": "cadvisor"
+      },
+      "value": [
+       1795402246.441,
+       "1"
+      ]
+     }
+    ]
+   }
+  },
+  "alerts": {
+   "status": "success",
+   "data": {
+    "alerts": [
+     {
+      "labels": {
+       "alertname": "DemoServiceHighErrorRate",
+       "job": "demo",
+       "method": "GET",
+       "path": "/api/foo",
+       "severity": "critical"
+      },
+      "annotations": {
+       "description": "The 5xx error rate for path /api/foo with method GET in demo is 1.87%.",
+       "title": "High 5xx rate for GET on /api/foo"
+      },
+      "state": "firing",
+      "activeAt": "2026-11-23T02:49:31.810405054Z",
+      "value": "1.8658374055975127e+00"
+     },
+     {
+      "labels": {
+       "alertname": "DemoServiceHighErrorRate",
+       "job": "demo",
+       "method": "POST",
+       "path": "/api/foo",
+       "severity": "critical"
+      },
+      "annotations": {
+       "description": "The 5xx error rate for path /api/foo with method POST in demo is 3.27%.",
+       "title": "High 5xx rate for POST on /api/foo"
+      },
+      "state": "firing",
+      "activeAt": "2026-11-23T01:33:16.810405054Z",
+      "value": "3.268945022288262e+00"
+     },
+     {
+      "labels": {
+       "alertname": "DemoServiceHighErrorRate",
+       "job": "demo",
+       "method": "POST",
+       "path": "/api/bar",
+       "severity": "critical"
+      },
+      "annotations": {
+       "description": "The 5xx error rate for path /api/bar with method POST in demo is 4.23%.",
+       "title": "High 5xx rate for POST on /api/bar"
+      },
+      "state": "firing",
+      "activeAt": "2026-11-23T02:46:16.810405054Z",
+      "value": "4.225352112676055e+00"
+     },
+     {
+      "labels": {
+       "alertname": "DemoServiceHighLatency",
+       "job": "demo",
+       "method": "POST",
+       "path": "/api/bar",
+       "severity": "critical"
+      },
+      "annotations": {
+       "description": "The 99th percentile latency for path /api/bar with method POST in demo is 0.21s.",
+       "title": "High latency for POST on /api/bar"
+      },
+      "state": "pending",
+      "activeAt": "2026-11-23T02:50:16.810405054Z",
+      "value": "2.099950007723028e-01"
+     }
+    ]
+   }
+  }
+ },
+ "coroot-demo": {
+  "applications": [
+   {
+    "id": "tbuzvelk:coroot:Deployment:coroot-cluster-agent",
+    "category": "monitoring",
+    "status": "warning",
+    "type": {
+     "name": "coroot"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "34ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "12/12"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "warning",
+     "value": "failed conns"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:default:DatabaseCluster:user-db-mysql",
+    "category": "application",
+    "status": "warning",
+    "type": {
+     "name": "mysql"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "19ms"
+    },
+    "upstreams": {
+     "status": "unknown",
+     "value": ""
+    },
+    "instances": {
+     "status": "ok",
+     "value": "2/2"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.4ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:coroot:DatabaseCluster:coroot-clickhouse",
+    "category": "monitoring",
+    "status": "info",
+    "type": {
+     "name": "clickhouse"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "10s"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "4/4"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "<0.1ms"
+    },
+    "logs": {
+     "status": "info",
+     "value": "1 unique error"
+    }
+   },
+   {
+    "id": "tbuzvelk:coroot:StatefulSet:coroot-coroot",
+    "category": "monitoring",
+    "status": "info",
+    "type": {
+     "name": "coroot"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "416ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "2/2"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "<0.1ms"
+    },
+    "logs": {
+     "status": "info",
+     "value": "1 unique error"
+    }
+   },
+   {
+    "id": "tbuzvelk:default:DatabaseCluster:order-db-mongodb",
+    "category": "application",
+    "status": "info",
+    "type": {
+     "name": "mongodb"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "24ms"
+    },
+    "upstreams": {
+     "status": "unknown",
+     "value": ""
+    },
+    "instances": {
+     "status": "ok",
+     "value": "3/3"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.2ms"
+    },
+    "logs": {
+     "status": "info",
+     "value": "1 unique error"
+    }
+   },
+   {
+    "id": "tbuzvelk:honeypot:DatabaseCluster:honeypot-mysql",
+    "category": "application",
+    "status": "unknown",
+    "type": {
+     "name": "mysql"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": ""
+    },
+    "upstreams": {
+     "status": "unknown",
+     "value": ""
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "unknown",
+     "value": ""
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:default:CronJob:analytics-updater",
+    "category": "application",
+    "status": "ok",
+    "type": {
+     "name": ""
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": ""
+    },
+    "upstreams": {
+     "status": "unknown",
+     "value": ""
+    },
+    "instances": {
+     "status": "ok",
+     "value": ""
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "unknown",
+     "value": ""
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:default:StatefulSet:cache",
+    "category": "application",
+    "status": "ok",
+    "type": {
+     "name": "memcached"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "5ms"
+    },
+    "upstreams": {
+     "status": "unknown",
+     "value": ""
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "unknown",
+     "value": ""
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:default:Deployment:cart",
+    "category": "application",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "5ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "2/2"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.4ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:default:StatefulSet:cart-db",
+    "category": "application",
+    "status": "ok",
+    "type": {
+     "name": "redis"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "5ms"
+    },
+    "upstreams": {
+     "status": "unknown",
+     "value": ""
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "unknown",
+     "value": ""
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:default:Deployment:catalog",
+    "category": "application",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "81ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "3/3"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.5ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:default:Job:catalog-db-init",
+    "category": "application",
+    "status": "ok",
+    "type": {
+     "name": ""
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": ""
+    },
+    "upstreams": {
+     "status": "unknown",
+     "value": ""
+    },
+    "instances": {
+     "status": "ok",
+     "value": ""
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "unknown",
+     "value": ""
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:chaos-mesh:Deployment:chaos-controller-manager",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": ""
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "3/3"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "2ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:chaos-mesh:DaemonSet:chaos-daemon",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": ""
+    },
+    "upstreams": {
+     "status": "unknown",
+     "value": ""
+    },
+    "instances": {
+     "status": "ok",
+     "value": "6/5"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "unknown",
+     "value": ""
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:chaos-mesh:Deployment:chaos-dashboard",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": ""
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "<0.1ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:chaos-mesh:Deployment:chaos-dns-server",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "5ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.4ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:kube-system:Deployment:coredns",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "5ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "3/3"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.4ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:coroot:StatefulSet:coroot-clickhouse-keeper",
+    "category": "monitoring",
+    "status": "ok",
+    "type": {
+     "name": ""
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "45ms"
+    },
+    "upstreams": {
+     "status": "unknown",
+     "value": ""
+    },
+    "instances": {
+     "status": "ok",
+     "value": "3/3"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "<0.1ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:coroot:DaemonSet:coroot-node-agent",
+    "category": "monitoring",
+    "status": "ok",
+    "type": {
+     "name": "coroot"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": ""
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "6/6"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.5ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:coroot:Deployment:coroot-operator",
+    "category": "monitoring",
+    "status": "ok",
+    "type": {
+     "name": "coroot"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": ""
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": ""
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:coroot:Deployment:coroot-prometheus",
+    "category": "monitoring",
+    "status": "ok",
+    "type": {
+     "name": "prometheus"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "68ms"
+    },
+    "upstreams": {
+     "status": "unknown",
+     "value": ""
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "unknown",
+     "value": ""
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:default:DatabaseCluster:db-main",
+    "category": "application",
+    "status": "ok",
+    "type": {
+     "name": "postgres"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": "<1%"
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "45ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "3/3"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.4ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:default:Deployment:delivery",
+    "category": "application",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "10s"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "2/2"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.6ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:flux-system:Deployment:flux-operator",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "5ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "1ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:default:Deployment:front-end",
+    "category": "application",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "250ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "7/7"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "3/3"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.4ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:gpu-operator:Deployment:gpu-operator",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "5ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.5ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:gpu-operator:Deployment:gpu-operator-node-feature-discovery-gc",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": ""
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.4ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:gpu-operator:Deployment:gpu-operator-node-feature-discovery-master",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "5ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "<0.1ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:gpu-operator:DaemonSet:gpu-operator-node-feature-discovery-worker",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "5ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "6/5"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.7ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:kube-system:Deployment:hcloud-csi-controller",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "6ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.4ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:kube-system:DaemonSet:hcloud-csi-node",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "21ms"
+    },
+    "upstreams": {
+     "status": "unknown",
+     "value": ""
+    },
+    "instances": {
+     "status": "ok",
+     "value": "6/6"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "unknown",
+     "value": ""
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:flux-system:Deployment:helm-controller",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "5ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "2/2"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.4ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:_:Unknown:k3s",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "k3s"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "98ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "12/12"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "1ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:_:Unknown:k3s-agent",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "k3s"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "5ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "21/21"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "5/5"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "3ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:default:StatefulSet:kafka",
+    "category": "application",
+    "status": "ok",
+    "type": {
+     "name": "kafka"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "6ms"
+    },
+    "upstreams": {
+     "status": "unknown",
+     "value": ""
+    },
+    "instances": {
+     "status": "ok",
+     "value": "3/3"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.3ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:flux-system:Deployment:kustomize-controller",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "5ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "3/3"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.5ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:kyverno:Deployment:kyverno-admission-controller",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": ""
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.4ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:kyverno:Deployment:kyverno-background-controller",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": ""
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.5ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:kyverno:Deployment:kyverno-cleanup-controller",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": ""
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.3ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:kyverno:Deployment:kyverno-reports-controller",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": ""
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.6ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:default:Deployment:load-test",
+    "category": "application",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": ""
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.3ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:kube-system:Deployment:local-path-provisioner",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": ""
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "<0.1ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:kube-system:Deployment:metrics-server",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": ""
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "2/2"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "2ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:flux-system:Deployment:notification-controller",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "5ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "<0.1ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:default:Deployment:order",
+    "category": "application",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "97ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "4/4"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "2/2"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.5ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:default:Deployment:podinfo",
+    "category": "application",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "5ms"
+    },
+    "upstreams": {
+     "status": "unknown",
+     "value": ""
+    },
+    "instances": {
+     "status": "ok",
+     "value": "2/2"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "unknown",
+     "value": ""
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:default:Deployment:podinfo-team1",
+    "category": "application",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "5ms"
+    },
+    "upstreams": {
+     "status": "unknown",
+     "value": ""
+    },
+    "instances": {
+     "status": "ok",
+     "value": "2/2"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "unknown",
+     "value": ""
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:default:Deployment:podinfo-team2",
+    "category": "application",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "5ms"
+    },
+    "upstreams": {
+     "status": "unknown",
+     "value": ""
+    },
+    "instances": {
+     "status": "ok",
+     "value": "3/3"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "unknown",
+     "value": ""
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:flux-system:Deployment:podinfo3",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "5ms"
+    },
+    "upstreams": {
+     "status": "unknown",
+     "value": ""
+    },
+    "instances": {
+     "status": "ok",
+     "value": "2/2"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "unknown",
+     "value": ""
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:zalando:Deployment:postgres-operator",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "5ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "2/2"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "<0.1ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:rabbitmq-system:Deployment:rabbitmq-cluster-operator",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": ""
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.3ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:default:StatefulSet:rabbitmq-server",
+    "category": "application",
+    "status": "ok",
+    "type": {
+     "name": "rabbitmq"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": ""
+    },
+    "upstreams": {
+     "status": "unknown",
+     "value": ""
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "<0.1ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:default:Deployment:recommendations",
+    "category": "application",
+    "status": "ok",
+    "type": {
+     "name": "java"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "249ms"
+    },
+    "upstreams": {
+     "status": "unknown",
+     "value": ""
+    },
+    "instances": {
+     "status": "ok",
+     "value": "2/2"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.4ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:flux-system:Deployment:source-controller",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "5ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.5ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:kube-system:DaemonSet:svclb-traefik-8775b7c1",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": ""
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": ""
+    },
+    "upstreams": {
+     "status": "unknown",
+     "value": ""
+    },
+    "instances": {
+     "status": "ok",
+     "value": "6/5"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "unknown",
+     "value": ""
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:kube-system:Deployment:traefik",
+    "category": "control-plane",
+    "status": "ok",
+    "type": {
+     "name": "traefik"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "5ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "<0.1ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:ambassador:Deployment:traffic-manager",
+    "category": "application",
+    "status": "ok",
+    "type": {
+     "name": "golang"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": ""
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "<0.1ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   },
+   {
+    "id": "tbuzvelk:default:Deployment:user",
+    "category": "application",
+    "status": "ok",
+    "type": {
+     "name": "python"
+    },
+    "errors": {
+     "status": "unknown",
+     "value": ""
+    },
+    "latency": {
+     "status": "unknown",
+     "value": "49ms"
+    },
+    "upstreams": {
+     "status": "ok",
+     "value": "1/1"
+    },
+    "instances": {
+     "status": "ok",
+     "value": "3/3"
+    },
+    "restarts": {
+     "status": "ok",
+     "value": ""
+    },
+    "cpu": {
+     "status": "unknown",
+     "value": ""
+    },
+    "memory": {
+     "status": "unknown",
+     "value": ""
+    },
+    "network": {
+     "status": "ok",
+     "value": "0.6ms"
+    },
+    "logs": {
+     "status": "unknown",
+     "value": ""
+    }
+   }
+  ],
+  "incidents": [
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "2vakgshk",
+    "opened_at": 1795371277000,
+    "resolved_at": 1795371757000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 21.112242
+     },
+     "latency_impact": {
+      "percentage": 23.873487
+     }
+    },
+    "rca": {
+     "short_summary": "front-end errors/latency caused by downstream catalog failing to connect to db-main; node3 CPU saturated by analytics-updater stress-ng job.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "nn2aix73",
+    "opened_at": 1795343796000,
+    "resolved_at": 1795344396000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 1.2433859
+     },
+     "latency_impact": {
+      "percentage": 14.494356
+     }
+    },
+    "rca": {
+     "short_summary": "`front-end` errors and high latency caused by injected network delay between `catalog` and `db-main` (Postgres).",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "hqwqofpt",
+    "opened_at": 1795284815000,
+    "resolved_at": 1795285955000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 8.526067
+     },
+     "latency_impact": {
+      "percentage": 9.676417
+     }
+    },
+    "rca": {
+     "short_summary": "`front-end` errors and latency caused by new `catalog:0.50` deployment overloading `db-main` with a heavy query.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "56exc18n",
+    "opened_at": 1795257395000,
+    "resolved_at": 1795257995000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 1.2983254
+     },
+     "latency_impact": {
+      "percentage": 14.341397
+     }
+    },
+    "rca": {
+     "short_summary": "`front-end` errors/latency caused by injected network delay between `catalog` and `db-main` (chaos experiment).",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "rgl43o76",
+    "opened_at": 1795198474000,
+    "resolved_at": 1795199554000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 9.570113
+     },
+     "latency_impact": {
+      "percentage": 10.726866
+     }
+    },
+    "rca": {
+     "short_summary": "front-end errors/latency caused by catalog failing to reach db-main, driven by node3 CPU saturation from a stress-ng workload.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "k724qbmz",
+    "opened_at": 1795170994000,
+    "resolved_at": 1795171594000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 1.3465163
+     },
+     "latency_impact": {
+      "percentage": 14.253558
+     }
+    },
+    "rca": {
+     "short_summary": "`front-end` errors/latency caused by injected network delay between `catalog` and its `db-main` Postgres.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "ltwrohov",
+    "opened_at": 1795112073000,
+    "resolved_at": 1795113153000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 8.43621
+     },
+     "latency_impact": {
+      "percentage": 9.851071
+     }
+    },
+    "rca": {
+     "short_summary": "front-end errors/latency caused by catalog\u2192db-main query timeouts, driven by node3 CPU saturation from a noisy-neighbor stress-ng process.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "xglqsq9e",
+    "opened_at": 1795084590000,
+    "resolved_at": 1795085190000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 1.287032
+     },
+     "latency_impact": {
+      "percentage": 14.716361
+     }
+    },
+    "rca": {
+     "short_summary": "Injected network delay between `catalog` and `db-main` caused slow queries, cascading latency and 502/500 errors in `front-end`.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "wjlzqpwl",
+    "opened_at": 1795025669000,
+    "resolved_at": 1795026749000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 9.273735
+     },
+     "latency_impact": {
+      "percentage": 10.451836
+     }
+    },
+    "rca": {
+     "short_summary": "front-end errors/latency caused by `catalog` failing to reach `db-main`, correlated with CPU contention on `node3`.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "6y62sec9",
+    "opened_at": 1794998183000,
+    "resolved_at": 1794998783000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 1.381727
+     },
+     "latency_impact": {
+      "percentage": 14.980474
+     }
+    },
+    "rca": {
+     "short_summary": "`front-end` latency/errors caused by injected network delay between `catalog` and `db-main` (Postgres).",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "z63qbkug",
+    "opened_at": 1794939248000,
+    "resolved_at": 1794940388000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 8.8878565
+     },
+     "latency_impact": {
+      "percentage": 10.012831
+     }
+    },
+    "rca": {
+     "short_summary": "front-end errors/latency caused by downstream catalog failing to connect to db-main (CPU saturation on node3 from a stress-ng job).",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "6xtd5re0",
+    "opened_at": 1794911827000,
+    "resolved_at": 1794912428000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 1.2621491
+     },
+     "latency_impact": {
+      "percentage": 13.375711
+     }
+    },
+    "rca": {
+     "short_summary": "front-end errors/latency caused by injected network delay between catalog and db-main (Chaos experiment).",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "dsxvfb01",
+    "opened_at": 1794852847000,
+    "resolved_at": 1794853987000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 8.666084
+     },
+     "latency_impact": {
+      "percentage": 10.167048
+     }
+    },
+    "rca": {
+     "short_summary": "front-end errors/latency caused by downstream `catalog` failing to reach `db-main` on `node3`, saturated by a `stress-ng` CronJob.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "84dj3q39",
+    "opened_at": 1794825427000,
+    "resolved_at": 1794827227000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 1.0266931
+     },
+     "latency_impact": {
+      "percentage": 11.2292185
+     }
+    },
+    "rca": {
+     "short_summary": "`front-end` errors/latency caused by injected network delay between `catalog` and `db-main` (Chaos Mesh experiment).",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "t6rhq0cb",
+    "opened_at": 1794766446000,
+    "resolved_at": 1794767586000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 8.519716
+     },
+     "latency_impact": {
+      "percentage": 9.7206955
+     }
+    },
+    "rca": {
+     "short_summary": "front-end errors/latency caused by downstream `catalog` failing to reach `db-main`, amplified by `node3` CPU saturation from a stress-ng job.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "xuk35gmx",
+    "opened_at": 1794739025000,
+    "resolved_at": 1794739625000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 1.2168647
+     },
+     "latency_impact": {
+      "percentage": 13.537417
+     }
+    },
+    "rca": {
+     "short_summary": "Injected network latency between `catalog` and `db-main` slowed Postgres queries, causing `front-end` latency and 502/500 errors.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "statt1f8",
+    "opened_at": 1794680045000,
+    "resolved_at": 1794681185000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 9.891125
+     },
+     "latency_impact": {
+      "percentage": 10.849774
+     }
+    },
+    "rca": {
+     "short_summary": "front-end errors/latency caused by catalog:0.50 rollout running expensive brand queries that overload db-main on node3.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "emy3d9xu",
+    "opened_at": 1794652625000,
+    "resolved_at": 1794653224000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 1.2144185
+     },
+     "latency_impact": {
+      "percentage": 13.4209175
+     }
+    },
+    "rca": {
+     "short_summary": "`front-end` latency/errors caused by injected network delay between `catalog` and its database `db-main`.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "pqwaetpc",
+    "opened_at": 1794593584000,
+    "resolved_at": 1794594784000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 10.372448
+     },
+     "latency_impact": {
+      "percentage": 11.716736
+     }
+    },
+    "rca": {
+     "short_summary": "front-end errors/latency caused by catalog:0.50 rollout doing heavy unindexed queries, overloading db-main CPU and failing DB connections.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "io65ordc",
+    "opened_at": 1794566224000,
+    "resolved_at": 1794566824000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 1.1718459
+     },
+     "latency_impact": {
+      "percentage": 13.580754
+     }
+    },
+    "rca": {
+     "short_summary": "`front-end` errors/latency caused by injected network delay (chaos experiment) on `catalog`\u2192`db-main` Postgres connections.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "3rs6fs6k",
+    "opened_at": 1794507243000,
+    "resolved_at": 1794508383000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 8.02274
+     },
+     "latency_impact": {
+      "percentage": 9.4101095
+     }
+    },
+    "rca": {
+     "short_summary": "`front-end` errors and latency caused by `db-main` CPU saturation on `node3`, triggered by a noisy `analytics-updater` stress-ng job.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:_:Unknown:k3s-agent",
+    "key": "t2uyt342",
+    "opened_at": 1794500643000,
+    "resolved_at": 1794501543000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 11.186891
+     },
+     "latency_impact": {
+      "percentage": 1.1800292
+     }
+    },
+    "rca": {
+     "short_summary": "High tail latency and failed requests in k3s-agent caused by slow responses from the k3s control plane (API server).",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:_:Unknown:k3s-agent",
+    "key": "x0lrcae1",
+    "opened_at": 1794494340000,
+    "resolved_at": 1794495243000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 30.076313
+     },
+     "latency_impact": {
+      "percentage": 1.7857068
+     }
+    },
+    "rca": {
+     "short_summary": "Elevated latency in k3s-agent correlates with disk volume latency on node5 and a memory leak on node6.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "do6vcz29",
+    "opened_at": 1794479819000,
+    "resolved_at": 1794482219000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 1.2696257
+     },
+     "latency_impact": {
+      "percentage": 13.990498
+     }
+    },
+    "rca": {
+     "short_summary": "A chaos-injected network delay between `catalog` and `db-main` slowed Postgres queries, causing `front-end` latency and 502/500 errors.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "rlotubuh",
+    "opened_at": 1794420838000,
+    "resolved_at": 1794421978000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 9.150438
+     },
+     "latency_impact": {
+      "percentage": 10.351827
+     }
+    },
+    "rca": {
+     "short_summary": "`front-end` errors and latency spiked after the `catalog:0.50` rollout, which fails to reach `db-main` Postgres.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "95n2pgy6",
+    "opened_at": 1794393418000,
+    "resolved_at": 1794394018000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 1.2647022
+     },
+     "latency_impact": {
+      "percentage": 14.165415
+     }
+    },
+    "rca": {
+     "short_summary": "`front-end` errors and high latency caused by injected network delay between `catalog` and `db-main` Postgres.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "gb46j6oi",
+    "opened_at": 1794334438000,
+    "resolved_at": 1794335578000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 9.391888
+     },
+     "latency_impact": {
+      "percentage": 10.40856
+     }
+    },
+    "rca": {
+     "short_summary": "`front-end` errors/latency caused by `catalog` v0.50 deploy running an expensive full-table query that overloads `db-main`.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "90wgjfew",
+    "opened_at": 1794307017000,
+    "resolved_at": 1794307617000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 1.4539114
+     },
+     "latency_impact": {
+      "percentage": 13.984394
+     }
+    },
+    "rca": {
+     "short_summary": "Injected network delay between `catalog` and `db-main` caused slow Postgres queries, cascading into `front-end` latency and 502 errors.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "madcqlvx",
+    "opened_at": 1794248097000,
+    "resolved_at": 1794248577000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 20.468111
+     },
+     "latency_impact": {
+      "percentage": 22.934723
+     }
+    },
+    "rca": {
+     "short_summary": "front-end errors/latency caused by downstream catalog failing to reach db-main on node3, which was saturated by a stress-ng CronJob.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   },
+   {
+    "application_id": "tbuzvelk:default:Deployment:front-end",
+    "key": "y6p8lojd",
+    "opened_at": 1794220617000,
+    "resolved_at": 1794221216000,
+    "severity": "critical",
+    "details": {
+     "availability_impact": {
+      "percentage": 1.231683
+     },
+     "latency_impact": {
+      "percentage": 14.155642
+     }
+    },
+    "rca": {
+     "short_summary": "`front-end` errors/latency caused by injected network delay between `catalog` and `db-main` Postgres.",
+     "root_cause": "",
+     "immediate_fixes": ""
+    }
+   }
+  ]
+ },
+ "_recorded": "demo.promlabs.com (Prometheus 3.14) and demo.coroot.com (1.29.4), 2026-11-23, trimmed"
+}

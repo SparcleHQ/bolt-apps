@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "id": "obs",
+  "title": "Observability",
+  "role": "SREs and DevOps engineers who run more than one monitoring tool.",
+  "saves": "One look across Prometheus, Coroot and AWS CloudWatch for what is unhealthy and firing, with services joined by name.",
+  "summary": "One view over your monitoring tools: services and firing alerts from every source, joined by service name. Keys from the keychain; AWS through its own CLI sign-in.",
+  "author": {
+    "name": "rajendrapatil"
+  },
+  "tier": 3,
+  "permissions": [
+    "runs_commands",
+    "network"
+  ],
+  "platforms": [
+    "macos",
+    "linux"
+  ],
+  "requires": [
+    {
+      "interpreter": "python",
+      "min_version": "3.9"
+    }
+  ],
+  "tests": []
+}

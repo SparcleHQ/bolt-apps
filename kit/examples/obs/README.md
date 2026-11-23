@@ -11,16 +11,14 @@
 ## Your own sources
 List them in `~/.config/obs/sources.json`. The file names keys, it never holds them (the app refuses a file others can write):
 
-```
-{
-  "sources": [
-    {"name": "prod-prom", "type": "prometheus", "url": "https://prom.example.com", "auth": {"kind": "bearer", "secret": "PROM_TOKEN"}},
-    {"name": "coroot", "type": "coroot", "url": "https://coroot.example.com", "project": "abc123xy", "auth": {"kind": "header", "header": "X-API-Key", "secret": "COROOT_API_KEY"}},
-    {"name": "aws-prod", "type": "aws-cloudwatch", "profile": "prod", "region": "us-east-1"}
-  ],
-  "aliases": {"pay-svc": "payments"}
-}
-```
+    {
+      "sources": [
+        {"name": "prod-prom", "type": "prometheus", "url": "https://prom.example.com", "auth": {"kind": "bearer", "secret": "PROM_TOKEN"}},
+        {"name": "coroot", "type": "coroot", "url": "https://coroot.example.com", "project": "abc123xy", "auth": {"kind": "header", "header": "X-API-Key", "secret": "COROOT_API_KEY"}},
+        {"name": "aws-prod", "type": "aws-cloudwatch", "profile": "prod", "region": "us-east-1"}
+      ],
+      "aliases": {"pay-svc": "payments"}
+    }
 
 - **Keys** sit in the system keychain or in `~/.config/obs/.env` (`chmod 600`; a file others can read is ignored). When one is missing the app shows the exact one-line setup, never a value. The key goes only to its own source's host, in the header that source needs: `bearer`, `basic` (with a `user`), or a named `header`.
 - **URLs** are https, or http to this computer (a port-forward). No redirects are followed.

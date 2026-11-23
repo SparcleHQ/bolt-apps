@@ -900,6 +900,40 @@
       ],
       "check": "kit/examples/sky-watch/check.json",
       "verified": "not verified in real Bolt"
+    },
+    {
+      "id": "coroot",
+      "need": "read a self-hosted observability API: service health, incidents with root cause, node load",
+      "layout": "tiles that drill to a service list with a WHY line, an incident list titled by root cause, and a node table",
+      "mode": "custom script on the flat kit",
+      "script": "scripts/coroot__app.py",
+      "backing": "remote HTTP API (Coroot, read-only; public demo by default, your own by .env)",
+      "widgets": [
+        "cards",
+        "entity_preview",
+        "table"
+      ],
+      "techniques": [
+        "base url and key from an owner-only .env, https or loopback only",
+        "no redirects, key sent to one host",
+        "project discovery from /api/user",
+        "parallel calls in a thread pool",
+        "stale copy on failure",
+        "composer action that pre-fills an AI triage prompt"
+      ],
+      "sources": [
+        "Coroot HTTP API (demo.coroot.com by default)"
+      ],
+      "edit": [
+        "scripts/coroot__config.json",
+        "scripts/coroot__fixtures.json",
+        "scripts/coroot__app.py"
+      ],
+      "check": "./bolt-apps check kit/examples/coroot",
+      "verified": "installed and run in real Bolt on macOS; self-hosted key auth not verified",
+      "edit_in_script": [
+        "scripts/coroot__app.py: the n_* readers, app_row(), incident_row(), overview_rows()"
+      ]
     }
   ],
   "side_by_side": "four kit apps (acme-dash, pulse-feed, expense-tracker, unit-convert) installed side by side with no owned_by_other: maintainer drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; tested on the files before the chip change (chip now equals id), so not re-run on these files; not run on the shipped 181 binary"

@@ -1,0 +1,81 @@
+{
+  "script": "scripts/coroot__app.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/coroot__bolt_app_kit.py",
+  "fixture": true,
+  "cases": [
+    {
+      "name": "overview: tiles",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "expect": {
+        "min_rows": 4
+      }
+    },
+    {
+      "name": "apps: list with unhealthy first",
+      "os": "macos",
+      "args": [
+        "apps"
+      ],
+      "expect": {
+        "min_rows": 3
+      }
+    },
+    {
+      "name": "apps: a word filters",
+      "os": "macos",
+      "args": [
+        "apps",
+        "checkout"
+      ],
+      "expect": {
+        "min_rows": 1
+      }
+    },
+    {
+      "name": "a bare word filters services",
+      "os": "macos",
+      "args": [
+        "front"
+      ],
+      "expect": {
+        "min_rows": 2
+      }
+    },
+    {
+      "name": "incidents: list with root cause",
+      "os": "macos",
+      "args": [
+        "incidents"
+      ],
+      "expect": {
+        "min_rows": 3
+      }
+    },
+    {
+      "name": "nodes: table",
+      "os": "macos",
+      "args": [
+        "nodes"
+      ],
+      "expect": {
+        "min_rows": 3
+      }
+    },
+    {
+      "name": "offline: shows try again",
+      "os": "macos",
+      "args": [
+        "overview",
+        "demo-offline"
+      ],
+      "expect": {
+        "min_rows": 2
+      }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "id": "coroot",
+  "title": "Coroot",
+  "role": "On-call engineers and SREs running Coroot.",
+  "saves": "Service health, incidents with Coroot's root cause and node load without opening the Coroot UI.",
+  "summary": "Coroot service health, SLO incidents with root cause, and nodes, from the launcher. Ships on the public demo; set COROOT_URL for your own.",
+  "author": {
+    "name": "rajendrapatil"
+  },
+  "tier": 3,
+  "permissions": [
+    "runs_commands",
+    "network"
+  ],
+  "platforms": [
+    "macos",
+    "linux"
+  ],
+  "requires": [
+    {
+      "interpreter": "python",
+      "min_version": "3.9"
+    }
+  ],
+  "tests": []
+}

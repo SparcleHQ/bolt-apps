@@ -1,0 +1,21 @@
+{
+  "app": {
+    "id": "coroot",
+    "chip": "coroot",
+    "title": "Coroot",
+    "icon": "Activity",
+    "description": "Service health, incidents with root cause, and nodes from a Coroot instance. Ships pointed at the public demo; set COROOT_URL for your own.",
+    "timeout": 25,
+    "service": "Coroot"
+  },
+  "api": {
+    "base_url": "https://demo.coroot.com",
+    "env_file": "~/.config/coroot/.env",
+    "user_agent": "bolt-app-coroot/1.0",
+    "call_timeout_s": 8,
+    "deadline_s": 14,
+    "max_bytes": 3000000,
+    "fixture_default": false
+  },
+  "cache": { "ttl": 60, "stale_max": 86400 }
+}

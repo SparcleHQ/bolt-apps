@@ -213,6 +213,100 @@ srcs_ = [dict(x, auth={'kind': 'none'}, project='', demo=True, links={}, trend_q
 for s_ in srcs_: assert hub.read(s_, False)['ok'], s_['name']
 assert not os.path.exists(os.path.join(home2, 'Library', 'Caches')) or not any(f for _, _, fs in os.walk(os.path.join(home2, 'Library', 'Caches')) for f in fs if 'obs' in f), 'sample wrote a cache'
 print('NEW ADAPTERS OK')
+
+# 20. text charts: sparkline and bars
+assert m.spark([]) == '' and m.spark([5, 5, 5]) == m.BLOCKS[0] * 3
+sp = m.spark([0, 1, 2, 3, 4, 5, 6, 7]); assert sp == m.BLOCKS and len(sp) == 8
+assert m.spark([1, 9])[0] == m.BLOCKS[0] and m.spark([1, 9])[-1] == m.BLOCKS[-1]
+assert m.bars(0, 5) == '' and m.bars(5, 5, 12) == chr(0x2588) * 12 and len(m.bars(1, 100)) == 1
+# 21. pick_trend: a source's own query wins; otherwise the first candidate that varies; a flat series is the last resort
+def mkpts(vals): return {'data': {'result': [{'values': [[1795400000 + i * 300, str(v)] for i, v in enumerate(vals)]}]}}
+seen = []
+def fake_range(cfg_, src_, hdr_, path, budget):
+    q = urllib.parse.unquote(path.split('query=')[1].split('&')[0]); seen.append(q)
+    if 'http_requests_total' in q: return {'data': {'result': []}}
+    if 'process_cpu' in q: return mkpts([3, 3, 3, 3, 3, 3])
+    if 'up{' in q: return mkpts([1, 1, 1, 1, 1, 1])
+    return mkpts([1, 2, 3, 4, 5, 6])
+import urllib.parse
+orig = m.http_json; m.http_json = fake_range
+try:
+    lab, pts = m.pick_trend(cfg, {'type': 'prometheus', 'trend_query': None, 'prefix': ''}, {}, 'api', 5)
+    assert lab == 'CPU seconds per second' and len(pts) == 6 and len(seen) == 3, (lab, seen)   # every candidate was flat or empty: the first non-empty one is kept
+    seen.clear()
+    lab, pts = m.pick_trend(cfg, {'type': 'prometheus', 'trend_query': 'my_metric{job="{service}"}', 'trend_label': 'my metric', 'prefix': ''}, {}, 'api', 5)
+    assert lab == 'my metric' and [v for _, v in pts] == [1, 2, 3, 4, 5, 6] and len(seen) == 1 and 'my_metric{job="api"}' in seen[0], (lab, seen)
+    assert m.pick_trend(cfg, {'type': 'prometheus', 'trend_query': None, 'prefix': ''}, {}, 'bad"name', 5) == ('', [])   # an unsafe name never reaches a query
+finally: m.http_json = orig
+# 22. history: one point per run at least a minute apart, capped, and reset when the set of sources changes
+os.environ['HOME'] = tempfile.mkdtemp()
+h = m.History(cfg, 'a,b')
+p1 = h.add({'t': 1000, 'firing': 3, 'crit': 1, 'services': 9, 'ok': 8, 'up': 2}); assert len(p1) == 1
+assert len(h.add({'t': 1030, 'firing': 4, 'crit': 1, 'services': 9, 'ok': 8, 'up': 2})) == 1   # too soon
+assert len(h.add({'t': 1100, 'firing': 5, 'crit': 2, 'services': 9, 'ok': 7, 'up': 2})) == 2
+for i in range(80): h.add({'t': 2000 + i * 100, 'firing': i, 'crit': 0, 'services': 9, 'ok': 9, 'up': 2})
+assert len(m.History(cfg, 'a,b').add({'t': 99999, 'firing': 1, 'crit': 0, 'services': 9, 'ok': 9, 'up': 2})) == cfg['history']['keep']
+assert len(m.History(cfg, 'a,b,c').add({'t': 100000, 'firing': 1, 'crit': 0, 'services': 9, 'ok': 9, 'up': 2})) == 1   # a different source list starts fresh
+# 23. chart, health, table and raw views
+res = [R('p', [S('a', 'crit'), S('b', 'ok')], [A('x', 'a', 'crit', now), A('y', 'a', 'warn', now), A('r', 'a', 'warn', now, 'resolved')]), R('q', [S('c', 'warn')], [])]
+grp = m.join(res, cfg, {})
+rows = m.build('chart', '', res, grp, False, {}, {}); assert [(r['src'], r['n']) for r in rows] == [('p', 2), ('q', 0)], rows
+rows = m.build('chart', 'unhealthy', res, grp, False, {}, {}); assert [(r['src'], r['n']) for r in rows] == [('p', 1), ('q', 1)], rows
+rows = m.build('table', '', res, grp, False, {}, {}); assert [r['sev'] for r in rows] == ['CRIT', 'WARN'] and rows[0]['alert'] == 'x' and rows[0]['source'] == 'p', rows
+# the drill lives in services: arg key.<name>
+dr = m.build('services', 'key.a', res, grp, False, {}, {}); assert dr[1]['title'].startswith('a') and any(r['title'] == 'p: CRIT' for r in dr), [r['title'] for r in dr]
+assert m.build('services', 'key.nope', res, grp, False, {}, {})[-1]['title'] == 'Service not found'
+lst = m.build('services', '', res, grp, False, {}, {}); assert all(r['nav']['view'] == 'services' and r['nav']['arg'].startswith('key.') and m.TOKEN.match(r['nav']['arg']) for r in lst if r.get('nav') and 'view' in r['nav']), lst
+# the overview: tiles carry a trend only once there are 3 points
+ov = m.overview_rows(res, grp, False, False, [{'t': 1, 'firing': 1, 'crit': 0, 'services': 3, 'ok': 2, 'up': 2}] * 2); assert 'trend' not in ov[2]
+ov = m.overview_rows(res, grp, False, False, [{'t': i, 'firing': i, 'crit': 0, 'services': 3, 'ok': 3 - i, 'up': 2} for i in range(4)])
+assert ov[2]['kpi_value'] is not None and ov[2]['trend'] == [0, 1, 2, 3] and ov[2]['delta'] == 3 and ov[1]['trend'] == [3, 2, 1, 0], (ov[2].get('trend'), ov[2].get('delta'))
+assert [r['nav']['view'] for r in ov if r.get('nav')][-4:] == ['chart', 'chart', 'table', 'overview']   # the last row is Check again
+print('RICH PANELS OK')
+
+# 24. Coroot's own Alerts and Risks pages
+RAL = [{'rule_name': 'Log errors', 'application_id': 'p:default:Deployment:front-end', 'severity': 'warning', 'summary': 'new error in the logs (35 messages)', 'opened_at': 1795415624000, 'resolved_at': None, 'manually_resolved_at': None, 'suppressed': False},
+       {'rule_name': 'Low disk space', 'application_id': 'p:default:StatefulSet:db', 'severity': 'critical', 'summary': '2 volumes over 80%', 'opened_at': '1795283195000', 'resolved_at': None},
+       {'rule_name': 'Old', 'application_id': 'p:default:Deployment:x', 'severity': 'warning', 'summary': 'resolved one', 'opened_at': 1795000000000, 'resolved_at': 1795000100000},
+       {'rule_name': 'Quiet', 'application_id': 'p:default:Deployment:y', 'severity': 'warning', 'summary': 'suppressed', 'opened_at': 1795000000000, 'suppressed': True}, {'nope': 1}]
+RRK = [{'key': {'category': 'Availability', 'type': 'unreplicated-database'}, 'application_id': 'p:default:StatefulSet:cart-db', 'severity': 'critical', 'availability': {'description': 'Redis is not replicated'}},
+       {'key': {'type': 'single-instance'}, 'application_id': 'p:default:Deployment:cart', 'severity': 'warning', 'availability': {'description': 'Single instance'}}, {'bad': 1}]
+ex = m.coroot_extras(RAL, RRK)
+assert [(a['name'], a['service'], a['severity'], a['state']) for a in ex if a['state'] == 'firing'] == [('Log errors', 'front-end', 'warn', 'firing'), ('Low disk space', 'db', 'crit', 'firing')], ex
+assert ex[0]['since'] == 1795415624 and ex[1]['since'] == 1795283195 and ex[0]['summary'].startswith('new error')
+rk = [a for a in ex if a['state'] == 'risk']
+assert [(a['name'], a['service'], a['severity'], a['summary']) for a in rk] == [('Risk: unreplicated database', 'cart-db', 'crit', 'Redis is not replicated'), ('Risk: single instance', 'cart', 'warn', 'Single instance')], rk
+# a risk never counts as firing and never turns a service red; the group keeps it apart
+g = m.join([R('cr', [S('cart-db', 'ok')], rk)], cfg, {})
+cd = [x for x in g if x['name'] == 'cart-db'][0]
+assert cd['status'] == 'ok' and not cd['firing'] and len(cd['risks']) == 1
+row = m.service_row(cd, {}); assert 'Risks' in row['body'] and 'Redis is not replicated' in row['body'] and '1 risk' in row['subtitle'], row['subtitle']
+# the alerts view does not list risks; the drill and the risk filter do
+res2 = [R('cr', [S('cart-db', 'ok'), S('front-end', 'warn')], ex)]; g2 = m.join(res2, cfg, {})
+assert all(a['state'] != 'risk' for a in [x for x in m.build('alerts', '', res2, g2, False, {}, {}) if False]) 
+al_rows = m.build('alerts', '', res2, g2, False, {}, {}); assert not any('Risk:' in r['title'] for r in al_rows), [r['title'] for r in al_rows]
+rl = m.build('services', 'risk', res2, g2, False, {}, {}); assert [r['title'] for r in rl if r.get('nav') and 'view' in r['nav']] == ['cart-db'] or 'cart-db' in [r['title'] for r in rl], [r['title'] for r in rl]
+dr = m.build('services', 'key.cartdb', res2, g2, False, {}, {}); assert any('Risk: unreplicated database' in r['title'] for r in dr), [r['title'] for r in dr]
+# an older Coroot without these endpoints: the adapter keeps working
+calls = []
+def fake_cr(cfg_, src_, hdr_, path, budget):
+    calls.append(path)
+    if path.endswith('/api/user'): return {'projects': [{'id': 'abc'}]}
+    if path.endswith('overview/applications'): return {'data': {'applications': [{'id': 'abc:default:Deployment:web', 'status': 'ok'}]}}
+    if path.endswith('/incidents'): return {'data': []}
+    raise m.Fail('notfound', 'answered 404')
+orig = m.http_json; m.http_json = fake_cr
+try: r = m.coroot_read(cfg, {'name': 'c', 'url': 'https://c.example.com', 'project': ''}, {}, 5)
+finally: m.http_json = orig
+assert [x['name'] for x in r['services']] == ['web'] and r['alerts'] == [] and any(c.endswith('/alerts') for c in calls) and any(c.endswith('overview/risks') for c in calls), calls
+def fake_cr_auth(cfg_, src_, hdr_, path, budget):
+    if path.endswith('/alerts'): raise m.Fail('auth', 'answered 401')
+    return fake_cr(cfg_, src_, hdr_, path, budget)
+m.http_json = fake_cr_auth
+try: m.coroot_read(cfg, {'name': 'c', 'url': 'https://c.example.com', 'project': ''}, {}, 5); assert False
+except m.Fail as e: assert e.kind == 'auth'
+finally: m.http_json = orig
+print('COROOT EXTRAS OK')
 print('ALL OK')
 '''
 

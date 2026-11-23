@@ -391,7 +391,8 @@
       "limit": "Unit at most {rules:tile.unit_max} characters; trend keeps {rules:tile.trend_keep} points.",
       "also": [
         "acme-dash",
-        "expense-tracker"
+        "expense-tracker",
+        "obs"
       ]
     },
     {

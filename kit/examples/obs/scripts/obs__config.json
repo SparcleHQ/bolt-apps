@@ -25,7 +25,9 @@
     {
       "name": "prom-demo",
       "type": "prometheus",
-      "url": "https://demo.promlabs.com"
+      "url": "https://demo.promlabs.com",
+      "trend_label": "requests per second",
+      "trend_query": "sum(rate(demo_api_request_duration_seconds_count{job=\"{service}\"}[5m]))"
     },
     {
       "name": "victoria-play",
@@ -72,5 +74,23 @@
       "svc",
       "service"
     ]
+  },
+  "trend": [
+    {
+      "label": "requests per second",
+      "query": "sum(rate(http_requests_total{job=\"{service}\"}[5m]))"
+    },
+    {
+      "label": "CPU seconds per second",
+      "query": "sum(rate(process_cpu_seconds_total{job=\"{service}\"}[5m]))"
+    },
+    {
+      "label": "share of targets up",
+      "query": "avg(up{job=\"{service}\"})"
+    }
+  ],
+  "history": {
+    "keep": 48,
+    "min_gap_s": 60
   }
 }

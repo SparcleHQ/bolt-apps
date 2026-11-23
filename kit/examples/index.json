@@ -963,7 +963,11 @@
         "a Prometheus range query drawn as a line chart, name allow-listed before it enters PromQL",
         "one status-page adapter that works for any Atlassian Statuspage, keeping a page and its components as services and open incidents as alerts",
         "alerts listed as firing, pending, then resolved within a day",
-        "sample answers never written to the real cache"
+        "sample answers never written to the real cache",
+        "tile sparklines and a change figure from a small local history kept in the kit cache",
+        "text sparklines and severity bars inside a pane that draws only text",
+        "bar charts from rows that carry a label and a number",
+        "first non-flat series from a list of candidate queries"
       ],
       "sources": [
         "Prometheus HTTP API (demo.promlabs.com)",

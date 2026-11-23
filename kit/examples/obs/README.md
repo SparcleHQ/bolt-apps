@@ -1,14 +1,17 @@
 # obs
 
 ## What this shows
-`=obs` is one view over the monitoring tools a team runs. Each source is read by a small adapter into the same model (services with a status, alerts with a severity and a start time). Services are joined across sources by name, so one row says what every tool thinks of `checkout`. It ships on eight real public demos and status pages, so it shows live data on the first run: Prometheus (demo.promlabs.com), the VictoriaMetrics playground, Grafana's play site, a Netdata demo, Coroot's demo, and the GitHub, Cloudflare and OpenAI status pages.
+`=obs` is one view over the monitoring tools a team runs. Each source is read by a small adapter into the same model (services with a status, alerts with a severity and a start time). Services are joined across sources by name, so one row says what every tool thinks of `checkout`. It ships on eight real public demos and status pages, so it shows live data on the first run: Prometheus (demo.promlabs.com), the VictoriaMetrics playground, Grafana's play site, a Netdata demo, Coroot's demo (its applications, incidents, its own Alerts page and its Risks page), and the GitHub, Cloudflare and OpenAI status pages.
 
-1. `=obs`: five tiles. Sources answering, healthy services, firing alerts, cross-tool signals, and Check again. Each drills (Enter).
+1. `=obs`: tiles for sources answering, healthy services, firing alerts, cross-tool signals, two charts, an alert table, and Check again. Each drills (Enter). The services and alerts tiles carry a sparkline and a change figure built from the app's own history (one point per run, kept for a week on your computer, starting when you install it; nothing is fetched for it).
 2. `=obs services [word]`: every service from every source, worst first. A word filters by name. `bad`, `crit`, `warn` and `ok` filter by status; `cross` keeps services where tools agree, started together, or disagree. Enter drills into one service.
-3. `=obs service <name>`: the drill. A summary row (tile with a sparkline when a source has a time series), one row per source that knows the service, its firing alerts, and a Trend row. Buttons: Open, Logs, Traces (from the links you configure), Copy summary, Triage with AI (puts a ready prompt in the composer).
-4. `=obs trend <name>`: a line chart of the last 3 hours from a Prometheus source (share of targets up, or your own `trend_query`).
-5. `=obs alerts`: firing alerts from every source, worst first.
-6. `=obs sources`: a table of each source with its state, service count, firing count and answer time.
+3. `=obs service <name>` (or Enter on a service): the drill. A summary row whose pane shows severity bars and a text sparkline of the last 3 hours, one row per source that knows the service, its firing alerts, and a Trend row. Buttons: Open, Logs, Traces (from the links you configure), Copy summary, Triage with AI (puts a ready prompt in the composer).
+4. `=obs trend <name>`: a line chart of the last 3 hours from a Prometheus source. The app tries a request-rate query, then CPU, then share of targets up, and keeps the first that is not a flat line; a source can set its own `trend_query` and `trend_label`.
+5. `=obs chart` and `=obs chart unhealthy`: bar charts of firing alerts, or unhealthy services, by source.
+6. `=obs table`: firing and pending alerts as a table (level, alert, service, source, minutes), worst first.
+   `=obs services risk` lists services that carry a standing risk. A risk is a condition a tool reports (Coroot: "Redis isn't replicated", "Publicly exposed database") rather than an alert, so it is shown in the service pane and counted in its own tile, never as a firing alert.
+7. `=obs alerts`: firing alerts from every source, worst first.
+8. `=obs sources`: a table of each source with its state, service count, firing count and answer time.
 
 ## Your own sources
 List them in `~/.config/obs/sources.json`. The file names keys, it never holds them (the app refuses a file others can write):
@@ -48,10 +51,14 @@ After editing `obs__config.json` or the pane layout, regenerate the app file: `p
 ## What was not verified
 - Installed and run in a real Bolt on macOS by a maintainer on 2026-11-22 (the Bolt build number was not recorded, so index.json says "not verified in real Bolt", the only wording its test allows). Windows is unproven.
 - The join was tested on synthetic data. The eight demos are unrelated systems with no shared service names, so the live demo shows 0 cross-tool signals.
+- Coroot's `/alerts` and `/overview/risks` answers were read from the public demo's API (the same data as its Alerts and Risks pages); an older Coroot that lacks them is skipped without error. Coroot's API is the one its UI uses and is not a versioned public API.
 - The Grafana, Netdata, VictoriaMetrics and status-page adapters were written against live answers from those public demos and run on them. None was run against a private instance, and their keyed (bearer) paths were not run against a real server. Datadog's own status page refused an anonymous request (HTTP 403) when probed, so it is not a default source.
 - The `aws-cloudwatch` adapter was tested only against a stub `aws` that prints the documented JSON shape. It has not run against real AWS.
 - Bearer, basic and header auth were tested as the headers built from a key. No keyed Prometheus or Coroot was read.
 - The service drill, Trend row, line chart and the extra footer buttons (five in all) were checked against the app engine's own rules (`check`, `lint`) and run on the public Prometheus demo, but not in a real Bolt. A button whose link is not configured is expected to do nothing; that was not seen. The `nav` row in the services list carries no buttons (an engine rule), so the buttons live in the drill.
+- The bar charts, the alert table, the tile sparklines and the text charts are checked against the app engine's own rules (`check`, `lint`) and the numbers behind them were run on the public demos, but none was drawn in a real Bolt. The table's default sort, and how a bar chart looks with eight bars, were not seen. The tile history needs a few runs before a sparkline appears.
+- A pane holds one widget: the severity bars and the sparkline in the service pane are text built from block characters, not a chart widget. Pie, area, gauge and heatmap panes need Bolt 0.1.182 and are not used.
+- An app file may declare at most 8 views, so the service drill lives inside the services view (argument `key.<name>`).
 - Prometheus is read through `/api/v1/query?query=up` and `/api/v1/alerts`; Coroot through its UI API (not a versioned public API), as in the `coroot` example.
 
 Data: Prometheus (Apache-2.0) via PromLabs' public demo; VictoriaMetrics (Apache-2.0) via its public playground; Grafana (AGPL-3.0, read through its HTTP API) via play.grafana.org; Netdata (GPL-3.0, read through its HTTP API) via a public demo; Coroot (Apache-2.0) via its public demo; GitHub, Cloudflare and OpenAI status pages (Atlassian Statuspage and a compatible format). See each provider's terms.

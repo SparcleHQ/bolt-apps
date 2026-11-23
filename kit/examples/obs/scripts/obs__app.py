@@ -274,6 +274,7 @@ COROOT_STATUS = {"ok": "ok", "info": "ok", "warning": "warn", "critical": "crit"
 def coroot_read(cfg, src, headers, budget, fx=None):
     if fx is not None:
         proj, apps, incs = "tbuzvelk", fx["applications"], fx["incidents"]
+        extra_a, extra_r = fx.get("alerts", []), fx.get("risks", [])
     else:
         proj = src["project"]
         if not proj:
@@ -285,6 +286,15 @@ def coroot_read(cfg, src, headers, budget, fx=None):
         base = "/api/project/%s/" % urllib.parse.quote(proj, safe="")
         apps = (http_json(cfg, src, headers, base + "overview/applications", budget).get("data") or {}).get("applications")
         incs = http_json(cfg, src, headers, base + "incidents", budget).get("data")
+        extra_a, extra_r = [], []
+        for path, key, store in (("alerts", "alerts", extra_a), ("overview/risks", "risks", extra_r)):   # newer Coroot answers these; an older one may not, so a missing endpoint is skipped
+            try:
+                got = ((http_json(cfg, src, headers, base + path, budget) or {}).get("data") or {}).get(key) or []
+            except Fail as e:
+                if e.kind == "auth":
+                    raise
+                got = []
+            store.extend(got if isinstance(got, list) else [])
     if not isinstance(apps, list) or not isinstance(incs, list):
         raise Fail("fail", "not a Coroot answer")
     services = []
@@ -304,7 +314,29 @@ def coroot_read(cfg, src, headers, budget, fx=None):
         r = i.get("rca") or {}
         alerts.append({"name": "SLO incident", "service": s(":".join(p[3:]) if len(p) >= 4 else i["application_id"], 80), "severity": _sev(i.get("severity")), "since": int(i["opened_at"] / 1000),
                        "summary": s(r.get("short_summary"), 200) or "SLO burn", "state": "resolved" if res else "firing"})
-    return {"services": services, "alerts": alerts}
+    return {"services": services, "alerts": alerts + coroot_extras(extra_a, extra_r)}
+
+
+def coroot_extras(alerts_raw, risks_raw):
+    """Coroot's own Alerts page (rules such as Log errors or Low disk space) and its Risks page (for example an unreplicated database). Alerts are firing alerts; a risk is a standing condition, not an alert, so it carries state "risk"."""
+    out = []
+    for x in alerts_raw:
+        if not isinstance(x, dict) or x.get("resolved_at") or x.get("manually_resolved_at") or x.get("suppressed") is True or not isinstance(x.get("application_id"), str):
+            continue
+        p = x["application_id"].split(":")
+        op = x.get("opened_at")
+        op = int(op) if isinstance(op, (int, float)) or (isinstance(op, str) and op.isdigit()) else None
+        out.append({"name": s(x.get("rule_name"), 80) or "Coroot alert", "service": s(":".join(p[3:]) if len(p) >= 4 else x["application_id"], 80), "severity": _sev(x.get("severity")),
+                    "since": int(op / 1000) if op else None, "summary": s(x.get("summary"), 200) or s(x.get("rule_name"), 80), "state": "firing"})
+    for r in risks_raw:
+        if not isinstance(r, dict) or not isinstance(r.get("application_id"), str):
+            continue
+        p = r["application_id"].split(":")
+        desc = next((v["description"] for v in r.values() if isinstance(v, dict) and isinstance(v.get("description"), str)), "")
+        kind = s((r.get("key") or {}).get("type") if isinstance(r.get("key"), dict) else "", 60).replace("-", " ")
+        out.append({"name": "Risk: %s" % (kind or "standing condition"), "service": s(":".join(p[3:]) if len(p) >= 4 else r["application_id"], 80), "severity": _sev(r.get("severity")),
+                    "since": None, "summary": s(desc, 200) or kind, "state": "risk"})
+    return out
 
 
 SP_STATUS = {"operational": "ok", "degraded_performance": "warn", "partial_outage": "warn", "under_maintenance": "warn", "major_outage": "crit"}
@@ -519,6 +551,7 @@ def join(results, cfg, aliases):
     out = []
     for g in groups.values():
         firing = [a for a in g["alerts"] if a["state"] == "firing"]
+        risks = [a for a in g["alerts"] if a["state"] == "risk"]
         st = max([RANK[v["status"]] for v in g["by"].values()] + [RANK[a["severity"]] for a in firing] + [0])
         worst = ("ok", "warn", "crit")[st]
         seen = sorted(set(list(g["by"]) + [a["source"] for a in firing]))
@@ -532,7 +565,7 @@ def join(results, cfg, aliases):
                 flag = "TOGETHER"   # and their alerts started within the window
         elif len(g["by"]) >= 2 and said == set(("ok", "bad")):
             flag = "DISAGREE"    # one tool says fine while another does not
-        out.append({"name": g["name"], "key": g["key"], "status": worst, "by": g["by"], "alerts": g["alerts"], "firing": firing, "sources": seen, "bad_sources": bad_sources, "flag": flag})
+        out.append({"name": g["name"], "key": g["key"], "status": worst, "by": g["by"], "alerts": g["alerts"], "firing": firing, "risks": risks, "sources": seen, "bad_sources": bad_sources, "flag": flag})
     out.sort(key=lambda x: (-RANK[x["status"]], -len(x["firing"]), x["name"].lower()))
     return out
 
@@ -656,10 +689,12 @@ def banner(results, fixture):
 
 def service_row(g, srcmap=None, nav=False, trend=None, label=""):
     per = " · ".join("%s %s" % (n, WORD[v["status"]].lower()) for n, v in sorted(g["by"].items()))
-    extra = " · %d alert%s firing" % (len(g["firing"]), "" if len(g["firing"]) == 1 else "s") if g["firing"] else ""
+    extra = (" · %d alert%s firing" % (len(g["firing"]), "" if len(g["firing"]) == 1 else "s") if g["firing"] else "") + (" · %d risk%s" % (len(g["risks"]), "" if len(g["risks"]) == 1 else "s") if g["risks"] else "")
     lines = ["**%s** (%s)" % (g["name"], g["status"].upper())] + ["- %s: %s%s" % (n, WORD[v["status"]], (", " + v["detail"]) if v["detail"] else "") for n, v in sorted(g["by"].items())]
     if g["firing"]:
         lines += ["", "**Firing now**"] + ["- %s (%s, %s): %s" % (a["name"], a["source"], a["severity"], a["summary"] or "no summary") for a in g["firing"][:5]]
+    if g["risks"]:
+        lines += ["", "**Risks**"] + ["- %s" % (a["summary"] or a["name"]) for a in g["risks"][:5]]
     if g["firing"]:
         crit = sum(1 for a in g["firing"] if a["severity"] == "crit")
         warn = len(g["firing"]) - crit
@@ -689,8 +724,9 @@ def alert_row(a, srcmap=None):
     share = "%s on %s (%s, %s): %s. %s" % (a["name"], a["service"], a["source"], a["severity"], ago(a["since"]), a["summary"])
     src = (srcmap or {}).get(a["source"]) or {}
     lk = dict((k + "_url", v.replace("{service}", urllib.parse.quote(a["service"], safe=""))) for k, v in (src.get("links") or {}).items())
-    return kit.safe_row("%s · %s" % (a["name"], a["service"]), "%s · %s · %s" % (a["source"], a["severity"], ago(a["since"])), icon="AlertCircle", **lk,
-                        badges=[(a["severity"].upper(), TONE[a["severity"]]), (a["state"].upper(), {"firing": "danger", "pending": "warn", "resolved": "success"}.get(a["state"], ""))], body=a["summary"] or "No summary from the source.", copy=share,
+    when = "standing risk" if a["state"] == "risk" else ago(a["since"])
+    return kit.safe_row("%s · %s" % (a["name"], a["service"]), "%s · %s · %s" % (a["source"], a["severity"], when), icon="AlertCircle", **lk,
+                        badges=[(a["severity"].upper(), TONE[a["severity"]]), (a["state"].upper(), {"firing": "danger", "pending": "warn", "resolved": "success", "risk": "info"}.get(a["state"], ""))], body=a["summary"] or "No summary from the source.", copy=share,
                         s_status=a["severity"].upper(), s_sources=a["source"], s_alerts="1", s_signal=ago(a["since"]), share_text=kit.safe_copy(share),
                         triage_text=kit.safe_copy("Triage this alert from %s. %s on %s, %s, %s. %s What should I check first?" % (a["source"], a["name"], a["service"], a["severity"], ago(a["since"]), a["summary"])))
 
@@ -718,7 +754,10 @@ def overview_rows(results, groups, fixture, any_demo, hist=None):
     rows[1] = dict(rows[1], **tk([p["ok"] for p in hist]))
     rows[2] = dict(rows[2], **tk([p["firing"] for p in hist]))
     unhealthy = sum(1 for r in results for sv in r["services"] if RANK[sv["status"]] > 0)
+    nrisk = sum(len(g["risks"]) for g in groups)
     rows += [
+        kit.row("Risks: %d standing" % nrisk, "conditions such as an unreplicated database, not alerts", icon="ShieldAlert", nav={"view": "services", "arg": "risk"}, badge="RISKS" if nrisk else "NONE",
+                tile=kit.safe_tile("Standing risks", nrisk, max=max(nrisk, 1), note="across %d services" % len([g for g in groups if g["risks"]]), foot="Enter for the services"), body="Press Enter for the services that carry a risk."),
         kit.row("Alerts by source: a chart", "%d firing, as bars" % len(firing), icon="AlertCircle", nav={"view": "chart"}, badge="CHART",
                 tile=kit.safe_tile("Firing by source", len(firing), max=max(len(firing), 1), note="across %d sources" % len(results), foot="Enter for the bar chart"), body="Press Enter for the bar chart."),
         kit.row("Unhealthy by source: a chart", "%d services need attention" % unhealthy, icon="Layers", nav={"view": "chart", "arg": "unhealthy"}, badge="CHART",
@@ -742,6 +781,8 @@ def build(view, word, results, groups, fixture, srcmap=None, trend=None):
         flt = {"bad": ("warn", "crit"), "crit": ("crit",), "warn": ("warn",), "ok": ("ok",), "cross": None}.get(w)   # =obs services bad | crit | warn | ok | cross
         if w in ("bad", "crit", "warn", "ok"):
             items = [g for g in groups if g["status"] in flt][:50]
+        elif w == "risk":
+            items = [g for g in groups if g["risks"]][:50]
         elif w == "cross":
             items = [g for g in groups if g["flag"]][:50]
         else:
@@ -775,7 +816,7 @@ def build(view, word, results, groups, fixture, srcmap=None, trend=None):
             lk = dict((k + "_url", tpl.replace("{service}", urllib.parse.quote(v["name"], safe=""))) for k, tpl in ((srcmap or {}).get(n) or {}).get("links", {}).items())
             rows.append(kit.safe_row("%s: %s" % (n, WORD[v["status"]]), v["detail"] or "no detail", icon="Database", badges=[(WORD[v["status"]], TONE[v["status"]])], body="%s says %s for %s%s" % (n, WORD[v["status"]], v["name"], (": " + v["detail"]) if v["detail"] else ""),
                                      copy="%s: %s %s" % (n, v["name"], WORD[v["status"]]), s_status=WORD[v["status"]], s_sources=n, s_alerts=str(len([a for a in g["firing"] if a["source"] == n])), s_signal="-", **lk))
-        rows += [alert_row(a, srcmap) for a in g["firing"][:10]]
+        rows += [alert_row(a, srcmap) for a in g["firing"][:10]] + [alert_row(a, srcmap) for a in g["risks"][:5]]
         if pts:
             rows.append(kit.row("Trend, last 3 hours", "%s · %d points · Enter for the chart" % (lab or "series", len(pts)), icon="TrendingUp", nav={"view": "trend", "arg": g["key"]}, copy=False, body="A line chart of the source's time series.", s_status="-", s_sources=", ".join(trend), s_alerts="-", s_signal="-"))
         return rows

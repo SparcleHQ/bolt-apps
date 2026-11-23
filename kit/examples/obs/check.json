@@ -161,6 +161,17 @@
       "expect": {
         "min_rows": 4
       }
+    },
+    {
+      "name": "services risk: services with a standing risk",
+      "os": "macos",
+      "args": [
+        "services",
+        "risk"
+      ],
+      "expect": {
+        "min_rows": 3
+      }
     }
   ]
 }

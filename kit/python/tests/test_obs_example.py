@@ -263,6 +263,50 @@ ov = m.overview_rows(res, grp, False, False, [{'t': i, 'firing': i, 'crit': 0, '
 assert ov[2]['kpi_value'] is not None and ov[2]['trend'] == [0, 1, 2, 3] and ov[2]['delta'] == 3 and ov[1]['trend'] == [3, 2, 1, 0], (ov[2].get('trend'), ov[2].get('delta'))
 assert [r['nav']['view'] for r in ov if r.get('nav')][-4:] == ['chart', 'chart', 'table', 'overview']   # the last row is Check again
 print('RICH PANELS OK')
+
+# 24. Coroot's own Alerts and Risks pages
+RAL = [{'rule_name': 'Log errors', 'application_id': 'p:default:Deployment:front-end', 'severity': 'warning', 'summary': 'new error in the logs (35 messages)', 'opened_at': 1795415624000, 'resolved_at': None, 'manually_resolved_at': None, 'suppressed': False},
+       {'rule_name': 'Low disk space', 'application_id': 'p:default:StatefulSet:db', 'severity': 'critical', 'summary': '2 volumes over 80%', 'opened_at': '1795283195000', 'resolved_at': None},
+       {'rule_name': 'Old', 'application_id': 'p:default:Deployment:x', 'severity': 'warning', 'summary': 'resolved one', 'opened_at': 1795000000000, 'resolved_at': 1795000100000},
+       {'rule_name': 'Quiet', 'application_id': 'p:default:Deployment:y', 'severity': 'warning', 'summary': 'suppressed', 'opened_at': 1795000000000, 'suppressed': True}, {'nope': 1}]
+RRK = [{'key': {'category': 'Availability', 'type': 'unreplicated-database'}, 'application_id': 'p:default:StatefulSet:cart-db', 'severity': 'critical', 'availability': {'description': 'Redis is not replicated'}},
+       {'key': {'type': 'single-instance'}, 'application_id': 'p:default:Deployment:cart', 'severity': 'warning', 'availability': {'description': 'Single instance'}}, {'bad': 1}]
+ex = m.coroot_extras(RAL, RRK)
+assert [(a['name'], a['service'], a['severity'], a['state']) for a in ex if a['state'] == 'firing'] == [('Log errors', 'front-end', 'warn', 'firing'), ('Low disk space', 'db', 'crit', 'firing')], ex
+assert ex[0]['since'] == 1795415624 and ex[1]['since'] == 1795283195 and ex[0]['summary'].startswith('new error')
+rk = [a for a in ex if a['state'] == 'risk']
+assert [(a['name'], a['service'], a['severity'], a['summary']) for a in rk] == [('Risk: unreplicated database', 'cart-db', 'crit', 'Redis is not replicated'), ('Risk: single instance', 'cart', 'warn', 'Single instance')], rk
+# a risk never counts as firing and never turns a service red; the group keeps it apart
+g = m.join([R('cr', [S('cart-db', 'ok')], rk)], cfg, {})
+cd = [x for x in g if x['name'] == 'cart-db'][0]
+assert cd['status'] == 'ok' and not cd['firing'] and len(cd['risks']) == 1
+row = m.service_row(cd, {}); assert 'Risks' in row['body'] and 'Redis is not replicated' in row['body'] and '1 risk' in row['subtitle'], row['subtitle']
+# the alerts view does not list risks; the drill and the risk filter do
+res2 = [R('cr', [S('cart-db', 'ok'), S('front-end', 'warn')], ex)]; g2 = m.join(res2, cfg, {})
+assert all(a['state'] != 'risk' for a in [x for x in m.build('alerts', '', res2, g2, False, {}, {}) if False]) 
+al_rows = m.build('alerts', '', res2, g2, False, {}, {}); assert not any('Risk:' in r['title'] for r in al_rows), [r['title'] for r in al_rows]
+rl = m.build('services', 'risk', res2, g2, False, {}, {}); assert [r['title'] for r in rl if r.get('nav') and 'view' in r['nav']] == ['cart-db'] or 'cart-db' in [r['title'] for r in rl], [r['title'] for r in rl]
+dr = m.build('services', 'key.cartdb', res2, g2, False, {}, {}); assert any('Risk: unreplicated database' in r['title'] for r in dr), [r['title'] for r in dr]
+# an older Coroot without these endpoints: the adapter keeps working
+calls = []
+def fake_cr(cfg_, src_, hdr_, path, budget):
+    calls.append(path)
+    if path.endswith('/api/user'): return {'projects': [{'id': 'abc'}]}
+    if path.endswith('overview/applications'): return {'data': {'applications': [{'id': 'abc:default:Deployment:web', 'status': 'ok'}]}}
+    if path.endswith('/incidents'): return {'data': []}
+    raise m.Fail('notfound', 'answered 404')
+orig = m.http_json; m.http_json = fake_cr
+try: r = m.coroot_read(cfg, {'name': 'c', 'url': 'https://c.example.com', 'project': ''}, {}, 5)
+finally: m.http_json = orig
+assert [x['name'] for x in r['services']] == ['web'] and r['alerts'] == [] and any(c.endswith('/alerts') for c in calls) and any(c.endswith('overview/risks') for c in calls), calls
+def fake_cr_auth(cfg_, src_, hdr_, path, budget):
+    if path.endswith('/alerts'): raise m.Fail('auth', 'answered 401')
+    return fake_cr(cfg_, src_, hdr_, path, budget)
+m.http_json = fake_cr_auth
+try: m.coroot_read(cfg, {'name': 'c', 'url': 'https://c.example.com', 'project': ''}, {}, 5); assert False
+except m.Fail as e: assert e.kind == 'auth'
+finally: m.http_json = orig
+print('COROOT EXTRAS OK')
 print('ALL OK')
 '''
 

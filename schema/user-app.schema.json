@@ -2140,6 +2140,46 @@
         }
       }
     },
+    "bindActivate": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "What Enter or a click on one table row or tile does. Exactly one of nav or action. Bolt 0.1.184 and later; an older Bolt refuses the whole pack (a personal schema_version 1 file loads with a warning and the key does nothing). Set min_bolt_version 0.1.184 in bolt-app.json.",
+      "properties": {
+        "nav": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "view"
+          ],
+          "description": "Open a view of this app. arg is a {{row.x}} template that must give ONE plain token (letters, digits, _ . -, at most 64, not starting with - or . and no ..) when the item is pressed; a row whose token is not valid is not pressable.",
+          "properties": {
+            "view": {
+              "$ref": "#/$defs/name",
+              "description": "A key of presentation.views."
+            },
+            "arg": {
+              "$ref": "#/$defs/text"
+            }
+          }
+        },
+        "action": {
+          "$ref": "#/$defs/name",
+          "description": "The id of a declared url or composer action, run with the item's own row. A run or utility action cannot take an item's fields."
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "nav"
+          ]
+        },
+        {
+          "required": [
+            "action"
+          ]
+        }
+      ]
+    },
     "bindTable": {
       "type": "object",
       "additionalProperties": false,
@@ -2216,6 +2256,9 @@
         "totals_label": {
           "$ref": "#/$defs/name",
           "description": "Rich widgets."
+        },
+        "activate": {
+          "$ref": "#/$defs/bindActivate"
         }
       }
     },
@@ -2274,6 +2317,9 @@
         },
         "trend": {
           "$ref": "#/$defs/text"
+        },
+        "activate": {
+          "$ref": "#/$defs/bindActivate"
         }
       },
       "if": {

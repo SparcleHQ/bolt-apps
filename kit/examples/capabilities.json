@@ -396,6 +396,16 @@
       ]
     },
     {
+      "id": "pane.item_activate",
+      "group": "panes",
+      "name": "Press a table row or tile to open a view or run an action",
+      "status": "supported",
+      "example": "kit/examples/widget-gallery",
+      "snippet": "\"bind\": {\"sort\": {\"field\": \"commits\", \"dir\": \"desc\"}, \"activate\": {\"nav\": {\"view\": \"detail\", \"arg\": \"{{row.service}}\"}}}",
+      "test": "toolkit/test/activate-184.test.mjs",
+      "limit": "Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). Table and cards panes only. Exactly one of nav (a view of this app; arg is a {{row.x}} template that must give one plain token, else that item is not pressable) or action (a declared url or composer action; a run or utility action cannot take an item's fields). Enter, Space or a click on the item; Tab reaches it. A pressed row no longer copies itself."
+    },
+    {
       "id": "actions.footer",
       "group": "actions",
       "name": "Footer buttons (url, composer, utility)",

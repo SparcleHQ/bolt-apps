@@ -73,7 +73,7 @@ test('pane kinds are identical across schema, toolkit, rules file and ENGINE.md'
 
 // ---------------------------------------------------------------- engine config fields
 test('every config field ENGINE.md documents exists in engine.py, and every field engine.py reads is documented', () => {
-	const eng = read('kit/examples/portal-template/scripts/portal-template__engine.py');
+	const eng = read('kit/python/bolt_app_engine.py');
 	const E = new Set([...eng.matchAll(/\.get\("([a-z_]+)"/g), ...eng.matchAll(/\["([a-z_]+)"\]/g), ...eng.matchAll(/"([a-z_]+)" in /g)].map((m) => m[1]));
 	const md = read('kit/examples/ENGINE.md');
 	const region = (md.slice(md.indexOf('## Modes'), md.indexOf('## Files named in the command')) + md.slice(md.indexOf('## More options'), md.indexOf('## What backs your app'))).replace(/```[\s\S]*?```/g, '');
@@ -104,9 +104,9 @@ const known = new Set([...universe, ...BOLT_ONLY]);
 	const add = (o) => { if (Array.isArray(o)) o.forEach(add); else if (o && typeof o === 'object') Object.entries(o).forEach(([k, v]) => { known.add(k); add(v); }); else if (typeof o === 'string') known.add(o); };
 	add(RULES.keys); add(RULES.actions.kinds); add(RULES.right_widget.modes); add(RULES.widget_kinds); add(JSON.parse(read('schema/install-rules.json')).contract);
 	for (const n of ['bolt-app', 'user-app', 'boltpack-manifest', 'connector']) { const walk = (o) => { if (o && typeof o === 'object') for (const [k, v] of Object.entries(o)) { if (k === 'properties' && v && typeof v === 'object') Object.keys(v).forEach((x) => known.add(x)); walk(v); } }; walk(JSON.parse(read(`schema/${n}.schema.json`))); }
-	const py = tracked().filter((f) => /^kit\/python\/(bolt_app_kit|tests)\/.*\.py$|^kit\/examples\/(portal-template|script-template)\/scripts\/[a-z-]+\.py$/.test(f)).map(read).join('\n');
+	const py = tracked().filter((f) => /^kit\/python\/(bolt_app_kit|tests)\/.*\.py$|^kit\/python\/bolt_app_engine\.py$|^kit\/examples\/(portal-template|script-template)\/scripts\/[a-z-]+\.py$/.test(f)).map(read).join('\n');
 	for (const m of py.matchAll(/[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)+/g)) known.add(m[0]);   // any identifier in the kit, the engine or their tests, so a name in a doc must at least exist there
-	for (const m of read('kit/examples/portal-template/scripts/portal-template__engine.py').matchAll(/"([a-z_]+)"/g)) known.add(m[1]);
+	for (const m of read('kit/python/bolt_app_engine.py').matchAll(/"([a-z_]+)"/g)) known.add(m[1]);
 	for (const f of [...SRC, 'conformance/verify-cases.json', 'kit/conformance/cases.json', 'kit/examples/index.json', 'kit/examples/capabilities.json']) for (const m of read(f).matchAll(/[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)+/g)) known.add(m[0]);
 	for (const w of ['reads_clipboard', 'reads_launcher_input', 'copies_to_clipboard', 'runs_commands', 'agent_tools', 'opens_links', 'scripts_dir', 'bolt_app_kit', 'bolt_safenet']) known.add(w);
 }

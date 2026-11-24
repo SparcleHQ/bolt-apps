@@ -23,16 +23,25 @@ def engine_path(app):
 
 
 def load_engine(app="lookup-template"):
-    spec = importlib.util.spec_from_file_location("eng_" + app.replace("-", "_"), engine_path(app))
+    path = engine_path(app)
+    with open(path, encoding="utf-8") as f:
+        if "_THIN_ENTRY = True" in f.read(8000):   # a thin app: the engine is the one shared file
+            path = os.path.join(HERE, "..", "bolt_app_engine.py")
+    spec = importlib.util.spec_from_file_location("eng_" + app.replace("-", "_"), path)
     m = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(m)
     return m
 
 
+def _is_thin(path):
+    with open(path, encoding="utf-8") as f:
+        return "_THIN_ENTRY = True" in f.read(8000)
+
+
 def carry_engine(d, app):
     """What `bolt-apps pack` does for a thin app: the shared engine sits beside the entry as <app>__bolt_app_engine.py."""
     entry = os.path.join(d, app + "__engine.py")
-    if os.path.exists(entry) and "_THIN_ENTRY = True" in open(entry, encoding="utf-8").read(8000):
+    if os.path.exists(entry) and _is_thin(entry):
         shutil.copy(os.path.join(HERE, "..", "bolt_app_engine.py"), os.path.join(d, app + "__bolt_app_engine.py"))
 
 
@@ -313,24 +322,16 @@ class Filters(unittest.TestCase):
 
 
 class Identical(unittest.TestCase):
-    def test_all_engine_copies_are_byte_identical(self):
-        """Apps that still hold their own copy hold the same bytes; a thin app holds the one canonical entry; the shared engine is that copy
-        but for the line that names the files the command hashes."""
-        bodies, thin = set(), set()
-        for app in os.listdir(EX):
-            p = engine_path(app)
-            if os.path.exists(p):
-                with open(p, "rb") as f:
-                    body = f.read()
-                (thin if b"\n_THIN_ENTRY = True\n" in body[:8000] else bodies).add(body)
-        self.assertEqual(len(bodies), 1)
+    def test_every_engine_app_holds_the_one_thin_entry_and_no_private_copy(self):
+        """The engine is kept once (kit/python/bolt_app_engine.py). Every example app that uses it holds the canonical thin entry, byte for byte,
+        and none holds a copy of the engine: a copy would drift (bolt-apps upgrade-kit converts an old one)."""
         with open(os.path.join(HERE, "..", "bolt_app_engine_entry.py"), "rb") as f:
-            self.assertEqual(thin, {f.read()} if thin else set())
-        with open(os.path.join(HERE, "..", "bolt_app_engine.py"), encoding="utf-8") as f:
-            shared = f.read()
-        copy = next(iter(bodies)).decode("utf-8")
-        words = re.compile(r"^FILE_WORDS = .*$", re.M)
-        self.assertEqual(words.sub("", shared), words.sub("", copy))
+            entry = f.read()
+        found = [app for app in sorted(os.listdir(EX)) if os.path.exists(engine_path(app))]
+        self.assertGreater(len(found), 10)
+        for app in found:
+            with open(engine_path(app), "rb") as f:
+                self.assertEqual(f.read(), entry, app)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 // The shared engine, kept once at kit/python/bolt_app_engine.py. A thin app (scripts/<id>__engine.py that only loads it) has no copy of
 // the engine in its folder; Bolt installs every script into one folder and Bolt 181 has no shared engine, so the PACK must carry it:
 // lint counts it as the app's script and pack writes it into the pack as scripts/<id>__bolt_app_engine.py. One copy per pack, none in the app folder.
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -32,7 +33,7 @@ export function readScript(dir, name, id, enc) {
 }
 
 const FILE_WORDS = /^FILE_WORDS = .*$/m;
-/** `new` copies a template that still carries its own engine. When that copy is the shared engine (only the FILE_WORDS line may differ), swap it for the thin entry: a new app starts without a private copy. Returns true when swapped. */
+/** `new` (thin by default) copies a template that may still carry its own engine. When that copy is the shared engine (only the FILE_WORDS line may differ), swap it for the thin entry: a new app starts without a private copy. Returns true when swapped. */
 export function thinIfShared(dir, id) {
 	const p = path.join(dir, 'scripts', `${id}__engine.py`);
 	try {
@@ -43,7 +44,7 @@ export function thinIfShared(dir, id) {
 	} catch { return false; }
 }
 
-/** A template that is itself thin (acme-dash) is copied by `new` as a full engine unless --thin: the hand-run `python3 scripts/<id>__engine.py --emit-yaml` of the docs works for a plain copy. Returns true when expanded. */
+/** A thin template is copied by `new --full` as a full engine copy, so the hand-run `python3 scripts/<id>__engine.py --emit-yaml` works on it. Returns true when expanded. */
 export function expandThin(dir, id) {
 	const p = path.join(dir, 'scripts', `${id}__engine.py`);
 	try {
@@ -52,6 +53,11 @@ export function expandThin(dir, id) {
 		return true;
 	} catch { return false; }
 }
+
+/** sha256 of the exact bytes of the engine every private copy was made from (the engine as it was before it was kept once). Pinned: it must never be
+ *  derived from the live shared engine, which changes by design; an old copy stays recognisable however the engine moves on. */
+export const OLD_ENGINE_SHA256 = '2469e3865bdbdb75bb60e66ac08b71f6677fc0bfc1b80dae7011aab07f57f08c';
+export const isKnownOldEngine = (buf) => crypto.createHash('sha256').update(buf).digest('hex') === OLD_ENGINE_SHA256;
 
 /** True when the app folder holds a thin entry (any scripts/<id>__engine.py with the marker). */
 export function thinAppDir(dir) {

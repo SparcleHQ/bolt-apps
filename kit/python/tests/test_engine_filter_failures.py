@@ -15,7 +15,7 @@ import unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from test_cold_run_engine import cfg_of, fixtures_of, load_engine, run, EX  # noqa: E402
+from test_cold_run_engine import carry_engine, cfg_of, fixtures_of, load_engine, run, EX  # noqa: E402
 
 WORDS = ("C++", "café", "#12", "a/b")
 
@@ -66,6 +66,7 @@ class Live(unittest.TestCase):
             source = os.path.join(scripts, f)
             if os.path.isfile(source):
                 shutil.copy(source, os.path.join(d, f))
+        carry_engine(d, "portal-template")
         with open(os.path.join(d, "portal-template__config.json"), "w") as f:
             json.dump(self.cfg, f)
         return d

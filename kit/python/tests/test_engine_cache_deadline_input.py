@@ -240,6 +240,7 @@ class ChainBudget(unittest.TestCase):
         for f in os.listdir(scripts):
             if f.endswith((".py", ".json")):
                 shutil.copy(os.path.join(scripts, f), os.path.join(self.d, f))
+        carry_engine(self.d, "lookup-template")
         cfg = cfg_of("lookup-template")
         cfg["api"]["base_url"] = "http://localhost:%d" % self.srv.server_address[1]
         cfg["endpoints"]["geocode"]["path"] = "/v1/search?name={query}"

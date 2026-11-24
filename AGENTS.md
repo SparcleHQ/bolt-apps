@@ -183,7 +183,7 @@ the person to confirm when they drop the pack on the Bolt launcher or Bolt Apps.
 ```
 ./bolt-apps new portal-template my-app --dir ~/my-apps   # copy, rename, sample passes
 # edit ~/my-apps/my-app/scripts/my-app__config.json and fixtures.json (the `edit` list of the template in kit/examples/index.json)
-# then regenerate the app file:  cd ~/my-apps/my-app && python3 scripts/my-app__engine.py --emit-yaml > utilities/my-app.yaml
+# then regenerate the app file:  ./bolt-apps regen ~/my-apps/my-app   (an old app with its own engine copy: ./bolt-apps upgrade-kit ~/my-apps/my-app first)
 ./bolt-apps run ~/my-apps/my-app --sample     # the rows Bolt would show
 ./bolt-apps check ~/my-apps/my-app
 ./bolt-apps ship ~/my-apps/my-app              # lint --personal, check, pack (next version), verify
@@ -213,7 +213,7 @@ with the exact error text and the fix for each are in the "Rules Bolt enforces" 
 |---|---|
 | `scripts/<id>__config.json`: endpoints and field `map`, `stats`, `overview`, `views` (labels, tile, up to 5 fields, body, link, `children`), `api`, `cache` | `scripts/<id>__engine.py` (the same file in every app built from the template) |
 | `scripts/<id>__fixtures.json`: a sample response per endpoint, made-up data | `scripts/<id>__bolt_app_kit.py` and `bolt_app_kit.lock.json` (refresh only with `bolt-apps kit vendor --flat .`) |
-| `bolt-app.json`, `README.md`, `check.json` (one case per view you add), `golden/` | `utilities/<id>.yaml` by hand: regenerate it with `--emit-yaml` |
+| `bolt-app.json`, `README.md`, `check.json` (one case per view you add), `golden/` | `utilities/<id>.yaml` by hand: regenerate it with `./bolt-apps regen <app folder>` |
 
 Pitfalls: stay inside the view limit in [the rules table](kit/examples/QUICKSTART.md#4-the-rules-table) (use `views[].children` for a detail level, it
 reuses a view); no filter field in a row (the filter is the second word typed); scripts are flat

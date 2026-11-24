@@ -28,7 +28,7 @@ A dashboard that needs a share of a whole, several lines on one axis, a grid of 
 Run `./bolt-apps keygen` once before the first pack: it makes your signing key and never overwrites one.
 ```
 ./bolt-apps kit vendor --flat kit/examples/chart-types
-python3 kit/examples/chart-types/scripts/chart-types__engine.py --emit-yaml > kit/examples/chart-types/utilities/chart-types.yaml
+./bolt-apps regen kit/examples/chart-types
 ./bolt-apps check kit/examples/chart-types --update-golden
 ./bolt-apps lint kit/examples/chart-types --personal
 ./bolt-apps pack kit/examples/chart-types --personal --version 1.0.1 --out chart-types-1.0.1.boltpack

@@ -46,23 +46,54 @@
   },
   "overview": {
     "widget": {
-      "kind": "cards",
+      "kind": "stack",
       "mode": "list_data",
       "bind": {
-        "layout": "tiles",
-        "title": "{{row.kpi_label}}",
-        "value": "{{row.kpi_value}}",
-        "unit": "{{row.kpi_unit}}",
-        "delta": "{{row.delta}}",
-        "delta_label": "{{row.since}}",
-        "max": "{{row.kpi_max}}",
-        "trend": "{{row.trend}}",
-        "subtitle": "{{row.kpi_note}}",
-        "badge": "{{row.kpi_badge}}",
-        "footer": "{{row.kpi_foot}}",
-        "from": {
-          "set": "tiles"
-        }
+        "children": [
+          {
+            "kind": "cards",
+            "bind": {
+              "layout": "tiles",
+              "title": "{{row.kpi_label}}",
+              "value": "{{row.kpi_value}}",
+              "unit": "{{row.kpi_unit}}",
+              "subtitle": "{{row.kpi_note}}",
+              "from": {
+                "set": "tiles"
+              }
+            }
+          },
+          {
+            "kind": "chart",
+            "bind": {
+              "type": "bar",
+              "x": "label",
+              "y": "value",
+              "label": "Deploys by day",
+              "from": {
+                "set": "trend"
+              }
+            }
+          },
+          {
+            "kind": "table",
+            "bind": {
+              "columns": [
+                {
+                  "field": "name",
+                  "label": "Service"
+                },
+                {
+                  "field": "state",
+                  "label": "State"
+                }
+              ],
+              "from": {
+                "set": "services"
+              }
+            }
+          }
+        ]
       }
     },
     "rows": [
@@ -139,6 +170,106 @@
         },
         "extra": {
           "set": "tiles"
+        }
+      },
+      {
+        "title": "Mon deploys",
+        "subtitle": "a point from the set trend",
+        "icon": "line-chart",
+        "extra": {
+          "set": "trend",
+          "label": "Mon",
+          "value": 42
+        }
+      },
+      {
+        "title": "Tue deploys",
+        "subtitle": "a point from the set trend",
+        "icon": "line-chart",
+        "extra": {
+          "set": "trend",
+          "label": "Tue",
+          "value": 58
+        }
+      },
+      {
+        "title": "Wed deploys",
+        "subtitle": "a point from the set trend",
+        "icon": "line-chart",
+        "extra": {
+          "set": "trend",
+          "label": "Wed",
+          "value": 51
+        }
+      },
+      {
+        "title": "Thu deploys",
+        "subtitle": "a point from the set trend",
+        "icon": "line-chart",
+        "extra": {
+          "set": "trend",
+          "label": "Thu",
+          "value": 73
+        }
+      },
+      {
+        "title": "Fri deploys",
+        "subtitle": "a point from the set trend",
+        "icon": "line-chart",
+        "extra": {
+          "set": "trend",
+          "label": "Fri",
+          "value": 96
+        }
+      },
+      {
+        "title": "Sat deploys",
+        "subtitle": "a point from the set trend",
+        "icon": "line-chart",
+        "extra": {
+          "set": "trend",
+          "label": "Sat",
+          "value": 61
+        }
+      },
+      {
+        "title": "Sun deploys",
+        "subtitle": "a point from the set trend",
+        "icon": "line-chart",
+        "extra": {
+          "set": "trend",
+          "label": "Sun",
+          "value": 47
+        }
+      },
+      {
+        "title": "api-gateway",
+        "subtitle": "a row from the set services",
+        "icon": "activity",
+        "extra": {
+          "set": "services",
+          "name": "api-gateway",
+          "state": "up"
+        }
+      },
+      {
+        "title": "web-frontend",
+        "subtitle": "a row from the set services",
+        "icon": "activity",
+        "extra": {
+          "set": "services",
+          "name": "web-frontend",
+          "state": "up"
+        }
+      },
+      {
+        "title": "worker-queue",
+        "subtitle": "a row from the set services",
+        "icon": "activity",
+        "extra": {
+          "set": "services",
+          "name": "worker-queue",
+          "state": "degraded"
         }
       }
     ]

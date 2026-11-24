@@ -88,6 +88,9 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | A text-only lookup result (no empty tile) | supported | [lookup-template](lookup-template) | `kit/python/tests/test_cold_run2_engine.py` | tiles_above draws only for a row with a number, so rows with text only draw no tile. Give every text-only row a body. A tiles grid (cards, bind.layout tiles) over rows with no number is an error in check. From source and sample runs, not seen in a running Bolt. |
 | Shared kit from Bolt (Bolt 182) | partial | [unit-convert](unit-convert) | `toolkit/test/shared-kit.test.mjs` | Needs Bolt 182; on 181 the app runs its own vendored kit. Bolt offers BOLT_APP_SHARED_DIR only after a hash check against a table compiled into Bolt, and the loader checks the folder again; any doubt means the app's own copy. WANT_SHARED = True trusts whoever controls that variable (Bolt does). Not seen in a running Bolt; the engine is not shared; existing apps keep their own copy until their author reships with the new loader; only unit-convert has the loader so far. |
 | Engine kept once (thin app) | supported | [acme-dash](acme-dash) | `toolkit/test/upgrade-kit.test.mjs` | The pack carries the engine (`scripts/<id>__bolt_app_engine.py`), so it runs on every Bolt that runs script apps; the engine is not part of the shared kit, so Bolt 182 does not share it yet. A thin app cannot run its entry by hand outside the toolkit: use regen. upgrade-kit refuses an edited engine. Installing a converted app again asks the person to approve it again, because its command now names one more file. |
+| Named row sets: one script run feeds several panes | supported | [chart-types](chart-types) | `toolkit/test/rowsets-formats-184.test.mjs` | Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). A script row may carry set (^[a-z][a-z0-9_-]{0,23}$, not constructor or prototype); a pane with bind.from draws only that set's rows, narrowed by up to 3 where field-equals-value filters. Needs mode list_data on chart, table, cards, heatmap or image_grid. Tagged rows are not list rows and do not count in the selection. At most 12 sets per run; a row with an unusable set stays a list row. Only a pane that uses from splits rows. A run whose rows are all tagged has an empty list: add one untagged row (a title or a Back row) if the list should show something. |
+| Number formats: format, digits, locale | supported | [chart-types](chart-types) | `toolkit/test/rowsets-formats-184.test.mjs` | Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). format is number, percent, compact, bytes (1024 steps) or duration (the value is seconds); percent writes the raw number and adds % (0.42 shows 0.42%, send 42 for 42%); digits 0 to 6; locale is a language tag of at most 35 characters. On chart, cards (tile value) and gauge, and on table columns (which also take compact, bytes and duration in format). bytes and duration carry their own unit, so unit is not added. Heatmap and detail panes take none of them. |
+| Stack: several panes in one view | supported | [chart-types](chart-types) | `toolkit/test/stack-184.test.mjs` | Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (stack is a new pane kind, so an older Bolt refuses the whole app file for every schema_version; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). kind stack, mode list_data, bind.children: 1 to 6 parts, each {kind, mode, bind}; kind is cards, chart, table, heatmap, gauge, detail or markdown (no stack inside a stack); each bind is that kind's own bind, and bind.from gives a part its own row set. At most 1,000 rows are drawn across the parts. A part that fails to draw shows one plain card and the others stay. A part with a bad kind shows a note naming it. bind.activate (pane-item events) is not supported inside a stack part in this version and lint refuses it. |
 
 ## Snippets
 
@@ -567,4 +570,22 @@ WANT_SHARED = False   # in the loader block of the app's script: True runs Bolt'
 
 ```
 ./bolt-apps regen ~/my-apps/my-app   # an app made by new holds a short entry, not an engine copy; pack carries the engine once. An older app with its own copy: ./bolt-apps upgrade-kit ~/my-apps/my-app
+```
+
+### Named row sets: one script run feeds several panes (`pane.row_sets`)
+
+```
+{"kind": "cards", "bind": {"layout": "tiles", "title": "{{row.kpi_label}}", "value": "{{row.kpi_value}}", "unit": "{{row.kpi_unit}}", "subtitle": "{{row.kpi_note}}", "from": {"set": "tiles"}}}
+```
+
+### Number formats: format, digits, locale (`pane.number_formats`)
+
+```
+{"kind": "chart", "mode": "list_data", "bind": {"type": "area", "x": "label", "label": "Deploys and failures", "series": [{"y": "value", "label": "Deploys"}, {"y": "failed", "label": "Failed"}], "format": "compact", "digits": 1, "locale": "de-DE"}}
+```
+
+### Stack: several panes in one view (`pane.stack`)
+
+```
+{"kind": "stack", "mode": "list_data", "bind": {"children": [{"kind": "cards", "bind": {"layout": "tiles", "title": "{{row.kpi_label}}", "value": "{{row.kpi_value}}", "unit": "{{row.kpi_unit}}", "subtitle": "{{row.kpi_note}}", "from": {"set": "tiles"}}}, {"kind": "chart", "bind": {"type": "bar", "x": "label", "y": "value", "label": "Deploys by day", "from": {"set": "trend"}}}, {"kind": "table", "bind": {"columns": [{"field": "name", "label": "Service"}, {"field": "state", "label": "State"}], "from": {"set": "services"}}}]}}
 ```

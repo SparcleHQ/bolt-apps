@@ -273,6 +273,31 @@
     "unit": {
      "t": "text",
      "max": 200
+    },
+    "limit": {
+     "t": "textOrNumber",
+     "max": 4096,
+     "since": "0.1.184"
+    },
+    "limit_label": {
+     "t": "text",
+     "max": 200,
+     "since": "0.1.184"
+    },
+    "marker": {
+     "t": "map",
+     "since": "0.1.184",
+     "keys": {
+      "field": {
+       "t": "text",
+       "max": 200,
+       "required": true
+      },
+      "label": {
+       "t": "text",
+       "max": 200
+      }
+     }
     }
    },
    "table": {
@@ -320,6 +345,17 @@
       "unit": {
        "t": "text",
        "max": 200
+      },
+      "bars": {
+       "t": "bool",
+       "since": "0.1.184"
+      },
+      "mark": {
+       "t": "enum",
+       "values": [
+        "tone"
+       ],
+       "since": "0.1.184"
       }
      },
      "items": 40

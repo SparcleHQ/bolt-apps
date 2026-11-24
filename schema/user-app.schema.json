@@ -2274,6 +2274,30 @@
         },
         "trend": {
           "$ref": "#/$defs/text"
+        },
+        "visual": {
+          "enum": [
+            "meter",
+            "ring",
+            "bullet"
+          ],
+          "description": "How the level against max is drawn on a tile: meter (the default bar), ring or bullet. Bolt 0.1.184 and later; an older Bolt refuses the whole pack (a personal schema_version 1 file loads with a warning and the key does nothing). Set min_bolt_version 0.1.184 in bolt-app.json."
+        },
+        "target": {
+          "type": [
+            "string",
+            "number"
+          ],
+          "maxLength": 4096,
+          "description": "bullet only: the target mark, on the same min to max scale as the bar. A number or a {{row.x}} reference. Not a number: no mark. Bolt 0.1.184 and later."
+        },
+        "limit": {
+          "type": [
+            "string",
+            "number"
+          ],
+          "maxLength": 4096,
+          "description": "A dashed horizontal line on the tile sparkline, in the trend's own units. A number or a {{row.x}} reference. Not a number, or no sparkline: no line. Bolt 0.1.184 and later."
         }
       },
       "if": {

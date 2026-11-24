@@ -8,11 +8,13 @@
 
 All apps here run the same engine, kept as `scripts/<id>__engine.py` (every file in `scripts/` is named `<id>__<name>`). An app is `scripts/<id>__config.json` plus `scripts/<id>__fixtures.json`. Nothing else is edited.
 
-**The engine is kept once.** Its source is `kit/python/bolt_app_engine.py` in the toolkit. `./bolt-apps new <template> <id> --thin` makes an app that holds a short entry in `scripts/<id>__engine.py` (about 25 lines, the same for every app, never edited) that loads it; `./bolt-apps check`, `run` and `regen` find the engine themselves, and `./bolt-apps pack` writes it into the pack once, as `scripts/<id>__bolt_app_engine.py`, so the pack still carries everything the app runs (Bolt 181 has no shared engine, and every Bolt installs scripts into one folder). The command in the app file names that file too, so changing it asks the person to approve again. After editing a thin app's config, regenerate its app file with `./bolt-apps regen <app folder>` (the `python3 scripts/<id>__engine.py --emit-yaml` line above is for an app that holds its own copy: a thin entry finds the engine through the toolkit). An older app that still holds its own full copy of the engine in `scripts/<id>__engine.py` keeps working unchanged: nothing is removed, and plain `new` still copies the engine until the docs and hints that name the hand-run `--emit-yaml` line are moved to `regen` (the default will then become thin). Do not copy the engine into an app; if the engine lacks something, ask for it in the toolkit. Regenerate the app file after any change:
+**The engine is kept once.** Its source is `kit/python/bolt_app_engine.py` in the toolkit. `./bolt-apps new <template> <id>` makes an app (thin is the default; `--full` keeps a private copy) that holds a short entry in `scripts/<id>__engine.py` (about 25 lines, the same for every app, never edited) that loads it; `./bolt-apps check`, `run` and `regen` find the engine themselves, and `./bolt-apps pack` writes it into the pack once, as `scripts/<id>__bolt_app_engine.py`, so the pack still carries everything the app runs (Bolt 181 has no shared engine, and every Bolt installs scripts into one folder). The command in the app file names that file too, so changing it asks the person to approve again. After editing a thin app's config, regenerate its app file with `./bolt-apps regen <app folder>` (the `python3 scripts/<id>__engine.py --emit-yaml` line below is for an app that holds its own copy: a thin entry finds the engine through the toolkit). An older app that still holds its own full copy of the engine in `scripts/<id>__engine.py` keeps working unchanged. `./bolt-apps upgrade-kit <app folder>` (or `--all`) moves it to the thin entry: it replaces only that file and regenerates the app file (the command now also names the engine file), and it refuses, changing nothing, when the copy is not byte for byte the known engine or the app file was edited by hand. It is safe to run again. Do not copy the engine into an app; if the engine lacks something, ask for it in the toolkit. Regenerate the app file after any change:
 
 ```
-python3 scripts/<id>__engine.py --emit-yaml > utilities/<id>.yaml
+./bolt-apps regen <app folder>
 ```
+
+(An app that holds its own engine copy can still run `python3 scripts/<id>__engine.py --emit-yaml > utilities/<id>.yaml` by hand.)
 
 If the config is wrong (an unknown icon, a missing key, unreadable JSON), `--emit-yaml` prints the problem on screen (for an icon it also lists the valid names), writes nothing to stdout and exits 1. A line break in a value the app file holds (the app title or description, a form input, a lookup example, a widget, a field label) is such a problem too: the app file keeps each value on one line, so the message names the config key to rewrite. The shell still creates an empty `utilities/<id>.yaml` for `>`: an empty file means the command failed, so run it again without `> ...` to read the reason. `run`, `lint` and `check` say the same when they meet an app file that is empty or is not YAML.
 
@@ -132,7 +134,7 @@ A lookup row has Open (when its `url` renders to an https address) and Copy, and
 - `steps` + `rows` (a chain): each `rows[]` entry is drawn like an overview row, so its `copy` is ignored and Copy copies the row text. The check command warns about it (config_copy_ignored). Put the text you want copied in `title` or `subtitle`.
 
 ## Files named in the command
-The app file lists `<id>__config.json`, `<id>__fixtures.json` and `<id>__bolt_app_kit.py` after the script, so Bolt includes them in what the person approves and asks again if any changes. The engine ignores them as input.
+The app file lists `<id>__config.json`, `<id>__fixtures.json`, `<id>__bolt_app_kit.py` and, for a thin app, `<id>__bolt_app_engine.py` after the script, so Bolt includes them in what the person approves and asks again if any changes. The engine ignores them as input.
 
 ## Commands
 
@@ -282,7 +284,7 @@ Most apps ship live (`api.fixture_default` `false`). An app that is sample-only 
 | `check.json` | engine apps (views or lookup): one case per view or typed word, no expected text, no goldens. Other templates: the template's cases | add a case per view you add; add `expect.text_present` words your app prints; add `"golden": "golden/<name>.json"` to a case and run `check --update-golden` once your data is final |
 | `README.md` | a first line saying "Template text below"; the rest is the template's | rewrite it, delete the note |
 | `bolt-app.json` | `title` from the id; `summary`, `role`, `saves` say TODO (lint warns `listing_todo`) | one real line each; `permissions` are the real ids the template needs, check them |
-| `utilities/<id>.yaml` | generated from the config | regenerate after every config change: `python3 scripts/<id>__engine.py --emit-yaml > utilities/<id>.yaml` |
+| `utilities/<id>.yaml` | generated from the config | regenerate after every config change: `./bolt-apps regen <app folder>` |
 
 The TODO description is shipped: `utilities/<id>.yaml` carries `app.description` into the pack and the launcher shows it. `lint`, `pack --personal` and `ship` print `description_todo` and `listing_todo` as warnings (not errors: the pack still builds), and `ship` adds a plain line saying the description still says TODO. Rewrite it before you share the pack.
 

@@ -14,4 +14,4 @@ Row fields that are objects or arrays show as tree nodes. A `payload` that is no
 
 Sample data is invented. The app calls `https://api.example.com`, which does not exist: point `api.base_url` and `endpoints[].path` at your own API, or keep using fixture mode in `check.json`. See `../ENGINE.md` for every option.
 
-After editing `config.json`, rebuild the app file: `python3 scripts/json-tree-browser__engine.py --emit-yaml > utilities/json-tree-browser.yaml`. Drop the `.boltpack` on the Bolt launcher or Bolt Apps; the key never goes in the pack (see ENGINE.md, "Where to store keys").
+After editing `config.json`, rebuild the app file: `./bolt-apps regen <this app folder>`. Drop the `.boltpack` on the Bolt launcher or Bolt Apps; the key never goes in the pack (see ENGINE.md, "Where to store keys").

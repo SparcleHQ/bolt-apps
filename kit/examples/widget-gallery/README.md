@@ -7,7 +7,7 @@ Which right-hand panes a personal app can draw and the exact `bind` keys each ne
 Any app that shows data in a chart, table, tree, diff or detail pane. Pick the view closest to yours, copy its `views[]` entry and its fixture.
 
 ## Edit only these fields
-`scripts/widget-gallery__config.json`: `endpoints` (path and `map`), each view's `item.extra` (the row fields the pane reads), `widget.bind`. `scripts/widget-gallery__fixtures.json`: one raw response per endpoint. Then `python3 scripts/widget-gallery__engine.py --emit-yaml > utilities/widget-gallery.yaml` and run check. Every option is in `../ENGINE.md`.
+`scripts/widget-gallery__config.json`: `endpoints` (path and `map`), each view's `item.extra` (the row fields the pane reads), `widget.bind`. `scripts/widget-gallery__fixtures.json`: one raw response per endpoint. Then `./bolt-apps regen <this app folder>` and run check. Every option is in `../ENGINE.md`.
 
 ## Pane contract (read from the launcher source)
 | kind | mode | bind keys | row fields it reads |

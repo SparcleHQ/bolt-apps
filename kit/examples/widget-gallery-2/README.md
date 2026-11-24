@@ -35,7 +35,7 @@ A gallery, a palette, an avatar list, a screenshot index. Replace `endpoints.swa
 Run `./bolt-apps keygen` once before the first pack: it makes your signing key and never overwrites one.
 ```
 ./bolt-apps kit vendor --flat kit/examples/widget-gallery-2
-python3 kit/examples/widget-gallery-2/scripts/widget-gallery-2__engine.py --emit-yaml > kit/examples/widget-gallery-2/utilities/widget-gallery-2.yaml
+./bolt-apps regen kit/examples/widget-gallery-2
 ./bolt-apps check kit/examples/widget-gallery-2 --update-golden
 ./bolt-apps lint kit/examples/widget-gallery-2 --personal
 ./bolt-apps pack kit/examples/widget-gallery-2 --personal --version 1.0.1 --out widget-gallery-2-1.0.1.boltpack

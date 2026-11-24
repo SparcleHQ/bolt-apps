@@ -23,10 +23,10 @@ const errs = (y, opts) => P(y, opts).filter((p) => p.level !== 'warning').map((p
 
 test('rules: the three tile keys carry since 0.1.184 and the old cards keys carry none', () => {
 	const c = RULES.right_widget.bind.cards;
-	assert.deepEqual(c.visual, { t: 'enum', values: ['meter', 'ring', 'bullet'], since: SINCE });
+	assert.deepEqual(c.visual, { t: 'enum', values: ['meter', 'ring', 'bullet', 'number', 'spark', 'strip', 'stack'], since: SINCE });
 	assert.deepEqual(c.target, { t: 'textOrNumber', max: 4096, since: SINCE });
 	assert.deepEqual(c.limit, { t: 'textOrNumber', max: 4096, since: SINCE });
-	for (const [k, v] of Object.entries(c)) if (!['visual', 'target', 'limit'].includes(k)) assert.equal(v.since, undefined, k);
+	for (const [k, v] of Object.entries(c)) if (!['visual', 'visual_from', 'target', 'limit'].includes(k)) assert.equal(v.since, undefined, k);
 	assert.equal(RULES.right_widget.bind.entity_preview.tiles_above.keys.visual, undefined, 'tiles_above does not read them yet');
 });
 

@@ -13,7 +13,8 @@
     "kpi_foot": "sample data",
     "kpi_badge": "BELOW OBJECTIVE",
     "copy_text": "- SLO, last 30 days - plain meter. Objective 99.5%",
-    "open_url": ""
+    "open_url": "",
+    "kpi_visual": "meter"
   },
   {
     "title": "p99 latency",
@@ -40,7 +41,8 @@
       412
     ],
     "open_url": "",
-    "limit": 450
+    "limit": 450,
+    "kpi_visual": "spark"
   },
   {
     "title": "Error budget by service",
@@ -59,7 +61,8 @@
     "kpi_foot": "",
     "kpi_badge": "HEALTHY",
     "copy_text": "",
-    "open_url": ""
+    "open_url": "",
+    "kpi_visual": "ring"
   },
   {
     "title": "CPU against limit by service",
@@ -78,7 +81,9 @@
     "kpi_foot": "",
     "kpi_badge": "HEALTHY",
     "copy_text": "",
-    "open_url": ""
+    "open_url": "",
+    "kpi_visual": "bullet",
+    "target": 44.5
   },
   {
     "title": "Services",
@@ -97,7 +102,18 @@
     "kpi_foot": "",
     "kpi_badge": "WARNING",
     "copy_text": "",
-    "open_url": ""
+    "trend": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      2
+    ],
+    "open_url": "",
+    "kpi_visual": "strip"
   },
   {
     "title": "Alerts",
@@ -116,6 +132,12 @@
     "kpi_foot": "",
     "kpi_badge": "CRITICAL",
     "copy_text": "",
-    "open_url": ""
+    "trend": [
+      1,
+      2,
+      1
+    ],
+    "open_url": "",
+    "kpi_visual": "stack"
   }
 ]

@@ -322,7 +322,7 @@
       "additionalProperties": false,
       "required": ["kind"],
       "properties": {
-        "kind": { "enum": ["card", "map", "image", "date", "calc", "color", "entity", "entity_preview", "weather", "markdown", "chart", "table", "cards", "detail", "json_tree", "diff", "image_grid", "heatmap", "gauge", "stack"] },
+        "kind": { "enum": ["card", "map", "image", "date", "calc", "color", "entity", "entity_preview", "weather", "markdown", "chart", "table", "cards", "detail", "json_tree", "diff", "image_grid", "heatmap", "gauge"] },
         "mode": { "enum": ["selected_row", "list_data"] },
         "bind": { "type": "object" },
         "links_for_type": { "$ref": "#/$defs/CanonicalType" }

@@ -117,7 +117,17 @@ MAX_RESULT = 1e30
 ABSOLUTE_ZERO_C = {"C": -273.15, "F": -459.67, "K": 0.0}   # the lowest value of each temperature unit
 
 
-load_json = kit.json_loader(HERE, _PFX)
+def load_json(name):
+    with open(os.path.join(HERE, _PFX + name), "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def split_args(argv):
+    a = list(argv[1:])
+    n = len(FILE_WORDS)
+    if len(a) >= n and [os.path.basename(x) for x in a[-n:]] == list(FILE_WORDS):
+        a = a[:-n]
+    return a
 
 
 def kind_of(cfg, unit):
@@ -221,8 +231,22 @@ def main(argv):
     if "--emit-yaml" in argv:
         sys.stdout.write(emit_yaml(cfg))
         return
-    kit.emit(build(cfg, kit.split_args(argv, FILE_WORDS, keep_dash=True)))
+    kit.emit(build(cfg, split_args(argv)))
+
+
+def run(argv):
+    try:
+        main(argv)
+    except SystemExit:
+        raise
+    except kit.KitError as e:
+        kit.emit([kit.error_row("Row contract: %s" % kit.clean_text(str(e), 200), title="This app could not run")])
+    except Exception as e:   # one plain row: never a traceback
+        if os.environ.get("BOLT_APP_DEBUG"):
+            import traceback
+            traceback.print_exc()
+        kit.emit([kit.error_row("%s while building the rows. Run the script in a terminal to see why." % e.__class__.__name__)])
 
 
 if __name__ == "__main__":
-    kit.run_guarded(main, sys.argv, debug=bool(os.environ.get("BOLT_APP_DEBUG")))
+    run(sys.argv)

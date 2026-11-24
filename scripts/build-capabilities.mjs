@@ -17,15 +17,10 @@ const cell = (s) => String(s).replace(/\|/g, '\\|').replace(/\n/g, ' ');
 export function render() {
 	const out = ['# What a Bolt App can do', '', '_Generated from `capabilities.json` by `scripts/build-capabilities.mjs`: edit the JSON, not this file._', '',
 		'One row per capability. Status is derived from the code and `schema/bolt-rules.json`. Nothing here is verified in real Bolt yet. The sandbox is not shipped: a personal script runs as you. To start, read [QUICKSTART.md](QUICKSTART.md); the limits are in its one rules table.', '',
-		'| Capability | Status | Since | Older Bolt | Example | Proven by | Limit |', '|---|---|---|---|---|---|---|'];
-	for (const r of caps.rows) out.push(`| ${cell(r.name)} | ${r.status} | ${r.since} | ${cell(r.older_bolt)} | ${r.example ? `[${path.basename(r.example)}](${path.relative('kit/examples', r.example)})` : (r.example_note || 'none')} | \`${r.test}\` | ${cell(resolve(r.limit))} |`);
-	out.push('', '## Pick the version first', '', 'Use the oldest Bolt version that has what you need, and set `min_bolt_version` in `bolt-app.json` to it. A row\'s Since column is the first Bolt that reads it; Older Bolt says what happens on a Bolt before that.', '');
-	const vers = [...new Set(caps.rows.filter((r) => /^0\.1\.\d+$/.test(r.since)).map((r) => r.since))].sort();
-	for (const v of vers) out.push(`- **${v}**: ${caps.rows.filter((r) => r.since === v && r.status !== 'not supported').map((r) => r.name).join('; ')}`);
-	out.push('', '## Do not use in this version', '', 'These are named so nobody builds on them. Lint refuses each one.', '');
-	for (const r of caps.rows.filter((x) => x.status === 'reserved')) out.push(`- ${r.name}: ${r.limit}`);
+		'| Capability | Status | Example | Proven by | Limit |', '|---|---|---|---|---|'];
+	for (const r of caps.rows) out.push(`| ${cell(r.name)} | ${r.status} | ${r.example ? `[${path.basename(r.example)}](${path.relative('kit/examples', r.example)})` : (r.example_note || 'none')} | \`${r.test}\` | ${cell(resolve(r.limit))} |`);
 	out.push('', '## Snippets', '');
-	for (const r of caps.rows) if (r.status !== 'not supported' && r.status !== 'reserved') out.push(`### ${r.name} (\`${r.id}\`)`, '', '```', r.snippet, '```', '');
+	for (const r of caps.rows) if (r.status !== 'not supported') out.push(`### ${r.name} (\`${r.id}\`)`, '', '```', r.snippet, '```', '');
 	return out.join('\n').replace(/\n+$/, '\n');
 }
 if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url))) {

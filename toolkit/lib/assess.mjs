@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseYaml, Unreadable, get, str } from './yamlsubset.mjs';
-import { RULES, gateProblem, structureProblems, bindProblems, envProblems, timeoutProblems, httpProblems, actionProblems, paneNavProblems, activateProblems } from './boltrules.mjs';
+import { RULES, gateProblem, structureProblems, bindProblems, envProblems, timeoutProblems, httpProblems, actionProblems, paneNavProblems } from './boltrules.mjs';
 export function httpsLiteralHost(t) {
 	const rest = String(t).trim();
 	if (!rest.startsWith('https://')) return null;
@@ -121,7 +121,7 @@ export const MAX_VIEWS = 8;                                   // the launcher MA
 const VIEW_NAME = /^[a-z][a-z0-9_-]{0,23}$/;                  // the launcher name_re
 export const NAV_ARG_RE = /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}$/; // the launcher NAV_ARG_RE
 export const isNavToken = (s) => typeof s === 'string' && NAV_ARG_RE.test(s) && !s.includes('..'); // the launcher isNavArg
-export const RIGHT_WIDGET_KINDS = ['card', 'map', 'image', 'calc', 'color', 'weather', 'date', 'markdown', 'entity_preview', 'chart', 'table', 'cards', 'detail', 'json_tree', 'diff', 'image_grid', 'heatmap', 'gauge', 'stack']; // the launcher (heatmap and gauge from Bolt 182)
+export const RIGHT_WIDGET_KINDS = ['card', 'map', 'image', 'calc', 'color', 'weather', 'date', 'markdown', 'entity_preview', 'chart', 'table', 'cards', 'detail', 'json_tree', 'diff', 'image_grid', 'heatmap', 'gauge']; // the launcher (heatmap and gauge from Bolt 182)
 const RIGHT_WIDGET_MODES = ['selected_row', 'list_data'];     // the launcher
 export const NO_APP_DATA_KINDS = ['image', 'color', 'weather', 'date', 'calc']; // the launcher NO_APP_DATA
 const BIND_NONE = ['map', 'image', 'calc', 'color', 'weather', 'date']; // the launcher BIND_NONE: these panes read nothing from bind
@@ -177,11 +177,6 @@ export function launcherRules(root, opts = {}) {
 		if (NO_APP_DATA_KINDS.includes(kind)) W('right_widget_no_data', `${p}.kind "${kind}" passes validation but Bolt shows "This app asks for a ${kind} pane, which cannot show app data" instead of your rows. Use table, detail, cards or chart${kind === 'image' ? ' (image_grid for pictures)' : ''}`);
 		const bad = (code, m) => (strict ? E : W)(code, strict ? m : `${m} (a warning for schema_version 1, an error from schema_version 2)`);
 		if (BIND_NONE.includes(kind) && bind && bind.t === 'm' && bind.entries.length) bad('right_widget_bind_unread', `${p}.bind.${bind.entries[0].key}: a ${kind} pane reads nothing from bind; remove the key${kind === 'map' ? ' (the map takes the launcher\'s own state; use an "Open in Maps" url action for a place)' : ''}`);
-		// stack (Bolt 0.1.184) is one pane that draws the whole list and hands each part its rows
-		if (kind === 'stack' && mode !== 'list_data') bad('right_widget_bind_unread', `${p}.mode: a stack needs mode: list_data`);
-		if (kind === 'stack' && !(bind && bind.t === 'm')) bad('right_widget_bind_unread', `${p}.bind.children: is required for a stack`);
-		// bind.from (a named row set, Bolt 0.1.184) feeds a pane that draws the whole list: the launcher refuses it on a selected_row pane
-		if (bind && bind.t === 'm' && get(bind, 'from') && mode !== 'list_data') bad('right_widget_bind_unread', `${p}.bind.from: needs mode: list_data (a selected_row pane reads one list row, never a row set)`);
 		// Every other kind: keys, types, enums and caps from the launcher's table (schema/bolt-rules.json). Strict for schema_version 2 and for every pack.
 		if (!BIND_NONE.includes(kind) && bind && bind.t === 'm') for (const bp of bindProblems(kind, bind, `${p}.bind`, { minBolt: opts.minBolt, minBoltKnown: opts.minBoltKnown })) {
 			if (bp.gate || bp.level === 'warning' || bp.code === 'bind_too_many_refs') (bp.level === 'warning' ? W : E)(bp.code, bp.message);   // a gate on a newer Bolt, or a plain warning, is never softened or hardened by schema_version
@@ -194,7 +189,7 @@ export function launcherRules(root, opts = {}) {
 		if (cm && cm.t === 'm' && cm.entries.length) for (const o of OS3) if (!cm.entries.some((e) => e.key === o) && !opts.platformsUnknown && (!Array.isArray(opts.platforms) || opts.platforms.includes(o))) W('command_os_missing', `bridge.command has no ${o} entry, so the app has nothing to run on ${o}${Array.isArray(opts.platforms) ? '' : '. Add one, or list only the systems it supports in "platforms" in bolt-app.json'}`);
 	}
 	// The launcher's structure, env, timeout, loopback, action and nav rules (schema/bolt-rules.json). Each is an error because the launcher refuses the file.
-	for (const f of [structureProblems, envProblems, timeoutProblems, httpProblems, actionProblems, paneNavProblems, activateProblems]) for (const pr of f(root)) (pr.level === 'warning' ? W : E)(pr.code, pr.message);
+	for (const f of [structureProblems, envProblems, timeoutProblems, httpProblems, actionProblems, paneNavProblems]) for (const pr of f(root)) (pr.level === 'warning' ? W : E)(pr.code, pr.message);
 	out.push(...transformProblems(root));   // these carry the line of the step or pattern they are about
 	return out;
 }
@@ -226,7 +221,7 @@ export function transformProblems(root) {
 	return out;
 }
 // Codes assessYaml can return as problems: verify takes these from checkManifests, so the folder view drops lint's copy.
-export const ASSESS_CODES = new Set(['transform_pipe_count', 'transform_step_unknown', 'recognize_patterns_count', 'recognize_regex_too_long', 'unknown_field', 'missing_field', 'bind_invalid', 'env_passthrough_max', 'env_name', 'env_secret_name', 'env_not_allowed', 'env_inline_value', 'timeout_default', 'timeout_out_of_range', 'http_port', 'http_port_reserved', 'http_host_not_loopback', 'http_method_not_allowed', 'http_parse', 'action_id', 'action_kind', 'action_field', 'run_action_template', 'action_primary', 'action_icon', 'action_label_reserved', 'action_url', 'action_url_internal', 'action_url_port', 'action_admin_only', 'input_type', 'bridge_cwd', 'env_passthrough_duplicate', 'http_header', 'view_arg_index', 'scripts_dir_form', 'runtime_not_allowed', 'action_not_allowed', 'views_too_many', 'view_name_invalid', 'view_arg_missing', 'view_arg_unknown', 'view_arg_not_query_word', 'view_arg_lead_default', 'view_arg_without_views', 'command_os_missing', 'right_widget_no_data', 'right_widget_kind_invalid', 'right_widget_bind_unread', 'run_action_template', 'bind_needs_newer_bolt', 'bind_locale_chars', 'bind_too_many_refs', 'hero_src_not_picture']);
+export const ASSESS_CODES = new Set(['transform_pipe_count', 'transform_step_unknown', 'recognize_patterns_count', 'recognize_regex_too_long', 'unknown_field', 'missing_field', 'bind_invalid', 'env_passthrough_max', 'env_name', 'env_secret_name', 'env_not_allowed', 'env_inline_value', 'timeout_default', 'timeout_out_of_range', 'http_port', 'http_port_reserved', 'http_host_not_loopback', 'http_method_not_allowed', 'http_parse', 'action_id', 'action_kind', 'action_field', 'run_action_template', 'action_primary', 'action_icon', 'action_label_reserved', 'action_url', 'action_url_internal', 'action_url_port', 'action_admin_only', 'input_type', 'bridge_cwd', 'env_passthrough_duplicate', 'http_header', 'view_arg_index', 'scripts_dir_form', 'runtime_not_allowed', 'action_not_allowed', 'views_too_many', 'view_name_invalid', 'view_arg_missing', 'view_arg_unknown', 'view_arg_not_query_word', 'view_arg_lead_default', 'view_arg_without_views', 'command_os_missing', 'right_widget_no_data', 'right_widget_kind_invalid', 'right_widget_bind_unread', 'run_action_template', 'bind_needs_newer_bolt', 'bind_too_many_refs', 'hero_src_not_picture']);
 export const MAX_HASHED_FILE_BYTES = 2 * 1024 * 1024;         // the launcher MAX_HASHED_FILE_BYTES
 const WORDS = [
 	[/^runs_commands$/, 'run programs on your computer'], [/^network:localhost:(\d+)$/, 'talk to a service on this computer (port $1)'],

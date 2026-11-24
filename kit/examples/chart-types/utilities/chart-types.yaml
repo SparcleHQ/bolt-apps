@@ -38,6 +38,8 @@ presentation:
       subtitle: "{{row.kpi_note}}"
       badge: "{{row.kpi_badge}}"
       footer: "{{row.kpi_foot}}"
+      from:
+        set: "tiles"
   views:
     overview: {}
     pie_rows:
@@ -80,6 +82,9 @@ presentation:
           series:
             - { y: "value", label: "Deploys" }
             - { y: "failed", label: "Failed" }
+          format: "compact"
+          digits: 1
+          locale: "de-DE"
     heat_rows:
       right_widget:
         kind: heatmap

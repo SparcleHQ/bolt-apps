@@ -6,7 +6,7 @@
   "fixture": true,
   "cases": [
     {
-      "name": "overview dashboard",
+      "name": "overview: links are list rows, tiles are the row set tiles (Bolt 184)",
       "os": "macos",
       "args": [
         "overview"
@@ -38,7 +38,7 @@
       "golden": "golden/multi-rows.json"
     },
     {
-      "name": "area with bind.series (Bolt 182)",
+      "name": "area with bind.series, format, digits and locale (Bolt 184)",
       "os": "macos",
       "args": [
         "area_rows"

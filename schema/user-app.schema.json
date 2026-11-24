@@ -2165,6 +2165,62 @@
             }
           },
           "description": "Labelled vertical marks, one per row whose field cell is set (not empty, 0, false or null), at most 8, row data only (not with values). label names the field that gives the text, else the cell itself. Bolt 0.1.184 and later."
+        },
+        "format": {
+          "enum": [
+            "number",
+            "percent",
+            "compact",
+            "bytes",
+            "duration"
+          ],
+          "description": "How numbers are written. bytes uses 1024 steps and duration reads seconds; both carry their own unit. Bolt 0.1.184 and later; set min_bolt_version 0.1.184."
+        },
+        "digits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6,
+          "description": "Most fraction digits. Bolt 0.1.184 and later."
+        },
+        "locale": {
+          "type": "string",
+          "maxLength": 35,
+          "description": "A language tag such as de-DE for digit grouping. Bolt 0.1.184 and later."
+        },
+        "from": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "set"
+          ],
+          "properties": {
+            "set": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,23}$",
+              "not": {
+                "enum": [
+                  "constructor",
+                  "prototype",
+                  "__proto__"
+                ]
+              },
+              "description": "Which named row set to draw. A script row joins a set with its own set field; tagged rows are not list rows."
+            },
+            "where": {
+              "type": "object",
+              "maxProperties": 3,
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean"
+                ],
+                "maxLength": 200
+              },
+              "description": "Up to 3 field-equals-value filters. A row without the field is left out."
+            }
+          },
+          "description": "Draw one named row set instead of the list rows. Needs mode: list_data. Bolt 0.1.184 and later; set min_bolt_version 0.1.184 in bolt-app.json."
         }
       }
     },
@@ -2212,9 +2268,12 @@
                   "number",
                   "percent",
                   "currency",
-                  "date"
+                  "date",
+                  "compact",
+                  "bytes",
+                  "duration"
                 ],
-                "description": "Rich widgets."
+                "description": "Rich widgets. compact, bytes and duration need Bolt 0.1.184 or later (set min_bolt_version 0.1.184)."
               },
               "unit": {
                 "$ref": "#/$defs/name"
@@ -2228,6 +2287,17 @@
                   "tone"
                 ],
                 "description": "A glyph before the cell text, read from the cell as a tone word (ok, warn, error and so on), by shape not colour. Bolt 0.1.184 and later."
+              },
+              "digits": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 6,
+                "description": "Most fraction digits. Bolt 0.1.184 and later."
+              },
+              "locale": {
+                "type": "string",
+                "maxLength": 35,
+                "description": "A language tag such as de-DE for digit grouping. Bolt 0.1.184 and later."
               }
             }
           }
@@ -2254,6 +2324,41 @@
         "totals_label": {
           "$ref": "#/$defs/name",
           "description": "Rich widgets."
+        },
+        "from": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "set"
+          ],
+          "properties": {
+            "set": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,23}$",
+              "not": {
+                "enum": [
+                  "constructor",
+                  "prototype",
+                  "__proto__"
+                ]
+              },
+              "description": "Which named row set to draw. A script row joins a set with its own set field; tagged rows are not list rows."
+            },
+            "where": {
+              "type": "object",
+              "maxProperties": 3,
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean"
+                ],
+                "maxLength": 200
+              },
+              "description": "Up to 3 field-equals-value filters. A row without the field is left out."
+            }
+          },
+          "description": "Draw one named row set instead of the list rows. Needs mode: list_data. Bolt 0.1.184 and later; set min_bolt_version 0.1.184 in bolt-app.json."
         }
       }
     },
@@ -2336,6 +2441,62 @@
           ],
           "maxLength": 4096,
           "description": "A dashed horizontal line on the tile sparkline, in the trend's own units. A number or a {{row.x}} reference. Not a number, or no sparkline: no line. Bolt 0.1.184 and later."
+        },
+        "format": {
+          "enum": [
+            "number",
+            "percent",
+            "compact",
+            "bytes",
+            "duration"
+          ],
+          "description": "How numbers are written. bytes uses 1024 steps and duration reads seconds; both carry their own unit. Bolt 0.1.184 and later; set min_bolt_version 0.1.184."
+        },
+        "digits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6,
+          "description": "Most fraction digits. Bolt 0.1.184 and later."
+        },
+        "locale": {
+          "type": "string",
+          "maxLength": 35,
+          "description": "A language tag such as de-DE for digit grouping. Bolt 0.1.184 and later."
+        },
+        "from": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "set"
+          ],
+          "properties": {
+            "set": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,23}$",
+              "not": {
+                "enum": [
+                  "constructor",
+                  "prototype",
+                  "__proto__"
+                ]
+              },
+              "description": "Which named row set to draw. A script row joins a set with its own set field; tagged rows are not list rows."
+            },
+            "where": {
+              "type": "object",
+              "maxProperties": 3,
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean"
+                ],
+                "maxLength": 200
+              },
+              "description": "Up to 3 field-equals-value filters. A row without the field is left out."
+            }
+          },
+          "description": "Draw one named row set instead of the list rows. Needs mode: list_data. Bolt 0.1.184 and later; set min_bolt_version 0.1.184 in bolt-app.json."
         }
       },
       "if": {
@@ -2429,6 +2590,41 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 8
+        },
+        "from": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "set"
+          ],
+          "properties": {
+            "set": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,23}$",
+              "not": {
+                "enum": [
+                  "constructor",
+                  "prototype",
+                  "__proto__"
+                ]
+              },
+              "description": "Which named row set to draw. A script row joins a set with its own set field; tagged rows are not list rows."
+            },
+            "where": {
+              "type": "object",
+              "maxProperties": 3,
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean"
+                ],
+                "maxLength": 200
+              },
+              "description": "Up to 3 field-equals-value filters. A row without the field is left out."
+            }
+          },
+          "description": "Draw one named row set instead of the list rows. Needs mode: list_data. Bolt 0.1.184 and later; set min_bolt_version 0.1.184 in bolt-app.json."
         }
       }
     },
@@ -2489,6 +2685,41 @@
         },
         "unit": {
           "$ref": "#/$defs/name"
+        },
+        "from": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "set"
+          ],
+          "properties": {
+            "set": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,23}$",
+              "not": {
+                "enum": [
+                  "constructor",
+                  "prototype",
+                  "__proto__"
+                ]
+              },
+              "description": "Which named row set to draw. A script row joins a set with its own set field; tagged rows are not list rows."
+            },
+            "where": {
+              "type": "object",
+              "maxProperties": 3,
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean"
+                ],
+                "maxLength": 200
+              },
+              "description": "Up to 3 field-equals-value filters. A row without the field is left out."
+            }
+          },
+          "description": "Draw one named row set instead of the list rows. Needs mode: list_data. Bolt 0.1.184 and later; set min_bolt_version 0.1.184 in bolt-app.json."
         }
       }
     },
@@ -2558,6 +2789,27 @@
               }
             }
           }
+        },
+        "format": {
+          "enum": [
+            "number",
+            "percent",
+            "compact",
+            "bytes",
+            "duration"
+          ],
+          "description": "How numbers are written. bytes uses 1024 steps and duration reads seconds; both carry their own unit. Bolt 0.1.184 and later; set min_bolt_version 0.1.184."
+        },
+        "digits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6,
+          "description": "Most fraction digits. Bolt 0.1.184 and later."
+        },
+        "locale": {
+          "type": "string",
+          "maxLength": 35,
+          "description": "A language tag such as de-DE for digit grouping. Bolt 0.1.184 and later."
         }
       }
     }

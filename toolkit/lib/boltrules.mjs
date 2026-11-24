@@ -53,6 +53,30 @@ function bindVal(node, spec, where, out, ctx = {}) {
 	else if (t === 'textList') { if (!node || node.t !== 'l') bad(`must be a list, got ${kindWord(node?.t)}`); else { if (node.items.length > spec.items) bad(`has more than ${spec.items} entries`); node.items.forEach((x, i) => { if (!x || x.t !== 's' || [...x.v].length > spec.max) bad(`entry ${i} must be text of at most ${spec.max} characters`); }); } }
 	else if (t === 'list') { if (!node || node.t !== 'l') bad(`must be a list, got ${kindWord(node?.t)}`); else { if (node.items.length > spec.items) bad(`has more than ${spec.items} entries`); node.items.forEach((x, i) => bindMap(x, spec.keys, `${where}[${i}]`, out, ctx)); } }
 	else if (t === 'map') bindMap(node, spec.keys, where, out, ctx);
+	else if (t === 'rowSet') rowSetProblems(node, where, out);
+}
+// bind.from (Bolt 0.1.184): {set, where?}. The same closed rules the launcher applies when it loads the app file.
+const SET_NAME = /^[a-z][a-z0-9_-]{0,23}$/, RESERVED_NAMES = new Set(['constructor', 'prototype', '__proto__', 'toString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable', 'toLocaleString', '__defineGetter__', '__defineSetter__', '__lookupGetter__', '__lookupSetter__']);
+function rowSetProblems(node, where, out) {
+	const bad = (m) => out.push({ code: 'bind_invalid', message: `${where}: ${m}` });
+	if (!node || node.t !== 'm') return bad(`must be a mapping, got ${kindWord(node?.t)}`);
+	for (const e of node.entries) if (e.key !== 'set' && e.key !== 'where') return out.push({ code: 'bind_unknown_key', message: `${where}.${e.key}: not a key a row set reads. Allowed: set, where` });
+	const set = get(node, 'set')?.value;
+	if (!set) return bad('set is required');
+	if (set.t !== 's') return bad(`set must be text, got ${kindWord(set.t)}`);
+	if (!SET_NAME.test(set.v)) return bad(`set "${set.v}" must match ^[a-z][a-z0-9_-]{0,23}$`);
+	if (RESERVED_NAMES.has(set.v)) return bad(`set "${set.v}" is a reserved name`);
+	const w = get(node, 'where')?.value;
+	if (!w) return;
+	if (w.t !== 'm') return bad(`where must be a mapping, got ${kindWord(w.t)}`);
+	if (w.entries.length > 3) return bad(`where has ${w.entries.length} entries; at most 3 are allowed`);
+	for (const e of w.entries) {
+		if (e.key === '' || [...e.key].length > 200 || RESERVED_NAMES.has(e.key)) return bad(`where has a field name that is not allowed: "${e.key.slice(0, 40)}"`);
+		if (!e.value || e.value.t !== 's') return bad(`where.${e.key} must be text, a number or true/false, got ${kindWord(e.value?.t)}`);
+		// an unquoted null or a non-finite number is not a value Bolt compares against (it refuses it)
+		if (!e.value.q && /^(null|~|[-+]?\.(nan|inf)|[-+]?\.(NaN|Inf|NAN|INF))$/.test(e.value.v)) return bad(`where.${e.key} must be text, a number or true/false, got ${e.value.v === 'null' || e.value.v === '~' ? 'nothing' : 'a number that is not finite'}`);
+		if ([...e.value.v].length > 200) return bad(`where.${e.key} is longer than 200 characters`);
+	}
 }
 // A dotted version "0.1.182" as numbers; undefined when it is not one.
 export const parseBoltVersion = (v) => { const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(String(v ?? '')); return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : undefined; };
@@ -76,6 +100,7 @@ function bindMap(node, keysSpec, where, out, ctx = {}) {
 			const sp = keysSpec[e.key];
 			if (sp.since) { const g = gateProblem(where, e.key, sp.since, ctx); if (g) out.push(g); }
 			bindVal(e.value, sp, `${where}.${e.key}`, out, ctx);
+			if (e.key === 'locale' && e.value && e.value.t === 's' && !/^[A-Za-z0-9-]*$/.test(e.value.v)) out.push({ code: 'bind_locale_chars', level: 'warning', message: `${where}.${e.key}: "${e.value.v.slice(0, 40)}" has characters outside letters, digits and "-" (de-DE, not de_DE). Bolt ignores a locale it cannot read and uses the system one` });
 			if (sp.max_refs && e.value && e.value.t === 's') {
 				const n = (e.value.v.match(REF) || []).length;
 				if (n > sp.max_refs) out.push({ code: 'bind_too_many_refs', message: `${where}.${e.key}: has ${n} {{ }} references, at most ${sp.max_refs} are read (Bolt drops the picture). A picture that needs more parts is too big: use a smaller one` });

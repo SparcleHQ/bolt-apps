@@ -31,6 +31,7 @@ test('rules: graph is a widget kind that carries kind_since 0.1.184 and six text
 });
 
 test('rules: the caps are written down once and named the same as in Bolt', () => {
+	// Pinned here and in bolt-pwa graphRegistration.guard.test.ts (GRAPH_MAX_*): change one, the other test fails.
 	assert.deepEqual(RULES.graph_caps, { max_nodes: 60, max_edges: 200, max_input_rows: 5000 });
 });
 
@@ -99,4 +100,11 @@ test('the gallery example draws a service map: a graph view, min_bolt_version 0.
 	const rows = JSON.parse(read(`${dir}/${c.golden}`));
 	const text = JSON.stringify(rows);
 	assert.ok(text.includes('checkout-api') && text.includes('payments'));
+});
+
+test('the status words are listed in the schema and the capability row, the same as the pane reads', () => {
+	const words = ['critical, error, down, failing', 'warning, warn, degraded', 'healthy, ok, up'];
+	const s = JSON.parse(read('schema/user-app.schema.json')).$defs.bindGraph.properties.status.description;
+	const r = caps.rows.find((x) => x.id === 'widget.graph').limit;
+	for (const w of words) { assert.ok(s.includes(w), `schema lists ${w}`); assert.ok(r.includes(w), `capability row lists ${w}`); }
 });

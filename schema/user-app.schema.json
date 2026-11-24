@@ -2433,7 +2433,7 @@
         },
         "status": {
           "$ref": "#/$defs/name",
-          "description": "Row field holding critical, warning or healthy: drawn filled, dashed or plain, never by color."
+          "description": "Row field holding a status word, drawn filled, dashed or plain, never by color. Status words, not case sensitive: critical (critical, error, down, failing), warning (warning, warn, degraded), healthy (healthy, ok, up); any other word is drawn plain."
         },
         "to": {
           "$ref": "#/$defs/name",

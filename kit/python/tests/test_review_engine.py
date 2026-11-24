@@ -10,12 +10,13 @@ import unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", "examples", "portal-template", "scripts"))
+SHARED_ENGINE = os.path.abspath(os.path.join(HERE, "..", "bolt_app_engine.py"))   # the engine is kept once; the example app holds only a thin entry
 sys.path.insert(0, os.path.join(HERE, ".."))
 import bolt_app_kit as kit  # noqa: E402
 
 
 def load_engine():
-    spec = importlib.util.spec_from_file_location("portal_engine_r", os.path.join(ROOT, "portal-template__engine.py"))
+    spec = importlib.util.spec_from_file_location("portal_engine_r", SHARED_ENGINE)
     m = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(m)
     return m

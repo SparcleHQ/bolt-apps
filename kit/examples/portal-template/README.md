@@ -16,7 +16,7 @@ It is a tier 3 personal-use app (it runs a script and calls the network), so it 
 Then rebuild the app file and check:
 
 ```
-python3 scripts/portal-template__engine.py --emit-yaml > utilities/portal-template.yaml
+./bolt-apps regen <this app folder>
 bolt-apps kit vendor --flat .          # the kit as one file, so the app can be packed
 bolt-apps check . --update-golden     # review the golden/ diff once
 bolt-apps check .

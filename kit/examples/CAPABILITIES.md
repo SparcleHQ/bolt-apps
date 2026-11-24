@@ -84,6 +84,7 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | An app that only shows sample data (offline, no API) | supported | no shipped example sets api.fixture_default true; the recipe is in ENGINE.md | `toolkit/test/cold-run.test.mjs` | Sample-only by design: fixture_default true, a base_url that cannot resolve, no key_env. ship and doctor print the same start mode. The data is signed with the pack. |
 | A text-only lookup result (no empty tile) | supported | [lookup-template](lookup-template) | `kit/python/tests/test_cold_run2_engine.py` | tiles_above draws only for a row with a number, so rows with text only draw no tile. Give every text-only row a body. A tiles grid (cards, bind.layout tiles) over rows with no number is an error in check. From source and sample runs, not seen in a running Bolt. |
 | Shared kit from Bolt (Bolt 182) | partial | [unit-convert](unit-convert) | `toolkit/test/shared-kit.test.mjs` | Needs Bolt 182; on 181 the app runs its own vendored kit. Bolt offers BOLT_APP_SHARED_DIR only after a hash check against a table compiled into Bolt, and the loader checks the folder again; any doubt means the app's own copy. WANT_SHARED = True trusts whoever controls that variable (Bolt does). Not seen in a running Bolt; the engine is not shared; existing apps keep their own copy until their author reships with the new loader; only unit-convert has the loader so far. |
+| Engine kept once (thin app) | supported | [acme-dash](acme-dash) | `toolkit/test/upgrade-kit.test.mjs` | The pack carries the engine (`scripts/<id>__bolt_app_engine.py`), so it runs on every Bolt that runs script apps; the engine is not part of the shared kit, so Bolt 182 does not share it yet. A thin app cannot run its entry by hand outside the toolkit: use regen. upgrade-kit refuses an edited engine. |
 
 ## Snippets
 
@@ -539,4 +540,10 @@ Settings, Desktop App, User Apps, expand the app, Review and accept
 
 ```
 WANT_SHARED = False   # in the loader block of the app's script: True runs Bolt's shared kit even when it differs from the app's own copy
+```
+
+### Engine kept once (thin app) (`engine.once`)
+
+```
+./bolt-apps regen ~/my-apps/my-app   # an app made by new holds a short entry, not an engine copy; pack carries the engine once. An older app with its own copy: ./bolt-apps upgrade-kit ~/my-apps/my-app
 ```

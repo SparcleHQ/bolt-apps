@@ -14,6 +14,7 @@ import urllib.parse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", "examples", "portal-template", "scripts"))
+SHARED_ENGINE = os.path.abspath(os.path.join(HERE, "..", "bolt_app_engine.py"))   # the engine is kept once; the example app holds only a thin entry
 sys.path.insert(0, os.path.join(HERE, ".."))
 import bolt_app_kit as kit  # noqa: E402
 
@@ -76,7 +77,7 @@ class Round2(unittest.TestCase):
         self.cfg_path = os.path.join(self.home, "config.json")
         with open(self.cfg_path, "w", encoding="utf-8") as f:
             json.dump(cfg, f)
-        spec = importlib.util.spec_from_file_location("eng_r2", os.path.join(ROOT, "portal-template__engine.py"))
+        spec = importlib.util.spec_from_file_location("eng_r2", SHARED_ENGINE)
         self.eng = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(self.eng)
         self._emit, kit.emit = kit.emit, fake_emit

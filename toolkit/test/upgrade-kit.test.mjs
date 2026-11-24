@@ -117,3 +117,14 @@ test('an old full-copy app still checks and packs, with no second engine in the 
 	const out = path.join(tmp(), 'o.boltpack'); assert.equal(cli('pack', d, '--personal', '--key', key, '--out', out).status, 0);
 	assert.deepEqual([...readPack(out).files.keys()].filter((n) => /bolt_app_engine/.test(n)), []);
 });
+
+test('a thin app whose app file holds another id is told to regen, not to run the entry by hand', () => {
+	const root = tmp();
+	assert.equal(spawnSync(process.execPath, [CLI, 'new', 'portal-template', 'zz', '--dir', root], { encoding: 'utf8' }).status, 0);
+	const f = path.join(root, 'zz/utilities/zz.yaml');
+	fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace(/^id: .*$/m, 'id: other').replace(/^chip: .*$/m, 'chip: other'));
+	const r = cli('lint', path.join(root, 'zz'), '--personal', '--json');
+	const msg = JSON.parse(r.stdout).reports[0].findings.find((x) => x.code === 'utilities_name_mismatch').message;
+	assert.match(msg, /generate it again: \.\/bolt-apps regen <app folder>/i);
+	assert.doesNotMatch(msg, /python3 scripts/);
+});

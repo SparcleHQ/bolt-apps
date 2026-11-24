@@ -16,7 +16,7 @@ Sources: the Hacker News API (no key) and NASA's NeoWs feed (a free key; `DEMO_K
 The app file is generated. After editing `scripts/feed-template__config.json`:
 
 ```
-python3 scripts/feed-template__engine.py --emit-yaml > utilities/feed-template.yaml
+./bolt-apps regen <this app folder>
 bolt-apps check .
 ```
 

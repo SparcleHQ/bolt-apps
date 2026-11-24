@@ -1,6 +1,6 @@
 // Run: node --test toolkit/test/tiles-184-per-row.test.mjs
 // S3b: bind.visual_from names a ROW FIELD whose value picks each tile's visual, so one cards grid can mix tiles. Bolt 0.1.184 or newer.
-// The rules file, the schema, lint (bind_needs_newer_bolt) and the showcase overview all agree.
+// The rules file, the schema, lint (bind_needs_newer_bolt) all agree.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

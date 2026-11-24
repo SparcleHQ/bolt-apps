@@ -28,11 +28,11 @@ test('rules: the chart and column keys carry since 0.1.184 and the old keys carr
 	assert.deepEqual(c.limit, { t: 'textOrNumber', max: 4096, since: SINCE });
 	assert.deepEqual(c.limit_label, { t: 'text', max: 200, since: SINCE });
 	assert.deepEqual(c.marker, { t: 'map', since: SINCE, keys: { field: { t: 'text', max: 200, required: true }, label: { t: 'text', max: 200 } } });
-	for (const [k, v] of Object.entries(c)) if (!['limit', 'limit_label', 'marker'].includes(k)) assert.equal(v.since === undefined || k === 'series' || k === 'type', true, k);
+	for (const [k, v] of Object.entries(c)) if (!['limit', 'limit_label', 'marker', 'format', 'digits', 'locale', 'from'].includes(k)) assert.equal(v.since === undefined || k === 'series' || k === 'type', true, k);
 	const col = RULES.right_widget.bind.table.columns.keys;
 	assert.deepEqual(col.bars, { t: 'bool', since: SINCE });
 	assert.deepEqual(col.mark, { t: 'enum', values: ['tone'], since: SINCE });
-	for (const [k, v] of Object.entries(col)) if (!['bars', 'mark'].includes(k)) assert.equal(v.since, undefined, k);
+	for (const [k, v] of Object.entries(col)) if (!['bars', 'mark', 'digits', 'locale'].includes(k)) assert.equal(v.since, undefined, k);
 });
 
 test('schema: bindChart and the table column list the keys and name the version', () => {

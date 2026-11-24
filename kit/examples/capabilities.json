@@ -1017,7 +1017,7 @@
       "example": "kit/examples/script-template",
       "snippet": "load_json = kit.json_loader(HERE, _PFX); words = kit.split_args(argv, FILE_WORDS); kit.run_guarded(main, sys.argv, debug=bool(os.environ.get(\"BOLT_APP_DEBUG\")))   # also kit.Fail, kit.s, kit.fixture_mode, kit.back_to_overview, kit.tile_bind, kit.indent, kit.bridge_head, kit.bridge_yaml",
       "test": "kit/python/tests/test_scaffold.py",
-      "limit": "Kit 0.3.11 or newer: an app that calls these must vendor that kit (./bolt-apps kit vendor --flat <app>). An older app keeps its own copied helpers and runs unchanged; nothing here changes what a pack carries. bridge_head covers the views-app shape (typed words view, arg, arg2, ...; one command per system); an app with another shape writes its own head. Not run in a real Bolt."
+      "limit": "Kit 0.3.11 or newer: an app that calls these must vendor that kit (`./bolt-apps kit vendor --flat my-app`). An older app keeps its own copied helpers and runs unchanged; nothing here changes what a pack carries. bridge_head covers the views-app shape (typed words view, arg, arg2, ...; one command per system); an app with another shape writes its own head. Not run in a real Bolt."
     }
   ]
 }

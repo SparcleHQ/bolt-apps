@@ -402,7 +402,7 @@ test('every public example has chip equal to id, and a chip different from the i
 
 test('on_missing_key: sample shows the labelled data and a key hint; setup shows only the setup row; ship says the start mode', () => {
 	const d = tmp('ns-mode-'), home = tmp('ns-home-');
-	assert.equal(cli(home, d, 'new', 'portal-template', 'modeapp', '--dir', d).status, 0);
+	assert.equal(cli(home, d, 'new', 'portal-template', 'modeapp', '--dir', d, '--full').status, 0);
 	const app = path.join(d, 'modeapp'), cfgp = path.join(app, 'scripts', 'modeapp__config.json'), cfg = JSON.parse(fs.readFileSync(cfgp, 'utf8'));
 	assert.equal(cfg.api.on_missing_key, 'sample');
 	const run = (env) => spawnPython(['-X', 'utf8', '-I', path.join(app, 'scripts', 'modeapp__engine.py'), 'overview'], { encoding: 'utf8', env: { ...process.env, HOME: home, USERPROFILE: home, ...env } });
@@ -459,7 +459,7 @@ test('a row action that chains must name the app\'s own id (chain_target_not_sel
 
 test('on_missing_key: a loose key file keeps its setup row, an unknown value is a config error, chart views carry no label row', () => {
 	const d = tmp('ns-omk-'), home = tmp('ns-home-');
-	assert.equal(cli(home, d, 'new', 'portal-template', 'omkapp', '--dir', d).status, 0);
+	assert.equal(cli(home, d, 'new', 'portal-template', 'omkapp', '--dir', d, '--full').status, 0);
 	const app = path.join(d, 'omkapp'), cfgp = path.join(app, 'scripts', 'omkapp__config.json'), cfg = JSON.parse(fs.readFileSync(cfgp, 'utf8'));
 	const run = (args, env = {}) => spawnPython(['-X', 'utf8', '-I', path.join(app, 'scripts', 'omkapp__engine.py'), ...args], { encoding: 'utf8', env: { ...process.env, HOME: home, USERPROFILE: home, ...env } });
 	let rows;
@@ -473,7 +473,7 @@ test('on_missing_key: a loose key file keeps its setup row, an unknown value is 
 	rows = JSON.parse(run(['overview']).stdout); assert.match(rows[0].title, /not set up correctly/); assert.match(rows[0].subtitle, /on_missing_key must be setup or sample/);
 	// a chart or table data view gets no label row (it would be a plotted point); the overview does
 	const ct = path.join(EX, 'chart-template'), fx = path.join(ct, 'scripts', 'chart-template__engine.py');
-	const rn = (a) => JSON.parse(spawnPython(['-X', 'utf8', '-I', fx, ...a], { encoding: 'utf8', env: { ...process.env, HOME: home, USERPROFILE: home } }).stdout);
+	const rn = (a) => JSON.parse(spawnPython(['-X', 'utf8', '-I', fx, ...a], { encoding: 'utf8', env: { ...process.env, HOME: home, USERPROFILE: home, BOLT_APPS_ENGINE_FILE: path.join(REPO, 'kit/python/bolt_app_engine.py') } }).stdout);   // the example is thin: the toolkit hands its entry the engine
 	assert.ok(rn(['overview']).some((r) => /sample data: add your/.test(r.kpi_foot || '')));
 	const cj = JSON.parse(fs.readFileSync(path.join(ct, 'scripts', 'chart-template__config.json'), 'utf8')), dv = cj.views.find((v) => v.widget && v.widget.kind === 'chart');
 	assert.ok(dv, 'chart-template has a chart view'); assert.ok(!rn([dv.id]).some((r) => /SAMPLE DATA/.test(r.title)));

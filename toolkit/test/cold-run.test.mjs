@@ -27,7 +27,10 @@ test('new then check passes for EVERY template, and again after --emit-yaml for 
 		const n = sh(home, root, 'new', t, id); assert.equal(n.status, 0, `${t}: ${n.stdout}${n.stderr}`);
 		assert.match(n.stdout, /check passes/, `${t}: new must say check passes (and mean it): ${n.stdout}`);
 		const eng = path.join(root, id, 'scripts', `${id}__engine.py`);
-		if (fs.existsSync(eng) && fs.readFileSync(eng, 'utf8').includes('--emit-yaml')) {
+		if (fs.existsSync(eng) && fs.readFileSync(eng, 'utf8').includes('_THIN_ENTRY = True')) {   // thin (the default): regen, as the docs say
+			const g = sh(home, root, 'regen', id); assert.equal(g.status, 0, `${t}: ${g.stdout}${g.stderr}`);
+			const c2 = sh(home, root, 'check', id); assert.equal(c2.status, 0, `${t} after regen: ${c2.stdout}`);
+		} else if (fs.existsSync(eng) && fs.readFileSync(eng, 'utf8').includes('--emit-yaml')) {
 			const e = spawnPy([eng, '--emit-yaml'], { cwd: path.join(root, id, 'scripts'), encoding: 'utf8' });
 			assert.equal(e.status, 0, `${t}: ${e.stderr}`);
 			fs.writeFileSync(path.join(root, id, 'utilities', `${id}.yaml`), e.stdout);
@@ -59,7 +62,7 @@ test('new: sample words of the template stay out of check.json, so the first edi
 	assert.equal(sh(home, root, 'check', 'quote-box').status, 0);
 });
 
-const ENGINE_APP = (root, home, id = 'lk') => { assert.equal(sh(home, root, 'new', 'lookup-template', id).status, 0); return path.join(root, id); };
+const ENGINE_APP = (root, home, id = 'lk') => { assert.equal(sh(home, root, 'new', 'lookup-template', id, '--full').status, 0); return path.join(root, id); };
 
 test('--emit-yaml with a bad icon exits non-zero, writes nothing to stdout, names the problem and lists valid icons', () => {
 	const root = tmp(), home = path.join(root, 'home'); fs.mkdirSync(home);
@@ -105,7 +108,7 @@ const engineRows = (app, id, args, env = {}) => { const r = spawnPy([path.join(a
 
 test('views mode takes no typed query: an unknown first word shows the overview; "view word" filters; "view id" drills through children', () => {
 	const root = tmp(), home = path.join(root, 'home'); fs.mkdirSync(home);
-	assert.equal(sh(home, root, 'new', 'portal-template', 'pt').status, 0); const app = path.join(root, 'pt');
+	assert.equal(sh(home, root, 'new', 'portal-template', 'pt', '--full').status, 0); const app = path.join(root, 'pt');
 	const overview = engineRows(app, 'pt', []);
 	assert.deepEqual(engineRows(app, 'pt', ['zzz-not-a-view']), overview, 'an unknown first word is ignored: the overview is shown');
 	assert.deepEqual(engineRows(app, 'pt', ['zzz-not-a-view', 'web']), overview);

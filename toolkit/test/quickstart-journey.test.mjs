@@ -19,7 +19,7 @@ test('QUICKSTART: the four commands and the regenerate line run as written again
 	const home = fs.mkdtempSync(path.join(os.tmpdir(), 'bolt-qs-'));
 	const block = /```sh run\n([\s\S]*?)```/.exec(QS)[1].split('\n').filter((l) => l.trim());
 	assert.equal(block.length, 4);
-	const regen = /`(cd ~\/my-apps\/my-tool && python3 [^`]+)`/.exec(QS);
+	const regen = /`(\.\/bolt-apps regen ~\/my-apps\/my-tool)`/.exec(QS);
 	assert.ok(regen, 'the page gives the regenerate command');
 	for (const line of block.slice(0, 2)) { const r = sh(home, line); assert.equal(r.status, 0, `${line}\n${r.stdout}${r.stderr}`); }
 	const app = path.join(home, 'my-apps', 'my-tool');

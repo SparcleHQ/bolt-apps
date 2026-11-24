@@ -14,4 +14,4 @@ Adding an entry from the launcher is a different pattern (a form): see `form-tem
 
 Sample data is invented. The app calls `https://api.example.com`, which does not exist: point `api.base_url` and `endpoints[].path` at your own API, or keep using fixture mode in `check.json`. See `../ENGINE.md` for every option.
 
-After editing `config.json`, rebuild the app file: `python3 scripts/expense-tracker__engine.py --emit-yaml > utilities/expense-tracker.yaml`. Drop the `.boltpack` on the Bolt launcher or Bolt Apps; the key never goes in the pack (see ENGINE.md, "Where to store keys").
+After editing `config.json`, rebuild the app file: `./bolt-apps regen <this app folder>`. Drop the `.boltpack` on the Bolt launcher or Bolt Apps; the key never goes in the pack (see ENGINE.md, "Where to store keys").

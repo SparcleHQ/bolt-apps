@@ -203,7 +203,7 @@ test('a failed gallery pack of a tier 3 app or an app with scripts/ ends with th
 test('lint refuses an app whose ids disagree: the app file name, the id in it, config app.id and bolt-app.json id', () => {
 	const REPO = path.resolve(HERE, '../..');
 	const d = tmp(), codes = (r) => JSON.parse(r.stdout).reports[0].findings.map((x) => `${x.level}:${x.code}`);
-	assert.equal(run(d, 'new', 'portal-template', 'zz', '--dir', d).status, 0);
+	assert.equal(run(d, 'new', 'portal-template', 'zz', '--dir', d, '--full').status, 0);
 	const app = path.join(d, 'zz'), ud = path.join(app, 'utilities'), cfg = path.join(app, 'scripts', 'zz__config.json');
 	assert.equal(run(d, 'lint', app, '--personal').status, 0);
 	// a renamed app file: the file name is no longer the id the copy was made for
@@ -235,7 +235,7 @@ test('lint refuses an app whose ids disagree: the app file name, the id in it, c
 
 test('an id finding never says to delete the file it asks you to generate again', () => {
 	const d = tmp();
-	assert.equal(run(d, 'new', 'portal-template', 'zz', '--dir', d).status, 0);
+	assert.equal(run(d, 'new', 'portal-template', 'zz', '--dir', d, '--full').status, 0);
 	const app = path.join(d, 'zz'), f = path.join(app, 'utilities', 'zz.yaml');
 	// the file has the right name (the listing id) but another id inside
 	fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace(/^id: .*$/m, 'id: other').replace(/^chip: .*$/m, 'chip: other'));

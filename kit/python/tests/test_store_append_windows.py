@@ -10,10 +10,11 @@ from unittest import mock
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", "examples", "portal-template", "scripts"))
+SHARED_ENGINE = os.path.abspath(os.path.join(HERE, "..", "bolt_app_engine.py"))   # the engine is kept once; the example app holds only a thin entry
 
 
 def load_engine():
-    spec = importlib.util.spec_from_file_location("portal_engine_win", os.path.join(ROOT, "portal-template__engine.py"))
+    spec = importlib.util.spec_from_file_location("portal_engine_win", SHARED_ENGINE)
     m = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(m)
     return m

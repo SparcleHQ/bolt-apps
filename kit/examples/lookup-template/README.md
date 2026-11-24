@@ -20,7 +20,7 @@ Any "type a name, see a card" lookup over one or two APIs.
 Run `./bolt-apps keygen` once before the first pack: it makes your signing key and never overwrites one.
 ```
 ./bolt-apps kit vendor --flat kit/examples/lookup-template
-python3 kit/examples/lookup-template/scripts/lookup-template__engine.py --emit-yaml > kit/examples/lookup-template/utilities/lookup-template.yaml
+./bolt-apps regen kit/examples/lookup-template
 ./bolt-apps check kit/examples/lookup-template --update-golden
 ./bolt-apps lint kit/examples/lookup-template --personal
 ./bolt-apps pack kit/examples/lookup-template --personal --version 1.0.1 --out lookup-template-1.0.1.boltpack

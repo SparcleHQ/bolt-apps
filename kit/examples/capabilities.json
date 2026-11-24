@@ -1055,6 +1055,16 @@
       "snippet": "WANT_SHARED = False   # in the loader block of the app's script: True runs Bolt's shared kit even when it differs from the app's own copy",
       "test": "toolkit/test/shared-kit.test.mjs",
       "limit": "Needs Bolt 182; on 181 the app runs its own vendored kit. Bolt offers BOLT_APP_SHARED_DIR only after a hash check against a table compiled into Bolt, and the loader checks the folder again; any doubt means the app's own copy. WANT_SHARED = True trusts whoever controls that variable (Bolt does). Not seen in a running Bolt; the engine is not shared; existing apps keep their own copy until their author reships with the new loader; only unit-convert has the loader so far."
+    },
+    {
+      "id": "engine.once",
+      "group": "platform",
+      "name": "Engine kept once (thin app)",
+      "status": "supported",
+      "example": "kit/examples/acme-dash",
+      "snippet": "./bolt-apps regen ~/my-apps/my-app   # an app made by new holds a short entry, not an engine copy; pack carries the engine once. An older app with its own copy: ./bolt-apps upgrade-kit ~/my-apps/my-app",
+      "test": "toolkit/test/upgrade-kit.test.mjs",
+      "limit": "The pack carries the engine (`scripts/<id>__bolt_app_engine.py`), so it runs on every Bolt that runs script apps; the engine is not part of the shared kit, so Bolt 182 does not share it yet. A thin app cannot run its entry by hand outside the toolkit: use regen. upgrade-kit refuses an edited engine. Installing a converted app again asks the person to approve it again, because its command now names one more file."
     }
   ]
 }

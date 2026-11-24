@@ -400,7 +400,10 @@
       "group": "panes",
       "name": "Tile ring, bullet and sparkline limit",
       "status": "supported",
-      "example_note": "no example yet; copy the snippet",
+      "example": "kit/examples/widget-gallery-2",
+      "also": [
+        "showcase-ops"
+      ],
       "snippet": "\"bind\": {\"layout\": \"tiles\", \"value\": \"{{row.value}}\", \"max\": \"{{row.max}}\", \"visual\": \"bullet\", \"target\": \"{{row.target}}\", \"trend\": \"{{row.trend}}\", \"limit\": \"{{row.limit}}\"}",
       "test": "toolkit/test/tiles-184.test.mjs",
       "limit": "Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). visual is meter (default), ring or bullet and needs a max; target and limit are numbers or {{row.x}} references; anything else draws the plain meter. Tiles in entity_preview tiles_above do not read them."

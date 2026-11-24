@@ -55,5 +55,43 @@
     "kpi_badge": "",
     "copy_text": "",
     "open_url": ""
+  },
+  {
+    "title": "Tiles · bullet, target and limit",
+    "subtitle": "Bolt 0.1.184: a target mark and a dashed limit line. Enter opens it",
+    "icon": "activity",
+    "body": "",
+    "nav": {
+      "view": "tiles-184"
+    },
+    "actions": [],
+    "kpi_label": "Bullets",
+    "kpi_value": 6,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "tiles, every key and fallback",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Tiles · ring",
+    "subtitle": "Bolt 0.1.184: the level as a ring. Enter opens it",
+    "icon": "activity",
+    "body": "",
+    "nav": {
+      "view": "ring-184"
+    },
+    "actions": [],
+    "kpi_label": "Rings",
+    "kpi_value": 4,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "tiles, with the fallbacks",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
   }
 ]

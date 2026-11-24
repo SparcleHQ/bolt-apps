@@ -35,7 +35,8 @@
     ],
     "no network": [
       "unit-convert",
-      "hero-gallery"
+      "hero-gallery",
+      "showcase-ops"
     ]
   },
   "what_backs_your_app": [
@@ -503,8 +504,8 @@
     },
     {
       "id": "widget-gallery-2",
-      "need": "to see card, image grid and cards with images",
-      "layout": "one view per pane kind: card, image grid, cards with images",
+      "need": "to see card, image grid, cards with images, and the tile ring, bullet, target and sparkline limit (Bolt 0.1.184)",
+      "layout": "one view per pane kind: card, image grid, cards with images; two tile views for the 0.1.184 visuals",
       "mode": "views",
       "widgets": [
         "card",
@@ -515,7 +516,11 @@
         "inline data images",
         "image_grid bind",
         "card bind",
-        "8-view limit workaround"
+        "8-view limit workaround",
+        "tile visual ring and bullet (Bolt 0.1.184)",
+        "tile target and sparkline limit",
+        "plain value when max is not a number",
+        "min_bolt_version 0.1.184 in bolt-app.json"
       ],
       "sources": [
         "sample data (generated swatches)"
@@ -525,6 +530,37 @@
         "scripts/widget-gallery-2__fixtures.json"
       ],
       "check": "./bolt-apps check kit/examples/widget-gallery-2",
+      "verified": "not verified in real Bolt"
+    },
+    {
+      "id": "showcase-ops",
+      "need": "to see Bolt's tile rings, bullets, targets and sparkline limits on a realistic ops dashboard (needs Bolt 0.1.184)",
+      "layout": "a tile strip (SLO meter, p99 with a dashed limit, error budget, CPU, services, alerts) that drills into a ring view and a bullet view, a services list that drills into its alerts with Back to the same row, and a plain alerts list",
+      "mode": "views",
+      "template": "portal-template",
+      "backing": "no network",
+      "widgets": [
+        "cards",
+        "entity_preview"
+      ],
+      "techniques": [
+        "tile visual ring (Bolt 0.1.184)",
+        "tile visual bullet with a target mark",
+        "sparkline limit line",
+        "plain meter",
+        "children drill with Back",
+        "severity in words",
+        "sample data only",
+        "min_bolt_version 0.1.184 in bolt-app.json"
+      ],
+      "sources": [
+        "invented sample data, no network"
+      ],
+      "edit": [
+        "scripts/showcase-ops__config.json",
+        "scripts/showcase-ops__fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/showcase-ops",
       "verified": "not verified in real Bolt"
     },
     {

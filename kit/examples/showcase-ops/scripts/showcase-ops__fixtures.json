@@ -1,0 +1,183 @@
+{
+ "summary": {
+  "data": {
+   "slo_pct": 99.2,
+   "slo_objective": 99.5,
+   "p99_ms": 412,
+   "p99_limit": 450,
+   "p99_trend": [
+    318,
+    340,
+    362,
+    355,
+    391,
+    420,
+    438,
+    412
+   ],
+   "budget_left": 38,
+   "cpu_used": 39.0,
+   "cpu_limit": 60,
+   "cpu_target": 44.5
+  }
+ },
+ "services": {
+  "data": [
+   {
+    "id": "checkout-api",
+    "name": "Checkout API",
+    "state": "degraded",
+    "team": "payments",
+    "cpu_used": 6.8,
+    "cpu_limit": 8,
+    "cpu_target": 5.5,
+    "budget_left": 22,
+    "p99": 438
+   },
+   {
+    "id": "search-index",
+    "name": "Search index",
+    "state": "healthy",
+    "team": "discovery",
+    "cpu_used": 3.1,
+    "cpu_limit": 6,
+    "cpu_target": 4.5,
+    "budget_left": 81,
+    "p99": 142
+   },
+   {
+    "id": "auth-gateway",
+    "name": "Auth gateway",
+    "state": "healthy",
+    "team": "identity",
+    "cpu_used": 2.4,
+    "cpu_limit": 4,
+    "cpu_target": 3.0,
+    "budget_left": 64,
+    "p99": 96
+   },
+   {
+    "id": "payments-worker",
+    "name": "Payments worker",
+    "state": "down",
+    "team": "payments",
+    "cpu_used": 7.9,
+    "cpu_limit": 8,
+    "cpu_target": 6.0,
+    "budget_left": 4,
+    "p99": 912
+   },
+   {
+    "id": "notify-queue",
+    "name": "Notification queue",
+    "state": "healthy",
+    "team": "engagement",
+    "cpu_used": 1.2,
+    "cpu_limit": 4,
+    "cpu_target": 3.0,
+    "budget_left": 93,
+    "p99": 58
+   },
+   {
+    "id": "media-resizer",
+    "name": "Media resizer",
+    "state": "degraded",
+    "team": "engagement",
+    "cpu_used": 5.6,
+    "cpu_limit": 6,
+    "cpu_target": 4.5,
+    "budget_left": 47,
+    "p99": 301
+   },
+   {
+    "id": "ledger-db",
+    "name": "Ledger database",
+    "state": "healthy",
+    "team": "payments",
+    "cpu_used": 9.1,
+    "cpu_limit": 16,
+    "cpu_target": 12.0,
+    "budget_left": 72,
+    "p99": 24
+   },
+   {
+    "id": "web-edge",
+    "name": "Web edge",
+    "state": "healthy",
+    "team": "platform",
+    "cpu_used": 2.9,
+    "cpu_limit": 8,
+    "cpu_target": 6.0,
+    "budget_left": 88,
+    "p99": 37
+   }
+  ]
+ },
+ "alerts": {
+  "data": [
+   {
+    "id": "a1",
+    "service_id": "payments-worker",
+    "severity": "critical",
+    "name": "Worker pool exhausted",
+    "state": "firing",
+    "minutes": 34,
+    "detail": "All 12 workers are busy and the queue is growing. Demo alert in invented data."
+   },
+   {
+    "id": "a2",
+    "service_id": "checkout-api",
+    "severity": "critical",
+    "name": "p99 latency above limit",
+    "state": "firing",
+    "minutes": 21,
+    "detail": "p99 is 438 ms against a 450 ms limit and rising."
+   },
+   {
+    "id": "a3",
+    "service_id": "checkout-api",
+    "severity": "warning",
+    "name": "Error budget under 25 percent",
+    "state": "firing",
+    "minutes": 95,
+    "detail": "22 percent of the monthly budget is left."
+   },
+   {
+    "id": "a4",
+    "service_id": "media-resizer",
+    "severity": "warning",
+    "name": "CPU above target",
+    "state": "firing",
+    "minutes": 58,
+    "detail": "5.6 cores used, target 4.5, limit 6."
+   },
+   {
+    "id": "a5",
+    "service_id": "payments-worker",
+    "severity": "warning",
+    "name": "Retry rate rising",
+    "state": "pending",
+    "minutes": 12,
+    "detail": "Retries doubled in the last 15 minutes."
+   },
+   {
+    "id": "a6",
+    "service_id": "ledger-db",
+    "severity": "info",
+    "name": "Nightly vacuum finished",
+    "state": "resolved",
+    "minutes": 240,
+    "detail": "Maintenance window ended on time."
+   },
+   {
+    "id": "a7",
+    "service_id": "search-index",
+    "severity": "info",
+    "name": "Index rebuild scheduled",
+    "state": "pending",
+    "minutes": 600,
+    "detail": "Planned rebuild at 02:00 UTC."
+   }
+  ]
+ }
+}

@@ -4,6 +4,8 @@ import http.server
 import importlib.util
 import json
 import os
+import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -27,6 +29,13 @@ def load_engine(app="lookup-template"):
     return m
 
 
+def carry_engine(d, app):
+    """What `bolt-apps pack` does for a thin app: the shared engine sits beside the entry as <app>__bolt_app_engine.py."""
+    entry = os.path.join(d, app + "__engine.py")
+    if os.path.exists(entry) and "_THIN_ENTRY = True" in open(entry, encoding="utf-8").read(8000):
+        shutil.copy(os.path.join(HERE, "..", "bolt_app_engine.py"), os.path.join(d, app + "__bolt_app_engine.py"))
+
+
 def run(app, args, cfg=None, env=None, fixtures=None):
     """Run an engine copy as a subprocess, optionally with a replaced config/fixtures (written next to a copy of the script)."""
     d = tempfile.mkdtemp()
@@ -45,6 +54,7 @@ def run(app, args, cfg=None, env=None, fixtures=None):
                 data = json.dumps(fixtures)
             with open(os.path.join(d, f), "w", encoding="utf-8") as dst:
                 dst.write(data)
+    carry_engine(d, app)
     e = dict(os.environ)
     e.update({"HOME": d, "USERPROFILE": d, "PYTHONDONTWRITEBYTECODE": "1"})
     e.pop("BOLT_APP_FIXTURE", None)
@@ -304,13 +314,23 @@ class Filters(unittest.TestCase):
 
 class Identical(unittest.TestCase):
     def test_all_engine_copies_are_byte_identical(self):
-        bodies = set()
+        """Apps that still hold their own copy hold the same bytes; a thin app holds the one canonical entry; the shared engine is that copy
+        but for the line that names the files the command hashes."""
+        bodies, thin = set(), set()
         for app in os.listdir(EX):
             p = engine_path(app)
             if os.path.exists(p):
                 with open(p, "rb") as f:
-                    bodies.add(f.read())
+                    body = f.read()
+                (thin if b"\n_THIN_ENTRY = True\n" in body[:8000] else bodies).add(body)
         self.assertEqual(len(bodies), 1)
+        with open(os.path.join(HERE, "..", "bolt_app_engine_entry.py"), "rb") as f:
+            self.assertEqual(thin, {f.read()} if thin else set())
+        with open(os.path.join(HERE, "..", "bolt_app_engine.py"), encoding="utf-8") as f:
+            shared = f.read()
+        copy = next(iter(bodies)).decode("utf-8")
+        words = re.compile(r"^FILE_WORDS = .*$", re.M)
+        self.assertEqual(words.sub("", shared), words.sub("", copy))
 
 
 if __name__ == "__main__":

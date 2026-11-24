@@ -27,8 +27,9 @@ The gallery takes tier 1 and 2 only. An app that runs programs or reaches the ne
 
 | Command | What it does |
 |---|---|
-| `new <template> <id> [--dir d] [--author "Your name"]` | Copies a working template from `kit/examples` (`new --list` shows them and what to edit), renames it, puts your name in `author` (pack copies it into the pack as the author's name, so it is in every copy of the pack you share; with no `--author` it is your login name, so pass `--author` to use another name), writes the app file and records goldens, so `check` passes before you change anything. |
+| `new <template> <id> [--dir d] [--author "Your name"] [--thin]` | Copies a working template from `kit/examples` (`new --list` shows them and what to edit), renames it, puts your name in `author` (pack copies it into the pack as the author's name, so it is in every copy of the pack you share; with no `--author` it is your login name, so pass `--author` to use another name), writes the app file and records goldens, so `check` passes before you change anything. |
 | `new <id> --type snippet\|search\|transform\|recognizer` | Creates `apps/<id>/` with `bolt-app.json`, a README and one content file. Every template passes `lint` and carries a test you can edit. |
+| `regen <app>` | Writes `utilities/<id>.yaml` from an engine app's config (the same as `python3 scripts/<id>__engine.py --emit-yaml > utilities/<id>.yaml`; an app made with `new --thin` has no engine copy and needs this command). On an error it prints the problem and writes nothing. |
 | `run <app> [view [word]] [--sample\|--live] [--json]` | Runs the app as Bolt would and prints the rows. It executes the app's own command with your real HOME and PATH. |
 | `ship <app>` | `lint --personal`, `check`, makes your key once, `pack` with the next version, `verify`; prints how to install. |
 | `doctor [app]` | Checks node, python, your key, `~/.bolt-apps` and what would block an install. |

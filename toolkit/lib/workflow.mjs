@@ -11,6 +11,7 @@ import { vendorKit } from './check.mjs';
 import { formatBoltSays, USER_APPS_PATH, USER_APPS_HIDDEN_NOTE } from './boltsays.mjs';
 import { versionProblem } from './boltrules.mjs';
 import { readPack, readPackMetadata } from './pack.mjs';
+import { engineEnv, thinIfShared, expandThin, thinAppDir, ENGINE_SRC } from './engine.mjs';
 import { pythonCmd, spawnPython, PYTHON_MISSING } from './python.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -111,7 +112,7 @@ export function newList() {
 	for (const a of apps) console.log(`  ${a.id.padEnd(24)} ${a.need || a.layout}\n  ${''.padEnd(24)} edit: ${(a.edit || []).join(', ')}`);
 	console.log(`\nStart with the one whose "need" matches. Not sure: ${DOCS}`);
 }
-export function newFromTemplate(template, id, root, author, authorNote = '') {
+export function newFromTemplate(template, id, root, author, authorNote = '', opts = {}) {
 	staleCloneNote();
 	const src = path.join(EXAMPLES, template);
 	if (!fs.existsSync(path.join(src, 'bolt-app.json'))) die(`no template "${template}". Run: ./bolt-apps new --list`, 2);
@@ -159,12 +160,13 @@ export function newFromTemplate(template, id, root, author, authorNote = '') {
 		+ `> If you build on someone else's app, keep their author credit and record the original app ID in \`derived_from\` in \`bolt-app.json\`.\n\n${s}`);
 	const cfgName = `scripts/${id}__config.json`;
 	edit(cfgName, (t) => { const j = JSON.parse(t); if (j.app) { j.app.id = id; j.app.chip = chip; j.app.title = title; j.app.description = `TODO describe your app: one line on what =${chip} shows.`; } return JSON.stringify(j, null, 2) + '\n'; });
+	if (opts.thin) thinIfShared(dir, id); else expandThin(dir, id);   // --thin: the template's private engine copy becomes the short entry; the engine is kept once in the toolkit and the pack carries it
 	// regenerate the app file from the config when the template has an emitter, else rewrite id, chip and title in place
 	const sd = path.join(dir, 'scripts');
 	const emitter = fs.existsSync(sd) ? fs.readdirSync(sd).filter((f) => f.endsWith('.py') && !f.endsWith('__bolt_app_kit.py')).find((f) => fs.readFileSync(path.join(sd, f), 'utf8').includes('--emit-yaml')) : null;
 	const ud = path.join(dir, 'utilities');
 	if (emitter) {
-		const r = spawnPython([`scripts/${emitter}`, '--emit-yaml'], { cwd: dir, encoding: 'utf8' });
+		const r = spawnPython([`scripts/${emitter}`, '--emit-yaml'], { cwd: dir, encoding: 'utf8', env: { ...process.env, ...engineEnv() } });
 		if (r.status !== 0) fail(`could not generate the app file: ${String(r.stderr || (r.error && r.error.message) || PYTHON_MISSING).slice(-300)}`);
 		for (const y of fs.readdirSync(ud)) fs.rmSync(path.join(ud, y));
 		fs.writeFileSync(path.join(ud, `${id}.yaml`), r.stdout);
@@ -221,7 +223,7 @@ function minimalCheck(dir, id) {
 function pruneSampleExpectations(dir, id) {
 	const p = path.join(dir, 'check.json'); let cfg; try { cfg = JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return 0; }
 	if (!fs.existsSync(path.join(dir, 'scripts', `${id}__config.json`))) return 0;   // only engine apps: their sample words live in config.json and fixtures.json
-	let engine = ''; try { const sd = path.join(dir, 'scripts'); for (const f of fs.readdirSync(sd)) if (f.endsWith('.py')) engine += fs.readFileSync(path.join(sd, f), 'utf8'); } catch { return 0; }
+	let engine = ''; try { const sd = path.join(dir, 'scripts'); for (const f of fs.readdirSync(sd)) if (f.endsWith('.py')) engine += fs.readFileSync(path.join(sd, f), 'utf8'); if (engine.includes('bolt_app_engine.py')) engine += fs.readFileSync(ENGINE_SRC, 'utf8'); } catch { return 0; }
 	let dropped = 0;
 	for (const c of Array.isArray(cfg.cases) ? cfg.cases : []) {
 		const ex = c && c.expect; if (!ex || !Array.isArray(ex.text_present)) continue;
@@ -233,12 +235,29 @@ function pruneSampleExpectations(dir, id) {
 	return dropped;
 }
 
+// ---------------------------------------------------------------- regen
+// Writes utilities/<id>.yaml from the engine app's config. The same as `python3 scripts/<id>__engine.py --emit-yaml > utilities/<id>.yaml`, which a thin
+// app cannot run by hand outside the toolkit (it finds the shared engine through the toolkit). On an error nothing is written and the engine's reason is shown.
+export function regen(args) {
+	const dir = args.find((a) => !a.startsWith('--'));
+	if (!dir || !fs.existsSync(path.join(dir, 'bolt-app.json'))) die('usage: ./bolt-apps regen <app-folder>   (an app made from an engine template)');
+	const sd = path.resolve(dir, 'scripts');
+	const em = fs.existsSync(sd) ? fs.readdirSync(sd).filter((f) => f.endsWith('__engine.py')).find((f) => fs.readFileSync(path.join(sd, f), 'utf8').includes('--emit-yaml') || fs.readFileSync(path.join(sd, f), 'utf8').includes('bolt_app_engine.py')) : null;
+	if (!em) die(`${q(sd)} has no <id>__engine.py: this app has no engine to regenerate its app file from`);
+	const id = em.slice(0, -'__engine.py'.length);
+	const r = spawnPython([path.join(sd, em), '--emit-yaml'], { cwd: sd, encoding: 'utf8', timeout: 30000, env: { ...process.env, ...engineEnv() } });
+	if (r.status !== 0 || !r.stdout) die(`could not generate the app file:\n${String(r.stderr || (r.error && r.error.message) || PYTHON_MISSING).trim().slice(-900)}`);
+	fs.mkdirSync(path.join(dir, 'utilities'), { recursive: true });
+	fs.writeFileSync(path.join(dir, 'utilities', `${id}.yaml`), r.stdout);
+	console.log(`wrote ${q(path.join(dir, 'utilities', `${id}.yaml`))}`);
+}
+
 // ---------------------------------------------------------------- run
 // When the app has an engine, ask it for the app file: if the config is what is wrong, its message (and the valid icons) is the real cause of an unreadable app file.
 function emitterProblem(dir) {
 	try {
 		const sd = path.join(dir, 'scripts'), em = fs.readdirSync(sd).filter((f) => f.endsWith('__engine.py')).find((f) => fs.readFileSync(path.join(sd, f), 'utf8').includes('--emit-yaml')); if (!em) return '';
-		const r = spawnPython([path.join(sd, em), '--emit-yaml'], { cwd: sd, encoding: 'utf8', timeout: 20000 });
+		const r = spawnPython([path.join(sd, em), '--emit-yaml'], { cwd: sd, encoding: 'utf8', timeout: 20000, env: { ...process.env, ...engineEnv() } });
 		return r.status !== 0 && r.stderr ? `\nThe real cause, from the engine:\n${r.stderr.trim().split('\n').slice(0, 6).join('\n').slice(0, 900)}` : '';
 	} catch { return ''; }
 }
@@ -246,7 +265,7 @@ function bridgeCommand(dir0, words) {
 	const dir = path.resolve(dir0);
 	const ud = path.join(dir, 'utilities');
 	let y; try { y = fs.readdirSync(ud).find((f) => /\.ya?ml$/.test(f)); } catch { die(`${q(ud)} is missing. An app folder has utilities/<id>.yaml`); } if (!y) die(`${q(ud)} has no app file`);
-	let root; try { root = parseYaml(fs.readFileSync(path.join(ud, y), 'utf8')); } catch (e) { die(`${q(path.join(ud, y))} cannot be read as an app file (${String(e.message).slice(0, 120)}). ${notYamlHint(fs.readFileSync(path.join(ud, y), 'utf8')) || 'Fix the YAML, or regenerate it from config.json.'}${emitterProblem(dir)}`); }
+	let root; try { root = parseYaml(fs.readFileSync(path.join(ud, y), 'utf8')); } catch (e) { die(`${q(path.join(ud, y))} cannot be read as an app file (${String(e.message).slice(0, 120)}). ${notYamlHint(fs.readFileSync(path.join(ud, y), 'utf8'), thinAppDir(dir)) || 'Fix the YAML, or regenerate it from config.json.'}${emitterProblem(dir)}`); }
 	const osKey = process.platform === 'darwin' ? 'macos' : process.platform === 'win32' ? 'windows' : 'linux';
 	const tpl = str(get(get(get(root, 'bridge')?.value, 'command')?.value, osKey)?.value);
 	if (!tpl) return { root, error: `the app file has no bridge command for ${osKey}` };
@@ -276,6 +295,7 @@ export function runApp(args) {
 		env.PYTHONUTF8 = '1';
 		for (const k of ['SYSTEMROOT', 'COMSPEC', 'APPDATA', 'LOCALAPPDATA', 'TEMP', 'TMP', 'PATHEXT']) if (process.env[k]) env[k] = process.env[k];
 	}
+	Object.assign(env, engineEnv());   // a thin app finds the shared engine through this (a pack carries it beside the script)
 	if (flags.includes('--sample')) env.BOLT_APP_FIXTURE = '1'; else if (flags.includes('--live')) env.BOLT_APP_FIXTURE = '0';
 	if (process.platform === 'win32' && (b.argv[0] === 'python' || b.argv[0] === 'python3')) {
 		const p = pythonCmd();

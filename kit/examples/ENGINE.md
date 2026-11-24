@@ -6,7 +6,9 @@
 
 `bolt-apps` in this page means `./bolt-apps`, run from the root of the clone. Limits live in [the rules table](QUICKSTART.md#4-the-rules-table); what is supported is in [CAPABILITIES.md](CAPABILITIES.md).
 
-All apps here run the same engine, kept as `scripts/<id>__engine.py` (every file in `scripts/` is named `<id>__<name>`). An app is `scripts/<id>__config.json` plus `scripts/<id>__fixtures.json`. Nothing else is edited. Regenerate the app file after any change:
+All apps here run the same engine, kept as `scripts/<id>__engine.py` (every file in `scripts/` is named `<id>__<name>`). An app is `scripts/<id>__config.json` plus `scripts/<id>__fixtures.json`. Nothing else is edited.
+
+**The engine is kept once.** Its source is `kit/python/bolt_app_engine.py` in the toolkit. `./bolt-apps new <template> <id> --thin` makes an app that holds a short entry in `scripts/<id>__engine.py` (about 25 lines, the same for every app, never edited) that loads it; `./bolt-apps check`, `run` and `regen` find the engine themselves, and `./bolt-apps pack` writes it into the pack once, as `scripts/<id>__bolt_app_engine.py`, so the pack still carries everything the app runs (Bolt 181 has no shared engine, and every Bolt installs scripts into one folder). The command in the app file names that file too, so changing it asks the person to approve again. After editing a thin app's config, regenerate its app file with `./bolt-apps regen <app folder>` (the `python3 scripts/<id>__engine.py --emit-yaml` line above is for an app that holds its own copy: a thin entry finds the engine through the toolkit). An older app that still holds its own full copy of the engine in `scripts/<id>__engine.py` keeps working unchanged: nothing is removed, and plain `new` still copies the engine until the docs and hints that name the hand-run `--emit-yaml` line are moved to `regen` (the default will then become thin). Do not copy the engine into an app; if the engine lacks something, ask for it in the toolkit. Regenerate the app file after any change:
 
 ```
 python3 scripts/<id>__engine.py --emit-yaml > utilities/<id>.yaml

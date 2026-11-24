@@ -17,7 +17,7 @@ from unittest.mock import patch
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from test_cold_run_engine import cfg_of, fixtures_of, load_engine, run, EX  # noqa: E402
+from test_cold_run_engine import carry_engine, cfg_of, fixtures_of, load_engine, run, EX  # noqa: E402
 
 
 def tickets(n, used=0, unused=0):
@@ -83,6 +83,7 @@ class LiveBase(unittest.TestCase):
         for f in os.listdir(scripts):
             if f.endswith((".py", ".json")):
                 shutil.copy(os.path.join(scripts, f), os.path.join(d, f))
+        carry_engine(d, self.app)
         with open(os.path.join(d, self.app + "__config.json"), "w") as f:
             json.dump(self.cfg, f)
         return d
@@ -560,6 +561,7 @@ class CacheRowsInEveryApp(unittest.TestCase):
         for f in os.listdir(scripts):
             if f.endswith((".py", ".json")):
                 shutil.copy(os.path.join(scripts, f), os.path.join(d, f))
+        carry_engine(d, app)
         with open(os.path.join(d, app + "__config.json"), "w") as f:
             json.dump(cfg, f)
         e = dict(os.environ)

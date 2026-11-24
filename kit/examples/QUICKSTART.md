@@ -34,7 +34,7 @@ Needs Node 18+ and Python 3.9+:
 ./bolt-apps ship ~/my-apps/my-tool                         # lint, check, pack, verify; prints the .boltpack
 ```
 
-Edit between `new` and `run`. After editing an engine app's `scripts/<id>__config.json`, regenerate its app file: `cd ~/my-apps/my-tool && python3 scripts/my-tool__engine.py --emit-yaml > utilities/my-tool.yaml` (on an error it prints the problem and exits 1; read it). Then drop the `.boltpack` on the Bolt launcher (never Admin settings), read the review card (self-signed is expected), click Install, click Install again on Bolt's own "Install an unverified Bolt pack?" dialog, then Settings, Desktop App, User Apps, expand the app, Review and accept, and type `=my-tool`. `ship` raises the version each time and keeps one signing key in `~/.bolt-apps`. Stuck: `./bolt-apps doctor ~/my-apps/my-tool`.
+Edit between `new` and `run`. After editing an engine app's `scripts/<id>__config.json`, regenerate its app file: `./bolt-apps regen ~/my-apps/my-tool` (or, for an app that holds its own engine copy, `cd ~/my-apps/my-tool && python3 scripts/my-tool__engine.py --emit-yaml > utilities/my-tool.yaml`; on an error either prints the problem and exits 1: read it). Then drop the `.boltpack` on the Bolt launcher (never Admin settings), read the review card (self-signed is expected), click Install, click Install again on Bolt's own "Install an unverified Bolt pack?" dialog, then Settings, Desktop App, User Apps, expand the app, Review and accept, and type `=my-tool`. `ship` raises the version each time and keeps one signing key in `~/.bolt-apps`. Stuck: `./bolt-apps doctor ~/my-apps/my-tool`.
 
 ## 3. Ten hard rules
 

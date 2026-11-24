@@ -9,6 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
+import { ENGINE_SRC, thinAppDir } from './engine.mjs';
 import { fileURLToPath } from 'node:url';
 import { pythonCmd } from './python.mjs';
 import { isNavToken, assessYaml } from './assess.mjs';
@@ -413,6 +414,9 @@ const WRAPPER = `import sys, os, runpy
 script, plat = sys.argv[1], sys.argv[2]
 sys.path.insert(0, os.path.dirname(script))
 sys.argv = [script] + sys.argv[3:]
+# A thin app finds the shared engine through this module, not through the environment: the script's environment stays what Bolt gives it.
+import types as _types
+_tk = _types.ModuleType("_bolt_apps_toolkit"); _tk.engine_file = ${JSON.stringify(ENGINE_SRC)}; sys.modules["_bolt_apps_toolkit"] = _tk
 import subprocess, shutil, tempfile, threading, json, unicodedata, hashlib, stat, signal, re, math, time
 # Windows stubs are .cmd files; kit.which of a macos/linux fixture returns the extensionless copy, which CreateProcess cannot run.
 # Rewrite a spawn of a file next to ._bolt_stub.py into the dispatcher so hang/by_args still work and proc.kill() hits the sleeper.
@@ -597,7 +601,7 @@ async function checkAppRun(appDir, cfg, report, opts) {
 	report.findings.push(...kitGuard(appDir, cfg));
 	// lookup.rows (a chained lookup) are drawn like overview rows: a row's own `copy` is not read, so Copy puts the row text on the clipboard. Only an `item` (single endpoint) honours `copy`.
 	try { const sd = path.join(appDir, 'scripts'), cf = fs.readdirSync(sd).find((f) => f.endsWith('__config.json')); const ec = cf ? JSON.parse(fs.readFileSync(path.join(sd, cf), 'utf8')) : null; const ig = ec && ec.mode === 'lookup' && ec.lookup && Array.isArray(ec.lookup.rows) ? ec.lookup.rows.map((r, i) => (r && typeof r === 'object' && 'copy' in r ? `lookup.rows[${i}]` : null)).filter(Boolean) : []; if (ig.length) top('warning', 'config_copy_ignored', `${ig.join(', ')} in scripts/${cf} declare "copy", which lookup rows ignore: Copy puts the row's own text on the clipboard. Remove it, or use a lookup with a single endpoint and an "item", where "copy" works (ENGINE.md, "Buttons in lookup mode")`, `scripts/${cf}`); } catch { /* no engine config: nothing to say */ }
-	try { const ud = path.join(appDir, 'utilities'); for (const y of fs.existsSync(ud) ? fs.readdirSync(ud).filter((f) => /\.ya?ml$/.test(f)) : []) { const txt = fs.readFileSync(path.join(ud, y), 'utf8'); try { parseYaml(txt); } catch (e) { top('error', 'app_file_not_yaml', `utilities/${y} cannot be read as YAML (${String(e.message).slice(0, 100)}). ${notYamlHint(txt) || 'Write plain YAML (AGENTS.md section 2), or regenerate it: python3 scripts/<id>__engine.py --emit-yaml > utilities/<id>.yaml'}`, `utilities/${y}`); } } } catch { /* no utilities folder: other checks say so */ }
+	try { const ud = path.join(appDir, 'utilities'); for (const y of fs.existsSync(ud) ? fs.readdirSync(ud).filter((f) => /\.ya?ml$/.test(f)) : []) { const txt = fs.readFileSync(path.join(ud, y), 'utf8'); try { parseYaml(txt); } catch (e) { top('error', 'app_file_not_yaml', `utilities/${y} cannot be read as YAML (${String(e.message).slice(0, 100)}). ${notYamlHint(txt, thinAppDir(appDir)) || 'Write plain YAML (AGENTS.md section 2), or regenerate it: python3 scripts/<id>__engine.py --emit-yaml > utilities/<id>.yaml'}`, `utilities/${y}`); } } } catch { /* no utilities folder: other checks say so */ }
 	const pyc = /^python3?$/.test(cfg.interpreter || '') ? pythonCmd({ skip: [appDir] }) : null;
 	// pyc.cmd is an absolute path: the case runs with a stubbed PATH, and the child must never search its own cwd (the app folder) for python
 	const py = pyc ? [pyc.cmd, ...pyc.args] : (cfg.interpreter ? whichSync(cfg.interpreter) : null);

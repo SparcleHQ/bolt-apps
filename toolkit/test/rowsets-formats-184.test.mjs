@@ -87,6 +87,13 @@ test('lint refuses a bad from, by name', () => {
 	bad(['where:', '  a: 1'], 'set is required');
 	bad(['set: k', 'where:', '  a: 1', '  b: 2', '  c: 3', '  d: 4'], 'at most 3');
 	bad(['set: k', 'where:', '  constructor: x'], 'field name that is not allowed');
+	bad(['set: k', 'where:', '  toString: x'], 'field name that is not allowed');
+	bad(['set: k', 'where:', '  valueOf: x'], 'field name that is not allowed');
+	bad(['set: k', 'where:', '  a: null'], 'got nothing');
+	bad(['set: k', 'where:', '  a: ~'], 'got nothing');
+	bad(['set: k', 'where:', '  a: .nan'], 'not finite');
+	bad(['set: k', 'where:', '  a: .inf'], 'not finite');
+	assert.deepEqual(errs(app('table', ['from:', '  set: k', '  where:', '    a: "null"'])), [], 'a quoted null is text');
 	bad(['set: k', 'where:', '  - a'], 'where must be a mapping');
 	bad(['set: k', 'where:', '  a:', '    b: 1'], 'where.a');
 	bad(['set: k', 'where:', `  a: ${'v'.repeat(201)}`], 'longer than 200');
@@ -128,4 +135,22 @@ test('the capability rows name the keys, the version and an existing test', () =
 test('QUICKSTART names the version of the new keys in the Panes newer row', () => {
 	const row = read('kit/examples/QUICKSTART.md').split('\n').find((l) => l.startsWith('| Panes newer than 181'));
 	assert.ok(row.includes('from') && row.includes('format') && row.includes(SINCE), row);
+});
+
+test('a locale with characters outside letters, digits and "-" is a warning, not an error', () => {
+	const y = app('chart', ['locale: de_DE']);
+	assert.deepEqual(errs(y), []);
+	const w = P(y).find((p) => p.code === 'bind_locale_chars');
+	assert.ok(w && w.level === 'warning' && w.message.includes('de-DE'), JSON.stringify(w));
+	assert.equal(P(app('chart', ['locale: de-DE'])).some((p) => p.code === 'bind_locale_chars'), false);
+});
+
+test('the check simulator reads where as well as set: only matching rows are tiles', async () => {
+	const { paneProblems } = await import('../lib/check.mjs');
+	const w = (where) => ({ kind: 'cards', mode: 'list_data', layout: 'tiles', valueField: 'v', from: 'k', where });
+	const pres = (where) => ({ viewArg: false, views: new Map(), top: w(where) });
+	const rows = [{ title: 'a', set: 'k', kind: 'x', v: 1 }, { title: 'b', set: 'k', kind: 'y', v: null }, { title: 'link', nav: { view: 'x' } }];
+	const codes = (where) => paneProblems(pres(where), rows, 'overview').map((p) => p.code);
+	assert.deepEqual(codes([['kind', 'x']]), [], 'only the matching row is a tile, and it has a number');
+	assert.deepEqual(codes([]), ['tile_row_without_value'], 'without where the row of set k with no number is an empty tile');
 });

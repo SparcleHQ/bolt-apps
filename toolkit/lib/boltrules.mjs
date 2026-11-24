@@ -73,6 +73,8 @@ function rowSetProblems(node, where, out) {
 	for (const e of w.entries) {
 		if (e.key === '' || [...e.key].length > 200 || RESERVED_NAMES.has(e.key)) return bad(`where has a field name that is not allowed: "${e.key.slice(0, 40)}"`);
 		if (!e.value || e.value.t !== 's') return bad(`where.${e.key} must be text, a number or true/false, got ${kindWord(e.value?.t)}`);
+		// an unquoted null or a non-finite number is not a value Bolt compares against (it refuses it)
+		if (!e.value.q && /^(null|~|[-+]?\.(nan|inf)|[-+]?\.(NaN|Inf|NAN|INF))$/.test(e.value.v)) return bad(`where.${e.key} must be text, a number or true/false, got ${e.value.v === 'null' || e.value.v === '~' ? 'nothing' : 'a number that is not finite'}`);
 		if ([...e.value.v].length > 200) return bad(`where.${e.key} is longer than 200 characters`);
 	}
 }
@@ -98,6 +100,7 @@ function bindMap(node, keysSpec, where, out, ctx = {}) {
 			const sp = keysSpec[e.key];
 			if (sp.since) { const g = gateProblem(where, e.key, sp.since, ctx); if (g) out.push(g); }
 			bindVal(e.value, sp, `${where}.${e.key}`, out, ctx);
+			if (e.key === 'locale' && e.value && e.value.t === 's' && !/^[A-Za-z0-9-]*$/.test(e.value.v)) out.push({ code: 'bind_locale_chars', level: 'warning', message: `${where}.${e.key}: "${e.value.v.slice(0, 40)}" has characters outside letters, digits and "-" (de-DE, not de_DE). Bolt ignores a locale it cannot read and uses the system one` });
 			if (sp.max_refs && e.value && e.value.t === 's') {
 				const n = (e.value.v.match(REF) || []).length;
 				if (n > sp.max_refs) out.push({ code: 'bind_too_many_refs', message: `${where}.${e.key}: has ${n} {{ }} references, at most ${sp.max_refs} are read (Bolt drops the picture). A picture that needs more parts is too big: use a smaller one` });

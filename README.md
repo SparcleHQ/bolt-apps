@@ -16,8 +16,9 @@ that turns pasted CSV into a Markdown table.
 
 ## What a Bolt App is
 
-Bolt Apps extend what Bolt can do. Start with a snippet or a search prefix. Add a YAML file that
-reshapes or recognizes what you paste. For your own use you can also add a command or script that
+Bolt Apps extend what Bolt can do. Start with a snippet or a search prefix. Build an app that
+reshapes or recognizes what you paste, then pack it into a `.boltpack`, the main way to install
+one. For your own use you can also add a command or script that
 returns rows (the [toolkit](toolkit/README.md) packs it with `--personal`); the gallery takes tier 1
 and 2 apps only, so that kind stays yours. Skills and agents import from Settings, Agents, Import.
 Connectors, detectors and compliance packs are for company admins. Every app has a safety tier, so
@@ -73,8 +74,12 @@ hand:
 
 - **Snippet:** Settings, Search & Commands, Snippets, Add snippet; paste the `content`.
 - **Search engine:** Settings, Search & Commands, Search Engines, Add engine.
-- **User App:** Open Settings, then Desktop App. If User Apps is hidden, switch Settings to
-  Advanced. Under User Apps, click Open folder, save the `.yaml` there, and click Reload.
+- **User App, main route (a pack):** pack the app (`./bolt-apps pack <folder>`, or `--personal`
+  for your own tier 3 app) and drop the `.boltpack` on the Bolt launcher or Bolt Apps. Bolt shows
+  what the app can do and asks you to confirm.
+- **User App, for your own apps (a plain file):** Open Settings, then Desktop App. If User Apps is
+  hidden, switch Settings to Advanced. Under User Apps, click Open folder, save the `.yaml` there,
+  and click Reload.
   If the app says Needs approval, expand its row, choose Review and accept, and review
   the files before clicking Accept. Bolt 0.1.181 shows this step for a manually installed
   transform such as [CSV to Markdown](apps/csv-to-markdown).

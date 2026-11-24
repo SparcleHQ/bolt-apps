@@ -25,6 +25,8 @@ Two shapes, pick one first. **Lookup**: the person types a word (`=my-tool serde
 
 ## 2. Four commands
 
+The result is a `.boltpack`, the main route to install an app. A plain `.yaml` in the User Apps folder is the secondary route, for your own simple apps.
+
 Needs Node 18+ and Python 3.9+:
 
 ```sh run

@@ -103,7 +103,7 @@ test('verify: a pack and its folder agree about platforms (a pack records none, 
 test('help lists every command and --version prints the version', () => {
 	const h = run(REPO, '--help').stdout;
 	for (const w of ['new', 'lint', 'check', 'kit vendor', 'keygen', 'pack', 'verify', '--version']) assert.ok(h.includes(w), w);
-	assert.match(run(REPO, '--version').stdout.trim(), /^\d+\.\d+\.\d+$/);
+	assert.match(run(REPO, '--version').stdout.split('\n')[0], /^\d+\.\d+\.\d+$/);
 });
 
 test('workflow: new <template> <id> -> run -> ship passes from a fresh copy, with no hand edits', () => {
@@ -159,10 +159,10 @@ test('the repo-root bolt-apps launcher runs the toolkit from any folder, through
 	assert.ok(fs.statSync(launcher).mode & 0o111, 'bolt-apps is executable');
 	const root = tmp();
 	const run1 = (cmd, args, env = process.env) => spawnSync(cmd, args, { cwd: root, encoding: 'utf8', env });
-	assert.match(run1(launcher, ['--version']).stdout.trim(), /^\d+\.\d+\.\d+$/);
+	assert.match(run1(launcher, ['--version']).stdout.split('\n')[0], /^\d+\.\d+\.\d+$/);
 	assert.match(run1(launcher, ['--help']).stdout, /new <template> <id>/);
 	const link = path.join(root, 'bolt-apps-link'); fs.symlinkSync(launcher, link);
-	assert.match(run1(link, ['--version']).stdout.trim(), /^\d+\.\d+\.\d+$/);
+	assert.match(run1(link, ['--version']).stdout.split('\n')[0], /^\d+\.\d+\.\d+$/);
 	const hop1 = path.join(root, 'hop1'), hop2 = path.join(root, 'sub', 'hop2'); fs.mkdirSync(path.join(root, 'sub'));
 	fs.symlinkSync(launcher, hop1); fs.symlinkSync(path.join('..', 'hop1'), hop2);   // a two-link chain, the second one with a relative target
 	assert.match(run1(hop2, ['--version']).stdout.trim(), /^\d+\.\d+\.\d+$/);

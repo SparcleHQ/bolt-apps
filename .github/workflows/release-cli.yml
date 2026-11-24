@@ -1,0 +1,55 @@
+# Builds the bolt-apps CLI release on a version tag: bolt-apps-<version>.tar.gz plus SHA256SUMS.
+# Runs on tags only. It creates a DRAFT release, so nothing is public until a maintainer publishes it.
+# The installer at https://sparcle.app/install-bolt-apps.sh downloads this tarball and refuses it unless it matches SHA256SUMS.
+#
+# Provenance: none of this repository's other workflows sign or attest anything, so this one follows
+# the same convention and publishes checksums only. SHA256SUMS comes from the same release as the
+# tarball, so it detects corruption and a swapped single asset, not a compromised release.
+name: release-cli
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Tag matches the toolkit version
+        run: |
+          want="${GITHUB_REF_NAME#v}"
+          have=$(node -p "JSON.parse(require('fs').readFileSync('toolkit/package.json','utf8')).version")
+          if [ "$want" != "$have" ]; then
+            echo "tag $GITHUB_REF_NAME does not match toolkit/package.json version $have" >&2
+            exit 1
+          fi
+      - name: Toolkit tests
+        run: node --test toolkit/test/*.test.mjs
+      - name: Build tarball and checksums
+        run: scripts/build-cli-tarball.sh dist
+      - name: Build twice, bytes must match
+        run: |
+          scripts/build-cli-tarball.sh dist2 >/dev/null
+          cmp "dist/bolt-apps-${GITHUB_REF_NAME#v}.tar.gz" "dist2/bolt-apps-${GITHUB_REF_NAME#v}.tar.gz"
+      - name: Installed copy runs
+        run: |
+          mkdir smoke && tar -xzf "dist/bolt-apps-${GITHUB_REF_NAME#v}.tar.gz" -C smoke
+          "smoke/bolt-apps-${GITHUB_REF_NAME#v}/bolt-apps" --version
+          cd "smoke/bolt-apps-${GITHUB_REF_NAME#v}" && ./bolt-apps new --list >/dev/null
+      - name: Draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --draft --verify-tag \
+            --title "bolt-apps CLI ${GITHUB_REF_NAME#v}" \
+            --notes "Author CLI. Install: curl -fsSL https://sparcle.app/install-bolt-apps.sh | sh. Verify with SHA256SUMS." \
+            "dist/bolt-apps-${GITHUB_REF_NAME#v}.tar.gz" dist/SHA256SUMS

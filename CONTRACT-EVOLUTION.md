@@ -31,6 +31,14 @@ These names are held so later work is additive. Each is `reserved` in `capabilit
 - Widget kinds: the built-in list in `schema/bolt-rules.json`, each with a since-version in `kind_since`. A new kind is a new entry; an old kind never changes.
 - Renderer families: the declarative chart pane is the only chart. A richer renderer arrives as new bind keys or a new kind, never as drawing code in a script.
 
+## What an older Bolt says
+
+A Bolt before 0.1.184 that is given a pack using a 184 kind or key refuses it with the generic message "This pack could not be verified, so it was not installed". Nothing reads `min_bolt_version` at install: it is a promise the author makes and a lint check. An install-time version check is planned for 184.1.
+
+## Ahead of the kit
+
+Bolt 0.1.184 also accepts a graph pane (a service map, up to 60 nodes and 200 links, a table with a reason above that). This kit has no authoring rules or sample for it yet, so lint refuses it; they come with 184.1. `capabilities.json` lists it as `partial` with that gap named.
+
 ## When a change lands
 
 1. The rule goes into `schema/bolt-rules.json` with its since-version, and into `schema/user-app.schema.json`.

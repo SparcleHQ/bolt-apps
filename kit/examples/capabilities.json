@@ -1481,23 +1481,17 @@
       "example_note": "none: reserved, not available"
     },
     {
-      "id": "reserved.graph_pane",
-      "group": "reserved",
-      "name": "Service map pane (kind name graph)",
-      "status": "reserved",
-      "snippet": "none: reserved, not available",
+      "id": "pane.graph_184",
+      "group": "panes",
+      "name": "Pane: graph (service map)",
+      "status": "partial",
+      "snippet": "none: no authoring rules in this kit yet",
       "test": "toolkit/test/contract-evolution.test.mjs",
-      "limit": "Not in 184. Do not use; lint refuses it.",
-      "since": "none",
-      "older_bolt": "Not available in any Bolt: lint refuses it, so no pack can use it yet.",
-      "probe": {
-        "runtime": "bridge",
-        "kind": "graph",
-        "bind": [
-          "id: a"
-        ]
-      },
-      "example_note": "none: reserved, not available"
+      "limit": "Bolt 0.1.184 accepts a graph pane, a service map of up to 60 nodes and 200 links; above that it shows the table with a visible reason. This kit has no authoring rules for it yet: its rules, schema and lint do not know the kind (lint refuses it), and there is no example. The rules and a sample that passes check come with 184.1. Until then do not build on it in a pack you ship from this kit.",
+      "since": "0.1.184",
+      "older_bolt": "A Bolt older than 0.1.184 refuses the whole pack that uses it (the generic message: this pack could not be verified, so it was not installed).",
+      "example_note": "no example yet: authoring rules and a sample come with 184.1",
+      "sample_due": "184.1"
     }
   ]
 }

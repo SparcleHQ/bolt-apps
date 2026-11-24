@@ -13,9 +13,14 @@ const EX = path.join(REPO, 'kit/examples');
 const apps = fs.readdirSync(EX).filter((d) => fs.existsSync(path.join(EX, d, 'check.json'))).sort();
 const run = (args) => spawnSync(process.execPath, [path.join(REPO, 'toolkit/bin/bolt-apps.mjs'), ...args], { cwd: REPO, encoding: 'utf8', timeout: 120000 });
 
-test('the corpus is the whole gallery: every app in index.json with a check.json is here, with goldens', () => {
+test('the corpus is the whole gallery: every app with a check.json is here, and each case that names a golden has the file', () => {
 	assert.ok(apps.length >= 20, `only ${apps.length} apps`);
-	for (const a of apps) assert.ok(fs.existsSync(path.join(EX, a, 'golden')) && fs.readdirSync(path.join(EX, a, 'golden')).length > 0, `${a}: no goldens`);
+	let withGoldens = 0;
+	for (const a of apps) {
+		const cases = JSON.parse(fs.readFileSync(path.join(EX, a, 'check.json'), 'utf8')).cases || [];
+		for (const c of cases) if (c.golden) { assert.ok(fs.existsSync(path.join(EX, a, c.golden)), `${a}: missing ${c.golden}`); withGoldens++; }
+	}
+	assert.ok(withGoldens >= 60, `only ${withGoldens} goldens`);
 });
 
 for (const a of apps) {

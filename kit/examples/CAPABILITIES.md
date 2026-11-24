@@ -103,7 +103,7 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | Compose: a pane built from other panes by reference | reserved | none | Not available in any Bolt: lint refuses it, so no pack can use it yet. | none: reserved, not available | `toolkit/test/contract-evolution.test.mjs` | Not in 184. Use the stack kind (Bolt 0.1.184) for several panes in one view. Do not use. |
 | Controls: inputs inside a pane | reserved | none | Not available in any Bolt: lint refuses it, so no pack can use it yet. | none: reserved, not available | `toolkit/test/contract-evolution.test.mjs` | Not in 184. Use the typed word, a form input or a row action. Do not use. |
 | Canvas pane | reserved | none | Not available in any Bolt: lint refuses it, so no pack can use it yet. | none: reserved, not available | `toolkit/test/contract-evolution.test.mjs` | Not in 184. Do not use. |
-| Service map pane (kind name graph) | reserved | none | Not available in any Bolt: lint refuses it, so no pack can use it yet. | none: reserved, not available | `toolkit/test/contract-evolution.test.mjs` | Not in 184. Do not use; lint refuses it. |
+| Pane: graph (service map) | partial | 0.1.184 | A Bolt older than 0.1.184 refuses the whole pack that uses it (the generic message: this pack could not be verified, so it was not installed). | no example yet: authoring rules and a sample come with 184.1 | `toolkit/test/contract-evolution.test.mjs` | Bolt 0.1.184 accepts a graph pane, a service map of up to 60 nodes and 200 links; above that it shows the table with a visible reason. This kit has no authoring rules for it yet: its rules, schema and lint do not know the kind (lint refuses it), and there is no example. The rules and a sample that passes check come with 184.1. Until then do not build on it in a pack you ship from this kit. |
 
 ## Pick the version first
 
@@ -111,7 +111,7 @@ Use the oldest Bolt version that has what you need, and set `min_bolt_version` i
 
 - **0.1.181**: Pane: card; Pane: markdown; Pane: entity_preview; Pane: chart; Pane: table; Pane: cards; Pane: detail; Pane: json_tree; Pane: diff; Pane: image_grid; Pane: entity_preview picture (image_url); Pane: markdown with a big inline picture; A picture from a web API in a pane; presentation.widget (list, table, cards, detail); Several views in one app; Drill from an overview row to a list; Back row on a drilled-in view; Drill from a row to related rows of another view; Row id from another field (id_field, parent_field); Filter a list by a typed word; Rows are filtered as you type; Fresh cache and a stale copy when the API fails; A detail pane that changes with the selected row; Number tiles with a meter, unit, note and badge rules; Footer buttons (url, composer, utility); Run action: one click runs this app with a fixed query; Footer button icon; Open a place in Maps from a row (instead of a map pane); Row actions: Open and Copy from config; Icons in config.json and the app file; Typed input form with validation; Secret input field; REST list endpoint; A list of ids, then one request per id; API key sent as a query parameter; API key sent in a header; No key at all; Date tokens in a path: {today}, {today-7d}, {today+1d}; An object of lists keyed by date or name; A second host for one endpoint; Refuse an answer that lacks fields; Chain endpoints: one answer feeds the next path; A command line tool; A service on this computer (http_local); A local file the person names; An MCP server; Keys from the keychain or a private file; Keys stripped from API answers before cache; Failure: exit code and stderr; What nav needs to work; Back, Esc, Left and Right; Recently shown lists are reused; Command variables: limit, press, outname; Rows that open as files; One action takes Enter (primary); Chart rows mixed with plain rows; What Bolt does limit about a run; Sample data: no key, no network; Several sources at once inside one deadline; permissions block in the app file; Windows; Chip must equal id; Three start states: live with a key, labelled sample data, setup row only; Approval after every reship; A first word that is not a view (a place, a repo, a host); One app that takes a typed query AND drills (lookup plus views); Buttons on a lookup row; An app that only shows sample data (offline, no API); A text-only lookup result (no empty tile); Engine kept once (thin app)
 - **0.1.182**: Pane: entity_preview hero picture (Bolt 182); Chart types: pie, donut, area, several lines (bind.series); Pane: heatmap; Pane: gauge; Shared kit from Bolt (Bolt 182)
-- **0.1.184**: Tile visuals: ring, bullet, number, spark, strip, stack, and a sparkline limit; A grid that mixes tile visuals, one per row; Chart limit line and marks; Table column bars and tone glyph; Named row sets: one script run feeds several panes; Number formats: format, digits, locale; Stack: several panes in one view; Press a table row or tile to open a view or run an action; Script-app scaffold in the kit (no copied helpers)
+- **0.1.184**: Tile visuals: ring, bullet, number, spark, strip, stack, and a sparkline limit; A grid that mixes tile visuals, one per row; Chart limit line and marks; Table column bars and tone glyph; Named row sets: one script run feeds several panes; Number formats: format, digits, locale; Stack: several panes in one view; Press a table row or tile to open a view or run an action; Script-app scaffold in the kit (no copied helpers); Pane: graph (service map)
 
 ## Do not use in this version
 
@@ -126,7 +126,6 @@ These are named so nobody builds on them. Lint refuses each one.
 - Compose: a pane built from other panes by reference: Not in 184. Use the stack kind (Bolt 0.1.184) for several panes in one view. Do not use.
 - Controls: inputs inside a pane: Not in 184. Use the typed word, a form input or a row action. Do not use.
 - Canvas pane: Not in 184. Do not use.
-- Service map pane (kind name graph): Not in 184. Do not use; lint refuses it.
 
 ## Snippets
 
@@ -642,4 +641,10 @@ WANT_SHARED = False   # in the loader block of the app's script: True runs Bolt'
 
 ```
 load_json = kit.json_loader(HERE, _PFX); words = kit.split_args(argv, FILE_WORDS); kit.run_guarded(main, sys.argv, debug=bool(os.environ.get("BOLT_APP_DEBUG")))   # also kit.Fail, kit.s, kit.fixture_mode, kit.back_to_overview, kit.tile_bind, kit.indent, kit.bridge_head, kit.bridge_yaml
+```
+
+### Pane: graph (service map) (`pane.graph_184`)
+
+```
+none: no authoring rules in this kit yet
 ```

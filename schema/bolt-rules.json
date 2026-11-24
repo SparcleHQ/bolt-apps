@@ -28,7 +28,8 @@
   "diff",
   "image_grid",
   "heatmap",
-  "gauge"
+  "gauge",
+  "graph"
  ],
  "no_app_data_kinds": [
   "image",
@@ -573,6 +574,33 @@
       }
      }
     }
+   },
+   "graph": {
+    "id": {
+     "t": "text",
+     "max": 200,
+     "required": true
+    },
+    "label": {
+     "t": "text",
+     "max": 200
+    },
+    "status": {
+     "t": "text",
+     "max": 200
+    },
+    "to": {
+     "t": "text",
+     "max": 200
+    },
+    "group": {
+     "t": "text",
+     "max": 200
+    },
+    "title": {
+     "t": "text",
+     "max": 200
+    }
    }
   },
   "strict_from_schema_version": 2,
@@ -1103,6 +1131,12 @@
  },
  "kind_since": {
   "heatmap": "0.1.182",
-  "gauge": "0.1.182"
+  "gauge": "0.1.182",
+  "graph": "0.1.184"
+ },
+ "graph_caps": {
+  "max_nodes": 60,
+  "max_edges": 200,
+  "max_input_rows": 5000
  }
 }

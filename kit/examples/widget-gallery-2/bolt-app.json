@@ -25,5 +25,6 @@
       "min_version": "3.9"
     }
   ],
-  "tests": []
+  "tests": [],
+  "min_bolt_version": "0.1.184"
 }

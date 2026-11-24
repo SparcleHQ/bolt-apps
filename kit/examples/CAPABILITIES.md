@@ -25,6 +25,7 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | Chart types: pie, donut, area, several lines (bind.series) | supported | [chart-types](chart-types) | `toolkit/test/charts-182.test.mjs` | Needs Bolt 0.1.182: set min_bolt_version 0.1.182 in bolt-app.json, because a 181 refuses the whole pack. Pie and donut take positive values and at most 12 slices; bind.series is up to 4 lines on line or area, with no color. |
 | Pane: heatmap | supported | [chart-types](chart-types) | `kit/examples/chart-types/check.json` | Needs Bolt 0.1.182 (min_bolt_version 0.1.182). Grid, matrix or calendar data, 24 columns and 24 rows at most. Drawn by no real Bolt in this repo yet: the app is lint and fixture tested only. |
 | Pane: gauge | supported | [chart-types](chart-types) | `kit/examples/chart-types/check.json` | Needs Bolt 0.1.182 (min_bolt_version 0.1.182). bind.value is required; the selected row is shown. Drawn by no real Bolt in this repo yet: the app is lint and fixture tested only. |
+| Pane: graph (service map) | supported | [widget-gallery-2](widget-gallery-2) | `toolkit/test/graph-184.test.mjs` | Needs Bolt 0.1.184: set min_bolt_version 0.1.184 in bolt-app.json (any older Bolt refuses the whole pack that uses graph, in every schema_version; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). Each row is a node; bind.to names the ids it points to (commas or a list). Bolt lays it out: at most 60 nodes and 200 edges are drawn; past that it groups nodes by bind.group and says so, or shows a table with the reason when there is no group. status is drawn filled (critical), dashed (warning) or plain (healthy), never by color: words, not case sensitive: critical (critical, error, down, failing), warning (warning, warn, degraded), healthy (healthy, ok, up); any other word is drawn plain. The 100 ms drawing budget is measured on the machine, so a very slow machine may show the table for the same rows. Drawn by no real Bolt in this repo yet: the app is lint and fixture tested only. |
 | presentation.widget (list, table, cards, detail) | partial | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | Only validated: it names the row layout and does not change the left list. With table, cards or detail and no right_widget the right panel opens empty (from the source, not run live). Use list. |
 | Several views in one app | supported | [acme-dash](acme-dash) | `kit/examples/acme-dash/check.json` | At most 8 entries in presentation.views; the overview needs no entry (the engine uses 7 plus an overview entry); view ids match `^[a-z][a-z0-9_-]{0,23}$`. |
 | Drill from an overview row to a list | supported | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | One Enter. A nav arg is one plain token matching `^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}$`; no slash. A chain to another app, or a chain a script writes on a row, only pre-fills the next command (second Enter); a fixed-text chain to the same app written in the app file runs directly. Use nav to drill. |
@@ -188,6 +189,12 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 
 ```
 {"kind": "gauge", "mode": "selected_row", "bind": {"value": "{{row.score}}", "max": "100", "shape": "half"}}
+```
+
+### Pane: graph (service map) (`widget.graph`)
+
+```
+{"kind": "graph", "mode": "list_data", "bind": {"id": "id", "label": "name", "status": "state", "to": "calls", "group": "team"}}
 ```
 
 ### presentation.widget (list, table, cards, detail) (`layout.list_widget`)

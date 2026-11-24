@@ -5,8 +5,8 @@ id: widget-gallery-2
 chip: widget-gallery-2
 title: "Widget gallery 2"
 icon: Image
-description: "The card pane, the image grid and the cards grid with images. Sample data: generated colour swatches as inline images."
-placeholder_examples: ["Enter for overview", "card", "grid", "cardsimg"]
+description: "The card pane, the image grid, the cards grid with images and the service map graph. Sample data: generated colour swatches as inline images and six invented services."
+placeholder_examples: ["Enter for overview", "card", "grid", "cardsimg", "graph"]
 emits: Generic
 args:
   - { name: view, from: "query.word(0)", default: overview }
@@ -68,6 +68,17 @@ presentation:
           subtitle: "{{row.hex}}"
           image: "{{row.src}}"
           footer: "{{row.uses}} uses"
+    graph:
+      right_widget:
+        kind: graph
+        mode: list_data
+        bind:
+          id: "id"
+          label: "name"
+          status: "state"
+          to: "calls"
+          group: "team"
+          title: "Service map"
     note:
       right_widget:
         kind: markdown

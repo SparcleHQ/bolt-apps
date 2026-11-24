@@ -58,6 +58,20 @@
       }
     },
     {
+      "name": "graph rows are nodes: id, label, status and the ids each points to",
+      "os": "macos",
+      "args": [
+        "graph"
+      ],
+      "golden": "golden/graph.json",
+      "expect": {
+        "text_present": [
+          "checkout-api",
+          "payments"
+        ]
+      }
+    },
+    {
       "name": "offline preview",
       "os": "macos",
       "args": [

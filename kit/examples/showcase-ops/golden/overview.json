@@ -44,7 +44,7 @@
   },
   {
     "title": "Error budget by service",
-    "subtitle": "overall 38% left. Enter opens the rings",
+    "subtitle": "average 59% left across services. Enter opens the rings",
     "icon": "shield-alert",
     "body": "",
     "nav": {
@@ -52,12 +52,12 @@
     },
     "actions": [],
     "kpi_label": "Error budget left",
-    "kpi_value": 38,
+    "kpi_value": 59,
     "kpi_unit": "%",
     "kpi_max": 100,
     "kpi_note": "all services",
     "kpi_foot": "",
-    "kpi_badge": "WARNING",
+    "kpi_badge": "HEALTHY",
     "copy_text": "",
     "open_url": ""
   },
@@ -101,7 +101,7 @@
   },
   {
     "title": "Alerts",
-    "subtitle": "4 firing, 2 critical. Enter opens the list",
+    "subtitle": "4 firing, 1 critical. Enter opens the list",
     "icon": "AlertCircle",
     "body": "",
     "nav": {
@@ -112,7 +112,7 @@
     "kpi_value": 4,
     "kpi_unit": "",
     "kpi_max": "",
-    "kpi_note": "2 critical",
+    "kpi_note": "1 critical",
     "kpi_foot": "",
     "kpi_badge": "CRITICAL",
     "copy_text": "",

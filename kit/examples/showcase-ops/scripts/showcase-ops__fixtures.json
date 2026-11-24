@@ -15,7 +15,7 @@
     438,
     412
    ],
-   "budget_left": 38,
+   "budget_left": 59,
    "cpu_used": 39.0,
    "cpu_limit": 60,
    "cpu_target": 44.5
@@ -127,11 +127,11 @@
    {
     "id": "a2",
     "service_id": "checkout-api",
-    "severity": "critical",
-    "name": "p99 latency above limit",
+    "severity": "warning",
+    "name": "p99 near limit",
     "state": "firing",
     "minutes": 21,
-    "detail": "p99 is 438 ms against a 450 ms limit and rising."
+    "detail": "Checkout API p99 is 438 ms against a 450 ms limit and rising. The estate wide p99 on the overview is 412 ms."
    },
    {
     "id": "a3",

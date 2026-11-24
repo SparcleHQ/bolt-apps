@@ -136,7 +136,7 @@
    },
    {
     "title": "Error budget by service",
-    "subtitle": "overall {summary.budget_left}% left. Enter opens the rings",
+    "subtitle": "average {summary.budget_left}% left across services. Enter opens the rings",
     "icon": "shield-alert",
     "view": "budget",
     "tile": {

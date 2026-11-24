@@ -535,7 +535,7 @@
     {
       "id": "showcase-ops",
       "need": "to see Bolt's tile rings, bullets, targets and sparkline limits on a realistic ops dashboard (needs Bolt 0.1.184)",
-      "layout": "a tile strip (SLO meter, p99 with a dashed limit, error budget, CPU, services, alerts) that drills into a ring view and a bullet view, a services list that drills into its alerts with Back to the same row, and a plain alerts list",
+      "layout": "a tile strip (SLO meter, p99 with a dashed limit, error budget, CPU, services, alerts) that drills into a ring view and a bullet view, a services list that drills into its alerts with a Back row (Bolt returns to the row you came from; not verified in real Bolt), and a plain alerts list",
       "mode": "views",
       "template": "portal-template",
       "backing": "no network",
@@ -548,7 +548,7 @@
         "tile visual bullet with a target mark",
         "sparkline limit line",
         "plain meter",
-        "children drill with Back",
+        "children drill with a Back row",
         "severity in words",
         "sample data only",
         "min_bolt_version 0.1.184 in bolt-app.json"

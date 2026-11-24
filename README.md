@@ -121,6 +121,10 @@ Drop the `.boltpack` on the Bolt launcher or Bolt Apps; Bolt shows the review ca
 [`kit/examples/acme-dash`](kit/examples/acme-dash) shows the same template with 8 views and three levels.
 Walkthrough with the row formats: <https://sparcle.app/docs/extend/rich-apps/>. Agents: [AGENTS.md](AGENTS.md) section 4c.
 
+**Compatibility:** older apps keep working in Bolt 0.1.184. An older Bolt refuses a whole pack that uses a newer widget. Read [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) before you hand out a pack that uses a new widget.
+
+**Cold-agent run (manual):** `make cold-agent` (needs `COLD_AGENT_CMD`) gives a fresh agent only the public docs and a task, then runs lint, check and verify on what it built. It needs a live agent, so CI does not run it; CI runs only its offline checker on a good and a bad sample app. See [scripts/cold-agent.sh](scripts/cold-agent.sh).
+
 ## Contributing
 
 App submissions are not open yet (see the note at the top); fixes to the toolkit, kit, examples and docs are welcome now. When the gallery opens:

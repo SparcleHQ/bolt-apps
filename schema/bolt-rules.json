@@ -401,6 +401,25 @@
     "trend": {
      "t": "text",
      "max": 4096
+    },
+    "visual": {
+     "t": "enum",
+     "values": [
+      "meter",
+      "ring",
+      "bullet"
+     ],
+     "since": "0.1.184"
+    },
+    "target": {
+     "t": "textOrNumber",
+     "max": 4096,
+     "since": "0.1.184"
+    },
+    "limit": {
+     "t": "textOrNumber",
+     "max": 4096,
+     "since": "0.1.184"
     }
    },
    "detail": {

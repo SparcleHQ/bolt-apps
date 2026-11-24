@@ -27,7 +27,9 @@ epoch=${SOURCE_DATE_EPOCH:-$(git log -1 --format=%ct)}
 mkdir -p "$out"
 out=$(CDPATH= cd -- "$out" && pwd -P)
 list=$(mktemp)
-trap 'rm -f "$list"' EXIT INT TERM
+tmp_tar=$(mktemp)
+tmp_gz=$(mktemp)
+trap 'rm -f "$list" "$tmp_tar" "$tmp_gz"' EXIT INT TERM
 
 # tracked files only, so nothing local (keys, caches, .boltpack files) can ride along
 git ls-files -- bolt-apps bolt-apps.cmd LICENSE NOTICE README.md toolkit schema kit docs \
@@ -40,10 +42,13 @@ for must in bolt-apps bolt-apps.cmd toolkit/bin/bolt-apps.mjs toolkit/package.js
 done
 
 tarball="$out/$name.tar.gz"
-"$tar_bin" --create --file=- --files-from="$list" \
+# tar to a temp file first, then gzip, then move into place: a failed tar (a pipe hides its exit code under plain sh)
+# can never leave a truncated tarball or a SHA256SUMS that vouches for one. set -e stops the script at the failing step.
+"$tar_bin" --create --file="$tmp_tar" --files-from="$list" \
     --transform "s,^,$name/," \
-    --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner --mode='u+rwX,go+rX,go-w' \
-  | gzip -n -9 > "$tarball"
+    --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner --mode='u+rwX,go+rX,go-w'
+gzip -n -9 < "$tmp_tar" > "$tmp_gz"
+cat "$tmp_gz" > "$tarball"
 
 cd "$out"
 if command -v sha256sum >/dev/null 2>&1; then sha256sum "$name.tar.gz" > SHA256SUMS

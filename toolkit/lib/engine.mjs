@@ -40,3 +40,13 @@ export function thinIfShared(dir, id) {
 		return true;
 	} catch { return false; }
 }
+
+/** A template that is itself thin (acme-dash) is copied by `new` as a full engine unless --thin: the hand-run `python3 scripts/<id>__engine.py --emit-yaml` of the docs works for a plain copy. Returns true when expanded. */
+export function expandThin(dir, id) {
+	const p = path.join(dir, 'scripts', `${id}__engine.py`);
+	try {
+		if (!fs.readFileSync(p, 'utf8').slice(0, 4000).includes('bolt_app_engine.py')) return false;
+		fs.writeFileSync(p, fs.readFileSync(ENGINE_SRC));
+		return true;
+	} catch { return false; }
+}

@@ -112,3 +112,12 @@ test('regen writes the app file of a thin app, and the committed one is what it 
 	fs.writeFileSync(path.join(bad, 'scripts/acme-dash__config.json'), '{ not json');
 	const f = cli('regen', bad); assert.notEqual(f.status, 0); assert.match(f.stderr, /could not generate/);
 });
+
+test('new from the thin acme-dash template without --thin gives a full engine copy that runs by hand', () => {
+	const root = tmp();
+	assert.equal(spawnSync(process.execPath, [CLI, 'new', 'acme-dash', 'copy-demo'], { cwd: root, encoding: 'utf8' }).status, 0);
+	const dir = path.join(root, 'copy-demo');
+	assert.ok(fs.readFileSync(path.join(dir, 'scripts/copy-demo__engine.py'), 'utf8').split('\n').length > 1000);
+	const y = spawnPython(['scripts/copy-demo__engine.py', '--emit-yaml'], { cwd: dir, encoding: 'utf8' }); assert.equal(y.status, 0, y.stderr);
+	assert.ok(!/bolt_app_engine/.test(y.stdout));
+});

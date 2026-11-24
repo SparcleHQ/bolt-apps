@@ -398,12 +398,22 @@
     {
       "id": "pane.tile_visuals",
       "group": "panes",
-      "name": "Tile ring, bullet and sparkline limit",
+      "name": "Tile visuals: ring, bullet, number, spark, strip, stack, and a sparkline limit",
       "status": "supported",
       "example_note": "no example yet; copy the snippet",
       "snippet": "\"bind\": {\"layout\": \"tiles\", \"value\": \"{{row.value}}\", \"max\": \"{{row.max}}\", \"visual\": \"bullet\", \"target\": \"{{row.target}}\", \"trend\": \"{{row.trend}}\", \"limit\": \"{{row.limit}}\"}",
       "test": "toolkit/test/tiles-184.test.mjs",
-      "limit": "Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). visual is meter (default), ring or bullet and needs a max; target and limit are numbers or {{row.x}} references; anything else draws the plain meter. Tiles in entity_preview tiles_above do not read them."
+      "limit": "Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). visual is meter (default), ring, bullet, number, spark, strip or stack. A donut is the ring: there is no other shape. ring, bullet and meter need a max; target and limit are numbers or {{row.x}} references; anything else draws the plain meter. strip and stack read the trend list: strip cells are 0 ok, 1 warn, 2 error (last 30 kept); stack takes up to 6 positive parts. A multi-series line or a full chart is not a tile: use a chart pane inside a stack pane, or its own view. Tiles in entity_preview tiles_above do not read these keys."
+    },
+    {
+      "id": "pane.tile_visual_from",
+      "group": "panes",
+      "name": "A grid that mixes tile visuals, one per row",
+      "status": "supported",
+      "snippet": "\"bind\": {\"layout\": \"tiles\", \"visual_from\": \"kpi_visual\", \"value\": \"{{row.kpi_value}}\", \"max\": \"{{row.kpi_max}}\", \"target\": \"{{row.target}}\", \"trend\": \"{{row.trend}}\", \"limit\": \"{{row.limit}}\"}",
+      "test": "toolkit/test/tiles-184-per-row.test.mjs",
+      "limit": "Bolt 0.1.184 or newer, with min_bolt_version 0.1.184. visual_from names a row field (up to 200 characters) whose value is meter, ring, bullet, number, spark, strip or stack. An unknown, missing or non-text value uses visual, then the plain meter; it never fails. Row order and the selected tile are unchanged; target and limit still work per row.",
+      "example_note": "no example yet; copy the snippet"
     },
     {
       "id": "actions.footer",

@@ -36,6 +36,7 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | Fresh cache and a stale copy when the API fails | supported | [portal-template](portal-template) | `kit/python/tests/test_cache_rows.py` | ttl seconds a result is fresh; stale_max seconds an old copy may be shown with its age. A failed call is never cached or shown as zero. |
 | A detail pane that changes with the selected row | supported | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | Works when the row `pane` names a declared view whose right_widget has mode selected_row and kind entity_preview, detail, markdown, json_tree, chart, table or card. Ignored for mode list_data, a view with no right_widget, or kind diff, cards or image_grid. |
 | Number tiles with a meter, unit, note and badge rules | supported | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | Unit at most 4 characters; trend keeps 30 points. |
+| Press a table row or tile to open a view or run an action | supported | [widget-gallery](widget-gallery) | `toolkit/test/activate-184.test.mjs` | Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). Table and cards panes only. Exactly one of nav (a view of this app; arg is a {{row.x}} template that must give one plain token, else that item is not pressable) or action (a declared url or composer action; a run or utility action cannot take an item's fields). Enter, Space or a click on the item; Tab reaches it. A pressed row no longer copies itself. |
 | Footer buttons (url, composer, utility) | supported | [acme-dash](acme-dash) | `kit/examples/acme-dash/check.json` | Bolt shows at most 6 footer buttons; the kit and engine keep to 3 (Open and Copy count). Bolt keeps 40 label characters; the button shows 14. |
 | Run action: one click runs this app with a fixed query | supported | no example yet; copy the snippet | `toolkit/test/launcher-rules.test.mjs` | kind run needs a query_template of fixed text. No example yet. |
 | Footer button icon | supported | no example yet; copy the snippet | `toolkit/test/bolt-rules.test.mjs` | Icon names are lowercase and case-sensitive, from the list in schema/bolt-rules.json (actions.icons); anything else is refused at load. A url action never takes an icon: it always wears the open glyph. |
@@ -254,6 +255,12 @@ presentation:
 
 ```
 "tile": {"label": "Open tickets", "value": "tickets_open", "max": "tickets_total", "badge": [{"if": "tickets_open>0", "badge": "ACTION"}, {"badge": "CLEAR"}]}
+```
+
+### Press a table row or tile to open a view or run an action (`pane.item_activate`)
+
+```
+"bind": {"sort": {"field": "commits", "dir": "desc"}, "activate": {"nav": {"view": "detail", "arg": "{{row.service}}"}}}
 ```
 
 ### Footer buttons (url, composer, utility) (`actions.footer`)

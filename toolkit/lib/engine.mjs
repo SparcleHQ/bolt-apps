@@ -43,7 +43,7 @@ export function thinIfShared(dir, id) {
 	} catch { return false; }
 }
 
-/** A template that is itself thin (acme-dash) is copied by `new` as a full engine unless --thin: the hand-run `python3 scripts/<id>__engine.py --emit-yaml` of the docs works for a plain copy. Returns true when expanded. */
+/** A template that is itself thin (acme-dash) is copied by `new` as a full engine unless --full is NOT given (thin is the default): the hand-run `python3 scripts/<id>__engine.py --emit-yaml` of the docs works for a plain copy. Returns true when expanded. */
 export function expandThin(dir, id) {
 	const p = path.join(dir, 'scripts', `${id}__engine.py`);
 	try {
@@ -51,6 +51,14 @@ export function expandThin(dir, id) {
 		fs.writeFileSync(p, fs.readFileSync(ENGINE_SRC));
 		return true;
 	} catch { return false; }
+}
+
+/** The FILE_WORDS line the private copies carry (before the shared engine also named its own file). */
+const OLD_FILE_WORDS = 'FILE_WORDS = [_PFX + w for w in ("config.json", "fixtures.json", "bolt_app_kit.py",)]   # named in the command so editing any of them asks again';
+/** The exact bytes of the engine every private copy was made from: the shared engine with the old FILE_WORDS line. Null when the shared engine no longer has that line to swap. */
+export function knownOldEngine() {
+	const shared = fs.readFileSync(ENGINE_SRC, 'utf8');
+	return FILE_WORDS.test(shared) ? Buffer.from(shared.replace(FILE_WORDS, () => OLD_FILE_WORDS), 'utf8') : null;
 }
 
 /** True when the app folder holds a thin entry (any scripts/<id>__engine.py with the marker). */

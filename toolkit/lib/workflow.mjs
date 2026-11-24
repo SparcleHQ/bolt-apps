@@ -11,7 +11,7 @@ import { vendorKit } from './check.mjs';
 import { formatBoltSays, USER_APPS_PATH, USER_APPS_HIDDEN_NOTE } from './boltsays.mjs';
 import { versionProblem } from './boltrules.mjs';
 import { readPack, readPackMetadata } from './pack.mjs';
-import { engineEnv, thinIfShared, expandThin, thinAppDir, ENGINE_SRC } from './engine.mjs';
+import { engineEnv, thinIfShared, expandThin, thinAppDir, isThinEntry, knownOldEngine, ENGINE_SRC, ENTRY_SRC } from './engine.mjs';
 import { pythonCmd, spawnPython, PYTHON_MISSING } from './python.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -160,7 +160,7 @@ export function newFromTemplate(template, id, root, author, authorNote = '', opt
 		+ `> If you build on someone else's app, keep their author credit and record the original app ID in \`derived_from\` in \`bolt-app.json\`.\n\n${s}`);
 	const cfgName = `scripts/${id}__config.json`;
 	edit(cfgName, (t) => { const j = JSON.parse(t); if (j.app) { j.app.id = id; j.app.chip = chip; j.app.title = title; j.app.description = `TODO describe your app: one line on what =${chip} shows.`; } return JSON.stringify(j, null, 2) + '\n'; });
-	if (opts.thin) thinIfShared(dir, id); else expandThin(dir, id);   // --thin: the template's private engine copy becomes the short entry; the engine is kept once in the toolkit and the pack carries it
+	if (opts.full) expandThin(dir, id); else thinIfShared(dir, id);   // thin is the default: no private engine copy in the app (kept once in the toolkit; the pack carries it); --full keeps a copy that `python3 scripts/<id>__engine.py --emit-yaml` runs by hand
 	// regenerate the app file from the config when the template has an emitter, else rewrite id, chip and title in place
 	const sd = path.join(dir, 'scripts');
 	const emitter = fs.existsSync(sd) ? fs.readdirSync(sd).filter((f) => f.endsWith('.py') && !f.endsWith('__bolt_app_kit.py')).find((f) => fs.readFileSync(path.join(sd, f), 'utf8').includes('--emit-yaml')) : null;
@@ -188,7 +188,7 @@ export function newFromTemplate(template, id, root, author, authorNote = '', opt
 	const copyPath = (f) => renameAppFile(f.split(`${template}__`).join(`${id}__`));
 	console.log(`created ${q(dir)} from ${template} (id ${id}, chip =${chip}). ${note}`);
 	if (authorNote) console.log(authorNote);
-	console.log(`\nNext:\n${[`edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).map(copyPath).join(', ')}${(() => { const fe = listTemplates().find((a) => a.id === template)?.first_edit; return fe ? `\n     change first: ${copyPath(String(fe))}` : ''; })()}`, connectStep(dir, id), `./bolt-apps run ${q(dir)} --sample      (see the rows) and  ./bolt-apps check ${q(dir)}`, `./bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)`].filter(Boolean).map((t, i) => `  ${i + 1}. ${t}`).join('\n')}\n\nMake it yours (full list: ENGINE.md, "Make it yours"):\n  - the listing in bolt-app.json and the config description say TODO\n  - README.md starts with a note. Replace the template text and keep the source credit\n  - check.json ${minimal ? 'has one case per view' : 'still expects the template words'}\n  - once your data is final, run ./bolt-apps check ${q(dir)} --update-golden and read what changed.`);
+	console.log(`\nNext:\n${[`edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).map(copyPath).join(', ')}${(() => { const fe = listTemplates().find((a) => a.id === template)?.first_edit; return fe ? `\n     change first: ${copyPath(String(fe))}` : ''; })()}`, thinAppDir(dir) ? `after you edit scripts/${id}__config.json: ./bolt-apps regen ${q(dir)}      (rewrites utilities/${id}.yaml; this app keeps no engine copy)` : '', connectStep(dir, id), `./bolt-apps run ${q(dir)} --sample      (see the rows) and  ./bolt-apps check ${q(dir)}`, `./bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)`].filter(Boolean).map((t, i) => `  ${i + 1}. ${t}`).join('\n')}\n\nMake it yours (full list: ENGINE.md, "Make it yours"):\n  - the listing in bolt-app.json and the config description say TODO\n  - README.md starts with a note. Replace the template text and keep the source credit\n  - check.json ${minimal ? 'has one case per view' : 'still expects the template words'}\n  - once your data is final, run ./bolt-apps check ${q(dir)} --update-golden and read what changed.`);
 }
 
 // For an engine app in views or lookup mode, replace the template's check.json cases by one case per view, taken from the app's own config (view ids, the first example query).
@@ -250,6 +250,64 @@ export function regen(args) {
 	fs.mkdirSync(path.join(dir, 'utilities'), { recursive: true });
 	fs.writeFileSync(path.join(dir, 'utilities', `${id}.yaml`), r.stdout);
 	console.log(`wrote ${q(path.join(dir, 'utilities', `${id}.yaml`))}`);
+}
+
+// ---------------------------------------------------------------- upgrade-kit
+// Moves an app that carries a private copy of the engine to the thin entry. Mechanical: it replaces scripts/<id>__engine.py only. config.json, fixtures,
+// utilities and golden files are not touched, except the app file, which is regenerated because the command now also names the engine file
+// (so editing the engine asks the person to approve again); that is the only difference and it is checked line by line before anything is written.
+// It refuses, and changes nothing, when the private copy is not byte for byte the known engine (a hand-modified engine is never replaced) or when the app file is not
+// what the engine generates from the config (regenerating would lose a hand edit).
+const lines = (t) => String(t).split('\n').length - 1;
+/** { status: 'converted'|'thin'|'refused', reason?, id, before?, after? }. dryRun writes nothing. */
+export function upgradeKitOne(dir, { dryRun = false } = {}) {
+	let id;
+	try { id = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')).id; } catch { return { status: 'refused', id: path.basename(dir), reason: 'there is no readable bolt-app.json here' }; }
+	const sd = path.join(dir, 'scripts'), entry = path.join(sd, `${id}__engine.py`);
+	let have; try { have = fs.readFileSync(entry); } catch { return { status: 'refused', id, reason: `there is no scripts/${id}__engine.py: this app does not use the engine` }; }
+	if (isThinEntry(have.toString('utf8').slice(0, 8000))) return { status: 'thin', id, reason: 'already thin: nothing to change' };
+	const known = knownOldEngine();
+	if (!known || Buffer.compare(have, known) !== 0) return { status: 'refused', id, reason: `scripts/${id}__engine.py is not byte for byte the known engine (it was edited, or it is another version). It was left alone: do not replace a hand-modified engine by script` };
+	const ymlPath = path.join(dir, 'utilities', `${id}.yaml`);
+	const emit = (folder, file) => spawnPython([path.join(folder, file), '--emit-yaml'], { cwd: folder, encoding: 'utf8', timeout: 30000, env: { ...process.env, ...engineEnv() } });
+	const oldYaml = fs.existsSync(ymlPath) ? fs.readFileSync(ymlPath, 'utf8') : null;
+	if (oldYaml === null) return { status: 'refused', id, reason: `there is no utilities/${id}.yaml to keep in step` };
+	const cur = emit(sd, `${id}__engine.py`);
+	if (cur.status !== 0 || cur.stdout !== oldYaml) return { status: 'refused', id, reason: `utilities/${id}.yaml is not what the engine generates from the config now (edited by hand, or stale). Run ./bolt-apps regen ${q(dir)} first, or fix it, then upgrade` };
+	// try the thin entry in a scratch copy of the scripts folder, and compare the app file it generates
+	const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'bolt-upgrade-kit-'));
+	try {
+		fs.cpSync(sd, scratch, { recursive: true });
+		fs.copyFileSync(ENTRY_SRC, path.join(scratch, `${id}__engine.py`));
+		const t = emit(scratch, `${id}__engine.py`);
+		if (t.status !== 0) return { status: 'refused', id, reason: `the thin entry could not generate the app file: ${String(t.stderr || '').trim().slice(-300)}` };
+		const word = ` {{scripts_dir}}/${id}__bolt_app_engine.py"`;
+		const expect = oldYaml.replace(/^(\s+(?:macos|linux|windows): ".*)"$/gm, (m, a) => `${a}${word}`);
+		if (t.stdout !== expect) return { status: 'refused', id, reason: `the app file the thin entry generates differs from the old one in more than the engine file name in the command. Nothing was changed` };
+		const r = { status: 'converted', id, before: lines(have.toString('utf8')), after: lines(fs.readFileSync(ENTRY_SRC, 'utf8')) };
+		if (!dryRun) { fs.copyFileSync(ENTRY_SRC, entry); fs.writeFileSync(ymlPath, t.stdout); }
+		return r;
+	} finally { fs.rmSync(scratch, { recursive: true, force: true }); }
+}
+export function upgradeKit(args) {
+	const all = args.includes('--all');
+	const di = args.indexOf('--dir');
+	const root = di >= 0 ? args[di + 1] : null;
+	const dirs = args.filter((a, i) => !a.startsWith('--') && args[i - 1] !== '--dir');
+	if (all === (dirs.length > 0) || (di >= 0 && !root)) die('usage: ./bolt-apps upgrade-kit <app-folder>   or   ./bolt-apps upgrade-kit --all [--dir <folder of apps>]   (--all defaults to the examples in this clone)', 2);
+	const targets = all ? (() => { const base = path.resolve(root || EXAMPLES); if (!fs.existsSync(base)) die(`${q(base)} does not exist`, 2); return fs.readdirSync(base).sort().map((f) => path.join(base, f)).filter((d) => fs.existsSync(path.join(d, 'bolt-app.json'))); })() : [path.resolve(dirs[0])];
+	if (!all && !fs.existsSync(path.join(targets[0], 'bolt-app.json'))) die(`${q(targets[0])} is not an app folder (no bolt-app.json)`, 2);
+	let removed = 0, done = 0, refused = 0, thin = 0, skipped = 0;
+	for (const d of targets) {
+		const r = upgradeKitOne(d);
+		if (r.status === 'converted') { done++; removed += r.before - r.after; console.log(`converted ${r.id}: scripts/${r.id}__engine.py ${r.before} -> ${r.after} lines (${r.before - r.after} removed); utilities/${r.id}.yaml now names the engine file`); }
+		else if (r.status === 'thin') { thin++; console.log(`unchanged ${r.id}: ${r.reason}`); }
+		else if (all && /does not use the engine/.test(r.reason)) { skipped++; }
+		else { refused++; console.log(`REFUSED ${r.id}: ${r.reason}`); }
+	}
+	if (all) console.log(`\n${done} converted (${removed} lines removed), ${thin} already thin, ${refused} refused, ${skipped} without an engine`);
+	else if (done) console.log('Re-run ./bolt-apps check on the app: the output should be the same. Packing writes the shared engine into the pack once.');
+	if (refused) process.exit(1);
 }
 
 // ---------------------------------------------------------------- run

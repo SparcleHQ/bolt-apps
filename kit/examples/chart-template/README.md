@@ -25,7 +25,7 @@ A metrics or trends app. Start from the overview (tiles with a sparkline trend) 
 Run `./bolt-apps keygen` once before the first pack: it makes your signing key and never overwrites one.
 ```
 ./bolt-apps kit vendor --flat kit/examples/chart-template
-python3 kit/examples/chart-template/scripts/chart-template__engine.py --emit-yaml > kit/examples/chart-template/utilities/chart-template.yaml
+./bolt-apps regen kit/examples/chart-template
 ./bolt-apps check kit/examples/chart-template --update-golden
 ./bolt-apps lint kit/examples/chart-template --personal
 ./bolt-apps pack kit/examples/chart-template --personal --version 1.0.1 --out chart-template-1.0.1.boltpack

@@ -16,7 +16,7 @@ A table shows every row, so the data view has no Back or refresh rows. The pane 
 Run `./bolt-apps keygen` once before the first pack: it makes your signing key and never overwrites one.
 ```
 ./bolt-apps kit vendor --flat kit/examples/table-template
-python3 kit/examples/table-template/scripts/table-template__engine.py --emit-yaml > kit/examples/table-template/utilities/table-template.yaml
+./bolt-apps regen kit/examples/table-template
 ./bolt-apps check kit/examples/table-template --update-golden
 ./bolt-apps lint kit/examples/table-template --personal
 ./bolt-apps pack kit/examples/table-template --personal --version 1.0.1 --out table-template-1.0.1.boltpack

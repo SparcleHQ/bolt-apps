@@ -97,7 +97,7 @@ def _mut_emit(rows, *a, **k):
 kit.emit = _mut_emit
 `;
 function mutantApp(template, id, root, home, args) {
-	assert.equal(sh(home, root, 'new', template, id).status, 0, template);
+	assert.equal(sh(home, root, 'new', template, id, '--full').status, 0, template);   // a full copy: the test edits the engine file
 	const eng = path.join(root, id, 'scripts', `${id}__engine.py`), src = fs.readFileSync(eng, 'utf8');
 	fs.writeFileSync(eng, src.replace('HERE = os.path.dirname(os.path.abspath(__file__))\n', (m) => m + HOOK));
 	const f = path.join(root, id, 'check.json'), ck = readJson(f);

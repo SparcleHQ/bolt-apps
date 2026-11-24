@@ -31,7 +31,7 @@ test('rules: graph is a widget kind that carries kind_since 0.1.184 and six text
 });
 
 test('rules: the caps are written down once and named the same as in Bolt', () => {
-	// Pinned here and in bolt-pwa graphRegistration.guard.test.ts (GRAPH_MAX_*): change one, the other test fails.
+	// The launcher pins the same three numbers in its own test: change one, the other test fails.
 	assert.deepEqual(RULES.graph_caps, { max_nodes: 60, max_edges: 200, max_input_rows: 5000 });
 });
 

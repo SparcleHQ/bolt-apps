@@ -286,6 +286,33 @@ export function paneNavProblems(root) {
 	}
 	return out;
 }
+// ---- 7b: pane-item events (bind.activate on a table or cards pane, Bolt 0.1.184). The launcher does nothing for a target it cannot resolve, so each is an error here:
+// exactly one of nav or action, a view the app declares, an action that is a declared url or composer action (a run or utility action cannot take an item's fields),
+// a literal arg that is one plain token, and a view arg the launcher can place the view in. The shape and the version gate are in the bind table (bolt-rules.json).
+const ACTIVATE_KINDS = ['url', 'composer'];
+export function activateProblems(root) {
+	const out = [], pres = get(root, 'presentation')?.value, views = entries(get(pres, 'views')?.value), names = views.map((v) => v.key);
+	const acts = items(get(root, 'actions')?.value).map((a) => ({ id: scalar(get(a, 'id')?.value), kind: scalar(get(a, 'kind')?.value) }));
+	const hasViewArg = !!scalar(get(pres, 'view_arg')?.value);
+	const panes = [['presentation.right_widget', get(pres, 'right_widget')?.value], ...views.map((v) => [`presentation.views.${v.key}.right_widget`, get(v.value, 'right_widget')?.value])];
+	for (const [w, rw] of panes) {
+		const act = get(get(rw, 'bind')?.value, 'activate')?.value;
+		if (!act || act.t !== 'm' || !['table', 'cards'].includes(scalar(get(rw, 'kind')?.value))) continue;
+		const where = `${w}.bind.activate`, nav = get(act, 'nav'), action = get(act, 'action');
+		if (!nav === !action) { out.push({ code: 'activate_one_of', message: `${where}: must have exactly one of nav or action` }); continue; }
+		if (nav) {
+			const view = scalar(get(nav.value, 'view')?.value), arg = scalar(get(nav.value, 'arg')?.value);
+			if (view !== undefined && !names.includes(view)) out.push({ code: 'activate_view', message: `${where}.nav.view "${view}" is not a view of this app, so pressing an item does nothing (views: ${names.join(', ') || 'none'})` });
+			if (!hasViewArg) out.push({ code: 'activate_view_arg', message: `${where}.nav: the app has no presentation.view_arg (a query.word(N) arg), so the launcher has nowhere to put the view and pressing an item does nothing` });
+			if (arg !== undefined && !arg.includes('{{') && (!new RegExp(RULES.nav_token_pattern).test(arg) || arg.includes('..'))) out.push({ code: 'activate_arg', message: `${where}.nav.arg "${arg}" must be one plain token (${RULES.nav_token_pattern}, no ".."); use a {{row.field}} template for an item's own value` });
+		} else {
+			const id = scalar(action.value), def = id === undefined ? undefined : acts.find((a) => a.id === id);
+			if (id !== undefined && !def) out.push({ code: 'activate_action', message: `${where}.action "${id}" is not a declared action of this app, so pressing an item does nothing (actions: ${acts.map((a) => a.id).join(', ') || 'none'})` });
+			else if (def && !ACTIVATE_KINDS.includes(def.kind)) out.push({ code: 'activate_action_kind', message: `${where}.action "${id}" is a ${def.kind} action; only ${ACTIVATE_KINDS.join(' or ')} actions can take an item's fields, so pressing an item does nothing` });
+		}
+	}
+	return out;
+}
 export function paneProblem(pane, root) {
 	if (typeof pane !== 'string' || !new RegExp(RULES.views.name_pattern).test(pane)) return `pane "${pane}" must match ${RULES.views.name_pattern}`;
 	const views = entries(get(get(root, 'presentation')?.value, 'views')?.value);

@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseYaml, Unreadable, get, str } from './yamlsubset.mjs';
-import { RULES, gateProblem, structureProblems, bindProblems, envProblems, timeoutProblems, httpProblems, actionProblems, paneNavProblems } from './boltrules.mjs';
+import { RULES, gateProblem, structureProblems, bindProblems, envProblems, timeoutProblems, httpProblems, actionProblems, paneNavProblems, activateProblems } from './boltrules.mjs';
 export function httpsLiteralHost(t) {
 	const rest = String(t).trim();
 	if (!rest.startsWith('https://')) return null;
@@ -194,7 +194,7 @@ export function launcherRules(root, opts = {}) {
 		if (cm && cm.t === 'm' && cm.entries.length) for (const o of OS3) if (!cm.entries.some((e) => e.key === o) && !opts.platformsUnknown && (!Array.isArray(opts.platforms) || opts.platforms.includes(o))) W('command_os_missing', `bridge.command has no ${o} entry, so the app has nothing to run on ${o}${Array.isArray(opts.platforms) ? '' : '. Add one, or list only the systems it supports in "platforms" in bolt-app.json'}`);
 	}
 	// The launcher's structure, env, timeout, loopback, action and nav rules (schema/bolt-rules.json). Each is an error because the launcher refuses the file.
-	for (const f of [structureProblems, envProblems, timeoutProblems, httpProblems, actionProblems, paneNavProblems]) for (const pr of f(root)) (pr.level === 'warning' ? W : E)(pr.code, pr.message);
+	for (const f of [structureProblems, envProblems, timeoutProblems, httpProblems, actionProblems, paneNavProblems, activateProblems]) for (const pr of f(root)) (pr.level === 'warning' ? W : E)(pr.code, pr.message);
 	out.push(...transformProblems(root));   // these carry the line of the step or pattern they are about
 	return out;
 }

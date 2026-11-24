@@ -215,8 +215,7 @@
     "subtitle": "deploys / day",
     "extra": {
      "label": "{day}",
-     "value": "{count}",
-     "event": "{event}"
+     "value": "{count}"
     }
    },
    "widget": {
@@ -226,12 +225,7 @@
      "type": "bar",
      "x": "label",
      "y": "value",
-     "label": "label",
-     "limit": 80,
-     "limit_label": "capacity",
-     "marker": {
-      "field": "event"
-     }
+     "label": "label"
     }
    }
   },
@@ -248,8 +242,7 @@
      "lang": "{lang}",
      "status": "{status}",
      "commits": "{commits}",
-     "open_prs": "{open_prs}",
-     "health": "{health}"
+     "open_prs": "{open_prs}"
     }
    },
    "widget": {
@@ -261,12 +254,6 @@
       "dir": "desc"
      },
      "totals_label": "Total",
-     "activate": {
-      "nav": {
-       "view": "detail",
-       "arg": "{{row.service}}"
-      }
-     },
      "columns": [
       {
        "field": "service",
@@ -282,16 +269,10 @@
        "label": "Status"
       },
       {
-       "field": "health",
-       "label": "Health",
-       "mark": "tone"
-      },
-      {
        "field": "commits",
        "label": "Commits",
        "align": "right",
-       "total": "sum",
-       "bars": true
+       "total": "sum"
       },
       {
        "field": "open_prs",

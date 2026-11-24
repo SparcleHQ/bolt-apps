@@ -24,13 +24,20 @@ presentation:
   subtitle_field: subtitle
   view_arg: view
   right_widget:
-    kind: stack
+    kind: cards
     mode: list_data
     bind:
-      children:
-        - { kind: "cards", bind: { layout: "tiles", title: "{{row.kpi_label}}", value: "{{row.kpi_value}}", unit: "{{row.kpi_unit}}", subtitle: "{{row.kpi_note}}", from: { set: "tiles" } } }
-        - { kind: "chart", bind: { type: "bar", x: "label", y: "value", label: "Deploys by day", from: { set: "trend" } } }
-        - { kind: "table", bind: { columns: [{ field: "name", label: "Service" }, { field: "state", label: "State" }], from: { set: "services" } } }
+      layout: "tiles"
+      title: "{{row.kpi_label}}"
+      value: "{{row.kpi_value}}"
+      unit: "{{row.kpi_unit}}"
+      delta: "{{row.delta}}"
+      delta_label: "{{row.since}}"
+      max: "{{row.kpi_max}}"
+      trend: "{{row.trend}}"
+      subtitle: "{{row.kpi_note}}"
+      badge: "{{row.kpi_badge}}"
+      footer: "{{row.kpi_foot}}"
   views:
     overview: {}
     pie_rows:
@@ -73,9 +80,6 @@ presentation:
           series:
             - { y: "value", label: "Deploys" }
             - { y: "failed", label: "Failed" }
-          format: "compact"
-          digits: 1
-          locale: "de-DE"
     heat_rows:
       right_widget:
         kind: heatmap

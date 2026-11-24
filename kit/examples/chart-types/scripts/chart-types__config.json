@@ -46,54 +46,20 @@
   },
   "overview": {
     "widget": {
-      "kind": "stack",
+      "kind": "cards",
       "mode": "list_data",
       "bind": {
-        "children": [
-          {
-            "kind": "cards",
-            "bind": {
-              "layout": "tiles",
-              "title": "{{row.kpi_label}}",
-              "value": "{{row.kpi_value}}",
-              "unit": "{{row.kpi_unit}}",
-              "subtitle": "{{row.kpi_note}}",
-              "from": {
-                "set": "tiles"
-              }
-            }
-          },
-          {
-            "kind": "chart",
-            "bind": {
-              "type": "bar",
-              "x": "label",
-              "y": "value",
-              "label": "Deploys by day",
-              "from": {
-                "set": "trend"
-              }
-            }
-          },
-          {
-            "kind": "table",
-            "bind": {
-              "columns": [
-                {
-                  "field": "name",
-                  "label": "Service"
-                },
-                {
-                  "field": "state",
-                  "label": "State"
-                }
-              ],
-              "from": {
-                "set": "services"
-              }
-            }
-          }
-        ]
+        "layout": "tiles",
+        "title": "{{row.kpi_label}}",
+        "value": "{{row.kpi_value}}",
+        "unit": "{{row.kpi_unit}}",
+        "delta": "{{row.delta}}",
+        "delta_label": "{{row.since}}",
+        "max": "{{row.kpi_max}}",
+        "trend": "{{row.trend}}",
+        "subtitle": "{{row.kpi_note}}",
+        "badge": "{{row.kpi_badge}}",
+        "footer": "{{row.kpi_foot}}"
       }
     },
     "rows": [
@@ -101,175 +67,66 @@
         "title": "Pie from rows",
         "subtitle": "share of a whole: x and y",
         "icon": "line-chart",
-        "view": "pie_rows"
+        "view": "pie_rows",
+        "tile": {
+          "label": "Total",
+          "value": "deploys_total",
+          "note": "deploys"
+        }
       },
       {
         "title": "Donut from rows",
         "subtitle": "a pie with the total in the centre",
         "icon": "line-chart",
-        "view": "donut_rows"
+        "view": "donut_rows",
+        "tile": {
+          "label": "Total",
+          "value": "deploys_total",
+          "note": "deploys"
+        }
       },
       {
         "title": "Two lines from rows",
         "subtitle": "bind.series: y per line",
         "icon": "line-chart",
-        "view": "multi_rows"
+        "view": "multi_rows",
+        "tile": {
+          "label": "Total",
+          "value": "deploys_total",
+          "note": "deploys"
+        }
       },
       {
         "title": "Area from rows",
-        "subtitle": "two filled lines, numbers written with format, digits and locale",
+        "subtitle": "two filled lines",
         "icon": "line-chart",
-        "view": "area_rows"
+        "view": "area_rows",
+        "tile": {
+          "label": "Total",
+          "value": "deploys_total",
+          "note": "deploys"
+        }
       },
       {
         "title": "Heatmap from rows",
         "subtitle": "x, y and a value per cell",
         "icon": "activity",
-        "view": "heat_rows"
+        "view": "heat_rows",
+        "tile": {
+          "label": "Requests",
+          "value": "requests_total",
+          "note": "this week"
+        }
       },
       {
         "title": "Gauge from a row",
         "subtitle": "one value on a 0 to 100 scale",
         "icon": "activity",
-        "view": "gauge_row"
-      },
-      {
-        "title": "Deploys this week",
-        "subtitle": "a tile from the set tiles",
-        "icon": "line-chart",
-        "tile": {
-          "label": "Deploys",
-          "value": "deploys_total",
-          "note": "this week"
-        },
-        "extra": {
-          "set": "tiles"
-        }
-      },
-      {
-        "title": "Requests this week",
-        "subtitle": "a tile from the set tiles",
-        "icon": "activity",
-        "tile": {
-          "label": "Requests",
-          "value": "requests_total",
-          "note": "this week"
-        },
-        "extra": {
-          "set": "tiles"
-        }
-      },
-      {
-        "title": "Best health score",
-        "subtitle": "a tile from the set tiles",
-        "icon": "activity",
+        "view": "gauge_row",
         "tile": {
           "label": "Best score",
           "value": "score_max",
           "note": "of 100"
-        },
-        "extra": {
-          "set": "tiles"
-        }
-      },
-      {
-        "title": "Mon deploys",
-        "subtitle": "a point from the set trend",
-        "icon": "line-chart",
-        "extra": {
-          "set": "trend",
-          "label": "Mon",
-          "value": 42
-        }
-      },
-      {
-        "title": "Tue deploys",
-        "subtitle": "a point from the set trend",
-        "icon": "line-chart",
-        "extra": {
-          "set": "trend",
-          "label": "Tue",
-          "value": 58
-        }
-      },
-      {
-        "title": "Wed deploys",
-        "subtitle": "a point from the set trend",
-        "icon": "line-chart",
-        "extra": {
-          "set": "trend",
-          "label": "Wed",
-          "value": 51
-        }
-      },
-      {
-        "title": "Thu deploys",
-        "subtitle": "a point from the set trend",
-        "icon": "line-chart",
-        "extra": {
-          "set": "trend",
-          "label": "Thu",
-          "value": 73
-        }
-      },
-      {
-        "title": "Fri deploys",
-        "subtitle": "a point from the set trend",
-        "icon": "line-chart",
-        "extra": {
-          "set": "trend",
-          "label": "Fri",
-          "value": 96
-        }
-      },
-      {
-        "title": "Sat deploys",
-        "subtitle": "a point from the set trend",
-        "icon": "line-chart",
-        "extra": {
-          "set": "trend",
-          "label": "Sat",
-          "value": 61
-        }
-      },
-      {
-        "title": "Sun deploys",
-        "subtitle": "a point from the set trend",
-        "icon": "line-chart",
-        "extra": {
-          "set": "trend",
-          "label": "Sun",
-          "value": 47
-        }
-      },
-      {
-        "title": "api-gateway",
-        "subtitle": "a row from the set services",
-        "icon": "activity",
-        "extra": {
-          "set": "services",
-          "name": "api-gateway",
-          "state": "up"
-        }
-      },
-      {
-        "title": "web-frontend",
-        "subtitle": "a row from the set services",
-        "icon": "activity",
-        "extra": {
-          "set": "services",
-          "name": "web-frontend",
-          "state": "up"
-        }
-      },
-      {
-        "title": "worker-queue",
-        "subtitle": "a row from the set services",
-        "icon": "activity",
-        "extra": {
-          "set": "services",
-          "name": "worker-queue",
-          "state": "degraded"
         }
       }
     ]
@@ -387,10 +244,7 @@
               "y": "failed",
               "label": "Failed"
             }
-          ],
-          "format": "compact",
-          "digits": 1,
-          "locale": "de-DE"
+          ]
         }
       }
     },

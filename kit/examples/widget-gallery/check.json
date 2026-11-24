@@ -14,34 +14,20 @@
       "golden": "golden/overview.json"
     },
     {
-      "name": "chart limit and marker: bars, a capacity line, two marks, no Back row",
+      "name": "chart: bars, no Back row",
       "os": "macos",
       "args": [
         "chart"
       ],
-      "golden": "golden/chart-limit-marker.json"
+      "golden": "golden/chart.json"
     },
     {
-      "name": "table bars and mark: commit bars and a health glyph",
+      "name": "table",
       "os": "macos",
       "args": [
         "table"
       ],
-      "golden": "golden/table-bars-mark.json"
-    },
-    {
-      "name": "table activate: pressing a row opens the detail view with the service token",
-      "os": "macos",
-      "args": [
-        "detail",
-        "api-gateway"
-      ],
-      "golden": "golden/activate.json",
-      "expect": {
-        "text_present": [
-          "api-gateway"
-        ]
-      }
+      "golden": "golden/table.json"
     },
     {
       "name": "detail",

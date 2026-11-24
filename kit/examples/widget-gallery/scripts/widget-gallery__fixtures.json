@@ -3,38 +3,31 @@
   "data": [
    {
     "day": "Mon",
-    "count": 42,
-    "event": 0
+    "count": 42
    },
    {
     "day": "Tue",
-    "count": 58,
-    "event": 0
+    "count": 58
    },
    {
     "day": "Wed",
-    "count": 51,
-    "event": 0
+    "count": 51
    },
    {
     "day": "Thu",
-    "count": 73,
-    "event": "release 2.14"
+    "count": 73
    },
    {
     "day": "Fri",
-    "count": 96,
-    "event": "hotfix 2.14.1"
+    "count": 96
    },
    {
     "day": "Sat",
-    "count": 61,
-    "event": 0
+    "count": 61
    },
    {
     "day": "Sun",
-    "count": 47,
-    "event": 0
+    "count": 47
    }
   ]
  },
@@ -53,8 +46,7 @@
     "cpu": "31%",
     "memory": "1.8 GB / 4 GB",
     "endpoint": "https://api.example.com",
-    "owner": "platform-team",
-    "health": "ok"
+    "owner": "platform-team"
    },
    {
     "name": "web-frontend",
@@ -69,8 +61,7 @@
     "cpu": "18%",
     "memory": "0.9 GB / 2 GB",
     "endpoint": "https://www.example.com",
-    "owner": "web-team",
-    "health": "ok"
+    "owner": "web-team"
    },
    {
     "name": "worker-queue",
@@ -85,8 +76,7 @@
     "cpu": "74%",
     "memory": "3.1 GB / 4 GB",
     "endpoint": "https://queue.example.com",
-    "owner": "platform-team",
-    "health": "warn"
+    "owner": "platform-team"
    },
    {
     "name": "billing-svc",
@@ -101,8 +91,7 @@
     "cpu": "12%",
     "memory": "0.6 GB / 2 GB",
     "endpoint": "https://billing.example.com",
-    "owner": "finance-eng",
-    "health": "ok"
+    "owner": "finance-eng"
    },
    {
     "name": "search-index",
@@ -117,8 +106,7 @@
     "cpu": "0%",
     "memory": "0 GB / 8 GB",
     "endpoint": "https://search.example.com",
-    "owner": "search-team",
-    "health": "error"
+    "owner": "search-team"
    }
   ]
  },

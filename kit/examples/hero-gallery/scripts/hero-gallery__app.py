@@ -38,7 +38,9 @@ FILE_WORDS = tuple(_PFX + w for w in ("config.json", "bolt_app_kit.py",))   # th
 MAX_PARTS = kit.HERO_MAX_PARTS   # the hero src may join at most 16 references (about 47 KB of picture)
 
 
-load_json = kit.json_loader(HERE, _PFX)
+def load_json(name):
+    with open(os.path.join(HERE, _PFX + name), encoding="utf-8") as f:
+        return json.load(f)
 
 
 def png(width, height, pixel):
@@ -116,5 +118,19 @@ def main(argv):
     kit.emit(build(cfg))
 
 
+def run(argv):
+    try:
+        main(argv)
+    except SystemExit:
+        raise
+    except kit.KitError as e:
+        kit.emit([kit.error_row("Row contract: %s" % kit.clean_text(str(e), 200), title="This app could not run")])
+    except Exception as e:   # one plain row: never a traceback
+        if os.environ.get("BOLT_APP_DEBUG"):
+            import traceback
+            traceback.print_exc()
+        kit.emit([kit.error_row("%s while building the rows. Run the script in a terminal to see why." % e.__class__.__name__)])
+
+
 if __name__ == "__main__":
-    kit.run_guarded(main, sys.argv, debug=bool(os.environ.get("BOLT_APP_DEBUG")))
+    run(sys.argv)

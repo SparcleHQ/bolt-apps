@@ -11,7 +11,7 @@ import { vendorKit } from './check.mjs';
 import { formatBoltSays, USER_APPS_PATH, USER_APPS_HIDDEN_NOTE } from './boltsays.mjs';
 import { versionProblem } from './boltrules.mjs';
 import { readPack, readPackMetadata } from './pack.mjs';
-import { engineEnv, thinIfShared, expandThin, ENGINE_SRC } from './engine.mjs';
+import { engineEnv, thinIfShared, expandThin, thinAppDir, ENGINE_SRC } from './engine.mjs';
 import { pythonCmd, spawnPython, PYTHON_MISSING } from './python.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -265,7 +265,7 @@ function bridgeCommand(dir0, words) {
 	const dir = path.resolve(dir0);
 	const ud = path.join(dir, 'utilities');
 	let y; try { y = fs.readdirSync(ud).find((f) => /\.ya?ml$/.test(f)); } catch { die(`${q(ud)} is missing. An app folder has utilities/<id>.yaml`); } if (!y) die(`${q(ud)} has no app file`);
-	let root; try { root = parseYaml(fs.readFileSync(path.join(ud, y), 'utf8')); } catch (e) { die(`${q(path.join(ud, y))} cannot be read as an app file (${String(e.message).slice(0, 120)}). ${notYamlHint(fs.readFileSync(path.join(ud, y), 'utf8')) || 'Fix the YAML, or regenerate it from config.json.'}${emitterProblem(dir)}`); }
+	let root; try { root = parseYaml(fs.readFileSync(path.join(ud, y), 'utf8')); } catch (e) { die(`${q(path.join(ud, y))} cannot be read as an app file (${String(e.message).slice(0, 120)}). ${notYamlHint(fs.readFileSync(path.join(ud, y), 'utf8'), thinAppDir(dir)) || 'Fix the YAML, or regenerate it from config.json.'}${emitterProblem(dir)}`); }
 	const osKey = process.platform === 'darwin' ? 'macos' : process.platform === 'win32' ? 'windows' : 'linux';
 	const tpl = str(get(get(get(root, 'bridge')?.value, 'command')?.value, osKey)?.value);
 	if (!tpl) return { root, error: `the app file has no bridge command for ${osKey}` };

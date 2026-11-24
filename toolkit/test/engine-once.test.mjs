@@ -36,7 +36,7 @@ test('a thin app keeps no copy of the engine, only a short entry', () => {
 });
 
 const rows = (scriptsDir, ...args) => {
-	const r = spawnPython([path.join(scriptsDir, 'acme-dash__engine.py'), ...args], { cwd: tmp(), encoding: 'utf8', env: { PATH: process.env.PATH, HOME: tmp(), BOLT_APP_FIXTURE: '1' } });
+	const r = spawnPython([path.join(scriptsDir, 'acme-dash__engine.py'), ...args], { cwd: tmp(), encoding: 'utf8', env: { PATH: process.env.PATH, HOME: tmp(), BOLT_APP_FIXTURE: '1', ...(scriptsDir === path.join(THIN, 'scripts') ? { BOLT_APPS_ENGINE_FILE: SHARED } : {}) } });
 	assert.equal(r.status, 0, r.stderr);
 	return r.stdout;
 };
@@ -120,4 +120,46 @@ test('new from the thin acme-dash template without --thin gives a full engine co
 	assert.ok(fs.readFileSync(path.join(dir, 'scripts/copy-demo__engine.py'), 'utf8').split('\n').length > 1000);
 	const y = spawnPython(['scripts/copy-demo__engine.py', '--emit-yaml'], { cwd: dir, encoding: 'utf8' }); assert.equal(y.status, 0, y.stderr);
 	assert.ok(!/bolt_app_engine/.test(y.stdout));
+});
+
+test('an installed thin entry never searches other folders: only the toolkit hands it the engine', () => {
+	const root = tmp();
+	// a folder tree that holds a shared engine above the app, as a clone does
+	fs.mkdirSync(path.join(root, 'kit/python'), { recursive: true });
+	fs.copyFileSync(SHARED, path.join(root, 'kit/python/bolt_app_engine.py'));
+	const sd = path.join(root, 'a/b/scripts'); fs.mkdirSync(sd, { recursive: true });
+	for (const f of fs.readdirSync(path.join(THIN, 'scripts'))) fs.copyFileSync(path.join(THIN, 'scripts', f), path.join(sd, f));
+	const run = (env) => spawnPython([path.join(sd, 'acme-dash__engine.py'), '--emit-yaml'], { cwd: sd, encoding: 'utf8', env: { PATH: process.env.PATH, HOME: root, ...env } });
+	const bare = run({});
+	assert.notEqual(bare.status, 0, 'a copy under a tree that holds the engine must not find it by walking up');
+	assert.match(bare.stderr, /not beside this script/);
+	assert.match(bare.stderr, /bolt-apps regen/);
+	assert.match(bare.stderr, /bolt-apps run/);
+	const viaEnv = run({ BOLT_APPS_ENGINE_FILE: SHARED });
+	assert.equal(viaEnv.status, 0, viaEnv.stderr);
+	const wrongName = run({ BOLT_APPS_ENGINE_FILE: path.join(root, 'kit/python/other.py') });
+	assert.notEqual(wrongName.status, 0);
+});
+
+test('an app that merely mentions the engine file name is not thin: nothing is injected into its pack', () => {
+	const d = path.join(tmp(), 'table-template'); fs.cpSync(LEGACY, d, { recursive: true });
+	const entry = path.join(d, 'scripts/table-template__engine.py');
+	fs.writeFileSync(entry, fs.readFileSync(entry, 'utf8').replace('"""Generic', '# note: see bolt_app_engine.py for the shared one\n"""Generic'));
+	const key = path.join(tmp(), 'k.pem'); assert.equal(cli('keygen', '--out', key).status, 0);
+	const out = path.join(tmp(), 'm.boltpack'); const p = cli('pack', d, '--personal', '--key', key, '--out', out);
+	assert.equal(p.status, 0, p.stdout + p.stderr);
+	assert.deepEqual([...readPack(out).files.keys()].filter((n) => /bolt_app_engine/.test(n)), []);
+});
+
+test('the not-YAML hint sends a thin app to regen and keeps the hand-run line for a full copy', async () => {
+	const { notYamlHint } = await import('../lib/yamlsubset.mjs');
+	assert.match(notYamlHint('', true), /bolt-apps regen/);
+	assert.doesNotMatch(notYamlHint('', true), /python3 scripts/);
+	assert.match(notYamlHint('{"a":1}', true), /bolt-apps regen/);
+	assert.match(notYamlHint('', false), /python3 scripts\/<id>__engine\.py --emit-yaml/);
+	assert.doesNotMatch(notYamlHint('{"a":1}'), /bolt-apps regen/);
+	// and a real thin app with an empty app file says so through lint
+	const d = tmp(); fs.cpSync(THIN, d, { recursive: true });
+	fs.writeFileSync(path.join(d, 'utilities/acme-dash.yaml'), '');
+	const l = cli('run', d); assert.match(l.stdout + l.stderr, /bolt-apps regen/);
 });

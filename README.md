@@ -106,6 +106,7 @@ Needs Node 18+ and Python 3.9+. Want tiles, drill down with Back, a detail panel
 ./bolt-apps new portal-template my-app --dir ~/my-apps
 # edit ~/my-apps/my-app/scripts/my-app__config.json and fixtures.json, then regenerate the app file:
 # cd ~/my-apps/my-app && python3 scripts/my-app__engine.py --emit-yaml > utilities/my-app.yaml
+# (an app made with new --thin has no engine copy: run ./bolt-apps regen ~/my-apps/my-app instead)
 ./bolt-apps run ~/my-apps/my-app --sample
 ./bolt-apps ship ~/my-apps/my-app
 ```

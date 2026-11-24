@@ -11,13 +11,15 @@ export const ENGINE_SRC = path.join(KIT_ROOT, 'python', 'bolt_app_engine.py');
 export const ENTRY_SRC = path.join(KIT_ROOT, 'python', 'bolt_app_engine_entry.py');
 /** Env a toolkit-run thin entry finds the shared engine by (check, run, emit-yaml): the app folder may be anywhere. */
 export const engineEnv = () => ({ BOLT_APPS_ENGINE_FILE: ENGINE_SRC });
+/** The thin entry's own marker line. A hand-written app that only mentions the engine file name is not thin. */
+export const isThinEntry = (text) => /^_THIN_ENTRY = True[ \t]*$/m.test(String(text));
 export const engineName = (id) => `${id}__bolt_app_engine.py`;
 
 /** The name of the engine file a pack of this app must carry, or null: only a thin entry that loads it and has no copy beside it. */
 export function thinEngineName(dir, id) {
 	if (typeof id !== 'string' || !id) return null;
 	try {
-		if (!fs.readFileSync(path.join(dir, 'scripts', `${id}__engine.py`), 'utf8').slice(0, 4000).includes('bolt_app_engine.py')) return null;
+		if (!isThinEntry(fs.readFileSync(path.join(dir, 'scripts', `${id}__engine.py`), 'utf8').slice(0, 8000))) return null;
 		return fs.existsSync(path.join(dir, 'scripts', engineName(id))) ? null : engineName(id);
 	} catch { return null; }
 }
@@ -45,8 +47,13 @@ export function thinIfShared(dir, id) {
 export function expandThin(dir, id) {
 	const p = path.join(dir, 'scripts', `${id}__engine.py`);
 	try {
-		if (!fs.readFileSync(p, 'utf8').slice(0, 4000).includes('bolt_app_engine.py')) return false;
+		if (!isThinEntry(fs.readFileSync(p, 'utf8').slice(0, 8000))) return false;
 		fs.writeFileSync(p, fs.readFileSync(ENGINE_SRC));
 		return true;
 	} catch { return false; }
+}
+
+/** True when the app folder holds a thin entry (any scripts/<id>__engine.py with the marker). */
+export function thinAppDir(dir) {
+	try { return fs.readdirSync(path.join(dir, 'scripts')).filter((f) => f.endsWith('__engine.py')).some((f) => isThinEntry(fs.readFileSync(path.join(dir, 'scripts', f), 'utf8').slice(0, 8000))); } catch { return false; }
 }

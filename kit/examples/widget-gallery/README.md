@@ -13,8 +13,8 @@ Any app that shows data in a chart, table, tree, diff or detail pane. Pick the v
 | kind | mode | bind keys | row fields it reads |
 |---|---|---|---|
 | cards (tiles) | list_data | title, value, unit, delta, delta_label, max, trend, subtitle, badge, footer, layout | the tile fields, `trend` |
-| chart | list_data | type (line, bar, sparkline), x, y, values, label, color, unit | numeric field named by y |
-| table | list_data | columns (field, label, align, total, format, unit), sort, totals_label | one field per column |
+| chart | list_data | type (line, bar, sparkline), x, y, values, label, color, unit, limit, limit_label, marker (Bolt 0.1.184) | numeric field named by y; the marker field |
+| table | list_data | columns (field, label, align, total, format, unit, bars, mark: Bolt 0.1.184), sort, totals_label | one field per column |
 | detail | selected_row | title, subtitle, fields (label, value, copy) | any |
 | json_tree | selected_row | source | `data` (an object) |
 | diff | selected_row | left, right, leftLabel, rightLabel | text with line breaks |
@@ -22,6 +22,11 @@ Any app that shows data in a chart, table, tree, diff or detail pane. Pick the v
 | markdown | selected_row | title, subtitle, body, actions | markdown text |
 
 A chart or table plots every row, so those views carry no Back or refresh rows.
+
+## Needs Bolt 0.1.184
+The chart view draws a dashed `limit` line labelled "capacity" and two `marker` marks (a release and a hotfix), and the table view draws `bars` on Commits and a `mark: tone` glyph on Health. These keys are newer than Bolt 0.1.183, so `bolt-app.json` says `min_bolt_version` 0.1.184 and the gallery needs that Bolt or newer. A chart or table pane that uses them is drawn by Bolt with its own accent and grey tokens, by shape and pattern, never red or green.
+
+verified: not verified in real Bolt. The sample runs and the check goldens pass against stubbed commands; no Bolt 0.1.184 has drawn these two views, and light and dark have not been looked at.
 
 ## Not available to a personal app
 Bolt shows a plain message instead of the pane for these kinds, because they read their own state and ignore the app's data:

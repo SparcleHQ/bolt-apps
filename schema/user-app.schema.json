@@ -2137,6 +2137,34 @@
               }
             }
           }
+        },
+        "limit": {
+          "type": [
+            "string",
+            "number"
+          ],
+          "maxLength": 4096,
+          "description": "A dashed horizontal line at this value. A number or a {{row.x}} reference read from the selected row. Not a number: no line. Bolt 0.1.184 and later; an older Bolt refuses the whole pack (a personal schema_version 1 file loads with a warning and the key does nothing). Set min_bolt_version 0.1.184 in bolt-app.json."
+        },
+        "limit_label": {
+          "$ref": "#/$defs/name",
+          "description": "Words on the limit line, shown clipped to 24 characters. Bolt 0.1.184 and later."
+        },
+        "marker": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "field"
+          ],
+          "properties": {
+            "field": {
+              "$ref": "#/$defs/name"
+            },
+            "label": {
+              "$ref": "#/$defs/name"
+            }
+          },
+          "description": "Labelled vertical marks, one per row whose field cell is set (not empty, 0, false or null), at most 8, row data only (not with values). label names the field that gives the text, else the cell itself. Bolt 0.1.184 and later."
         }
       }
     },
@@ -2190,6 +2218,16 @@
               },
               "unit": {
                 "$ref": "#/$defs/name"
+              },
+              "bars": {
+                "type": "boolean",
+                "description": "An inline bar under the cell, scaled to the largest shown value of the column. Numeric columns only; zero, negative and non-numbers draw no bar. Bolt 0.1.184 and later."
+              },
+              "mark": {
+                "enum": [
+                  "tone"
+                ],
+                "description": "A glyph before the cell text, read from the cell as a tone word (ok, warn, error and so on), by shape not colour. Bolt 0.1.184 and later."
               }
             }
           }

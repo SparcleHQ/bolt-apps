@@ -3,7 +3,7 @@
 ## What this teaches
 The chart types and panes Bolt 0.1.182 added, each drawn from rows: a pie, a donut, two lines (`bind.series`), an area, a heatmap and a gauge. Chart rows are plain list rows; the picture is the right pane. For line, bar and sparkline see `../chart-template`.
 
-**Needs Bolt 0.1.184 or newer.** A Bolt 181 refuses the whole pack that uses any of these, so `bolt-app.json` sets `min_bolt_version` 0.1.182 and `./bolt-apps lint` fails without it.
+**Needs Bolt 0.1.184 or newer.** A Bolt 181 refuses the whole pack that uses any of these, so `bolt-app.json` sets `min_bolt_version` 0.1.184 and `./bolt-apps lint` fails without it.
 
 | View | Pane | Bind keys used |
 |---|---|---|

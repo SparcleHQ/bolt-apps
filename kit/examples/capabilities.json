@@ -1302,7 +1302,7 @@
       "snippet": "load_json = kit.json_loader(HERE, _PFX); words = kit.split_args(argv, FILE_WORDS); kit.run_guarded(main, sys.argv, debug=bool(os.environ.get(\"BOLT_APP_DEBUG\")))   # also kit.Fail, kit.s, kit.fixture_mode, kit.back_to_overview, kit.tile_bind, kit.indent, kit.bridge_head, kit.bridge_yaml",
       "test": "kit/python/tests/test_scaffold.py",
       "limit": "Kit 0.3.11 or newer: an app that calls these must vendor that kit (`./bolt-apps kit vendor --flat my-app`). An older app keeps its own copied helpers and runs unchanged; nothing here changes what a pack carries. bridge_head covers the views-app shape (typed words view, arg, arg2, ...; one command per system); an app with another shape writes its own head. Not run in a real Bolt.",
-      "since": "0.1.184",
+      "since": "kit 0.3.11",
       "older_bolt": "Not read by Bolt: the helpers live in the kit the app vendors (kit 0.3.11 or newer). An older app keeps its own copy and runs unchanged."
     },
     {
@@ -1487,7 +1487,7 @@
       "status": "partial",
       "snippet": "none: no authoring rules in this kit yet",
       "test": "toolkit/test/contract-evolution.test.mjs",
-      "limit": "Bolt 0.1.184 accepts a graph pane, a service map of up to 60 nodes and 200 links; above that it shows the table with a visible reason. This kit has no authoring rules for it yet: its rules, schema and lint do not know the kind (lint refuses it), and there is no example. The rules and a sample that passes check come with 184.1. Until then do not build on it in a pack you ship from this kit.",
+      "limit": "Bolt 0.1.184 accepts a graph pane, a service map of up to 60 nodes and 200 links; above that it groups nodes by bind.group, or shows the table with a visible reason when there is no group field, too many groups or the layout overruns. This kit has no authoring rules for it yet: its rules, schema and lint do not know the kind (lint refuses it), and there is no example. The rules and a sample that passes check come with 184.1. Until then do not build on it in a pack you ship from this kit.",
       "since": "0.1.184",
       "older_bolt": "A Bolt older than 0.1.184 refuses the whole pack that uses it (the generic message: this pack could not be verified, so it was not installed).",
       "example_note": "no example yet: authoring rules and a sample come with 184.1",

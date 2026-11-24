@@ -22,6 +22,7 @@ export function render() {
 	out.push('', '## Pick the version first', '', 'Use the oldest Bolt version that has what you need, and set `min_bolt_version` in `bolt-app.json` to it. A row\'s Since column is the first Bolt that reads it; Older Bolt says what happens on a Bolt before that.', '');
 	const vers = [...new Set(caps.rows.filter((r) => /^0\.1\.\d+$/.test(r.since)).map((r) => r.since))].sort();
 	for (const v of vers) out.push(`- **${v}**: ${caps.rows.filter((r) => r.since === v && r.status !== 'not supported').map((r) => r.name).join('; ')}`);
+	for (const k of [...new Set(caps.rows.filter((r) => /^kit /.test(r.since)).map((r) => r.since))].sort()) out.push(`- **${k}** (not a Bolt version; the app vendors the kit): ${caps.rows.filter((r) => r.since === k).map((r) => r.name).join('; ')}`);
 	out.push('', '## Do not use in this version', '', 'These are named so nobody builds on them. Lint refuses each one.', '');
 	for (const r of caps.rows.filter((x) => x.status === 'reserved')) out.push(`- ${r.name}: ${r.limit}`);
 	out.push('', '## Snippets', '');

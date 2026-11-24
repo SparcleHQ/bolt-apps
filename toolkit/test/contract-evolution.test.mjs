@@ -13,7 +13,7 @@ import { DEPRECATIONS, migrateText, migrateApp } from '../lib/migrate.mjs';
 import { caps } from '../../scripts/build-capabilities.mjs';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const VERSION = /^0\.1\.\d+$/;
+const VERSION = /^(0\.1\.\d+|kit 0\.\d+\.\d+)$/;
 
 test('every row has a since-version (or none, only when it is not available) and says what an older Bolt does', () => {
 	for (const r of caps.rows) {

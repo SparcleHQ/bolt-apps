@@ -54,6 +54,33 @@ function bindVal(node, spec, where, out, ctx = {}) {
 	else if (t === 'list') { if (!node || node.t !== 'l') bad(`must be a list, got ${kindWord(node?.t)}`); else { if (node.items.length > spec.items) bad(`has more than ${spec.items} entries`); node.items.forEach((x, i) => bindMap(x, spec.keys, `${where}[${i}]`, out, ctx)); } }
 	else if (t === 'map') bindMap(node, spec.keys, where, out, ctx);
 	else if (t === 'rowSet') rowSetProblems(node, where, out);
+	else if (t === 'stackChildren') stackChildrenProblems(node, where, out, ctx, spec);
+}
+// stack.children (Bolt 0.1.184): 1 to 6 parts {kind, mode?, bind?}, depth 1; each bind is checked as that kind's own bind. Same caps as the launcher.
+function stackChildrenProblems(node, where, out, ctx, spec) {
+	const bad = (m) => out.push({ code: 'bind_invalid', message: `${where}: ${m}` });
+	const S = RULES.stack, kinds = Object.keys(S.child_kinds);
+	if (!node || node.t !== 'l') return bad(`must be a list, got ${kindWord(node?.t)}`);
+	if (node.items.length === 0) return bad('needs at least one part');
+	if (node.items.length > S.max_children) return bad(`has ${node.items.length} entries; the limit is ${S.max_children}`);
+	node.items.forEach((it, i) => {
+		const at = `${where}[${i}]`, b = (m) => out.push({ code: 'bind_invalid', message: `${at}${m}` });
+		if (!it || it.t !== 'm') return b(` must be a mapping, got ${kindWord(it?.t)}`);
+		for (const e of it.entries) if (!['kind', 'mode', 'bind'].includes(e.key)) return out.push({ code: 'bind_unknown_key', message: `${at}.${e.key}: not a key a stack part reads. Allowed: kind, mode, bind` });
+		const kv = get(it, 'kind')?.value;
+		if (!kv) return b('.kind is required');
+		if (kv.t !== 's') return b(`.kind must be one of ${kinds.join(', ')}, got ${kindWord(kv.t)}`);
+		if (!Object.hasOwn(S.child_kinds, kv.v)) return b(kv.v === 'stack' ? '.kind "stack" is not allowed: a stack cannot hold a stack' : `.kind "${kv.v.slice(0, 40)}" is not one of ${kinds.join(', ')}`);
+		let mode = S.child_kinds[kv.v];
+		const mv = get(it, 'mode')?.value;
+		if (mv) { if (mv.t !== 's' || !['selected_row', 'list_data'].includes(mv.v)) return b('.mode must be one of selected_row, list_data'); mode = mv.v; }
+		const bind = get(it, 'bind')?.value;
+		if (bind && get(bind, 'activate')) return b('.bind.activate is not supported inside a stack part');   // pane-item events (EVT-1) are not supported in a stack part in this slice
+		if (bind) {
+			out.push(...bindProblems(kv.v, bind, `${at}.bind`, ctx));
+			if (get(bind, 'from') && mode !== 'list_data') out.push({ code: 'bind_invalid', message: `${at}.bind.from: needs mode: list_data` });
+		}
+	});
 }
 // bind.from (Bolt 0.1.184): {set, where?}. The same closed rules the launcher applies when it loads the app file.
 const SET_NAME = /^[a-z][a-z0-9_-]{0,23}$/, RESERVED_NAMES = new Set(['constructor', 'prototype', '__proto__', 'toString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable', 'toLocaleString', '__defineGetter__', '__defineSetter__', '__lookupGetter__', '__lookupSetter__']);

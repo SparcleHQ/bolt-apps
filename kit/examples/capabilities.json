@@ -822,7 +822,7 @@
       "group": "panes",
       "name": "Named row sets: one script run feeds several panes",
       "status": "supported",
-      "snippet": "{\"kind\": \"cards\", \"mode\": \"list_data\", \"bind\": {\"layout\": \"tiles\", \"title\": \"{{row.kpi_label}}\", \"value\": \"{{row.kpi_value}}\", \"unit\": \"{{row.kpi_unit}}\", \"delta\": \"{{row.delta}}\", \"delta_label\": \"{{row.since}}\", \"max\": \"{{row.kpi_max}}\", \"trend\": \"{{row.trend}}\", \"subtitle\": \"{{row.kpi_note}}\", \"badge\": \"{{row.kpi_badge}}\", \"footer\": \"{{row.kpi_foot}}\", \"from\": {\"set\": \"tiles\"}}}",
+      "snippet": "{\"kind\": \"cards\", \"bind\": {\"layout\": \"tiles\", \"title\": \"{{row.kpi_label}}\", \"value\": \"{{row.kpi_value}}\", \"unit\": \"{{row.kpi_unit}}\", \"subtitle\": \"{{row.kpi_note}}\", \"from\": {\"set\": \"tiles\"}}}",
       "test": "toolkit/test/rowsets-formats-184.test.mjs",
       "limit": "Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). A script row may carry set (^[a-z][a-z0-9_-]{0,23}$, not constructor or prototype); a pane with bind.from draws only that set's rows, narrowed by up to 3 where field-equals-value filters. Needs mode list_data on chart, table, cards, heatmap or image_grid. Tagged rows are not list rows and do not count in the selection. At most 12 sets per run; a row with an unusable set stays a list row. Only a pane that uses from splits rows. A run whose rows are all tagged has an empty list: add one untagged row (a title or a Back row) if the list should show something.",
       "example": "kit/examples/chart-types",
@@ -854,6 +854,25 @@
         "digits",
         "locale"
       ]
+    },
+    {
+      "id": "pane.stack",
+      "group": "panes",
+      "name": "Stack: several panes in one view",
+      "status": "supported",
+      "example": "kit/examples/chart-types",
+      "example_keys": [
+        "stack",
+        "children"
+      ],
+      "keys": [
+        "stack",
+        "children"
+      ],
+      "snippet": "{\"kind\": \"stack\", \"mode\": \"list_data\", \"bind\": {\"children\": [{\"kind\": \"cards\", \"bind\": {\"layout\": \"tiles\", \"title\": \"{{row.kpi_label}}\", \"value\": \"{{row.kpi_value}}\", \"unit\": \"{{row.kpi_unit}}\", \"subtitle\": \"{{row.kpi_note}}\", \"from\": {\"set\": \"tiles\"}}}, {\"kind\": \"chart\", \"bind\": {\"type\": \"bar\", \"x\": \"label\", \"y\": \"value\", \"label\": \"Deploys by day\", \"from\": {\"set\": \"trend\"}}}, {\"kind\": \"table\", \"bind\": {\"columns\": [{\"field\": \"name\", \"label\": \"Service\"}, {\"field\": \"state\", \"label\": \"State\"}], \"from\": {\"set\": \"services\"}}}]}}",
+      "test": "toolkit/test/stack-184.test.mjs",
+      "limit": "Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (stack is a new pane kind, so an older Bolt refuses the whole app file for every schema_version; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). kind stack, mode list_data, bind.children: 1 to 6 parts, each {kind, mode, bind}; kind is cards, chart, table, heatmap, gauge, detail or markdown (no stack inside a stack); each bind is that kind's own bind, and bind.from gives a part its own row set. At most 1,000 rows are drawn across the parts. A part that fails to draw shows one plain card and the others stay. A part with a bad kind shows a note naming it. bind.activate (pane-item events) is not supported inside a stack part in this version and lint refuses it.",
+      "kind": "stack"
     },
     {
       "id": "run.isolation",

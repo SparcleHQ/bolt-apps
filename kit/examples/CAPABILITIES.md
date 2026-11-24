@@ -70,6 +70,7 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | Chart rows mixed with plain rows | supported | [widget-gallery](widget-gallery) | `conformance/launcher-constants.json` | A row without the y field is skipped, so one list can hold chart rows and plain rows. The unit is cut at 8 characters. |
 | Named row sets: one script run feeds several panes | supported | [chart-types](chart-types) | `toolkit/test/rowsets-formats-184.test.mjs` | Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). A script row may carry set (^[a-z][a-z0-9_-]{0,23}$, not constructor or prototype); a pane with bind.from draws only that set's rows, narrowed by up to 3 where field-equals-value filters. Needs mode list_data on chart, table, cards, heatmap or image_grid. Tagged rows are not list rows and do not count in the selection. At most 12 sets per run; a row with an unusable set stays a list row. Only a pane that uses from splits rows. A run whose rows are all tagged has an empty list: add one untagged row (a title or a Back row) if the list should show something. |
 | Number formats: format, digits, locale | supported | [chart-types](chart-types) | `toolkit/test/rowsets-formats-184.test.mjs` | Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). format is number, percent, compact, bytes (1024 steps) or duration (the value is seconds); percent writes the raw number and adds % (0.42 shows 0.42%, send 42 for 42%); digits 0 to 6; locale is a language tag of at most 35 characters. On chart, cards (tile value) and gauge, and on table columns (which also take compact, bytes and duration in format). bytes and duration carry their own unit, so unit is not added. Heatmap and detail panes take none of them. |
+| Stack: several panes in one view | supported | [chart-types](chart-types) | `toolkit/test/stack-184.test.mjs` | Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (stack is a new pane kind, so an older Bolt refuses the whole app file for every schema_version; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). kind stack, mode list_data, bind.children: 1 to 6 parts, each {kind, mode, bind}; kind is cards, chart, table, heatmap, gauge, detail or markdown (no stack inside a stack); each bind is that kind's own bind, and bind.from gives a part its own row set. At most 1,000 rows are drawn across the parts. A part that fails to draw shows one plain card and the others stay. A part with a bad kind shows a note naming it. bind.activate (pane-item events) is not supported inside a stack part in this version and lint refuses it. |
 | What Bolt does limit about a run | partial | automatic | `conformance/launcher-constants.json` | Each run gets a fresh private working folder (not the app folder) unless bridge.cwd is home, its process tree is killed on timeout, and there are CPU and process limits. Files and network are not confined. Bolt sets 6 variables: the 3 Python ones and GIT_CONFIG_NOSYSTEM, GIT_TERMINAL_PROMPT, GIT_OPTIONAL_LOCKS. |
 | Sample data: no key, no network | supported | [portal-template](portal-template) | `kit/python/tests/test_portal_engine.py` | Ship live (api.fixture_default false) unless the app is sample-only by design (see sample.offline_only). Put "fixture": true at the top of check.json; an installed pack cannot be switched to sample data. |
 | Several sources at once inside one deadline | supported | [system-glance](system-glance) | `kit/python/tests/test_probe.py` | Partial failure shows per-source rows; an unread value is never zero. |
@@ -461,13 +462,19 @@ actions:
 ### Named row sets: one script run feeds several panes (`pane.row_sets`)
 
 ```
-{"kind": "cards", "mode": "list_data", "bind": {"layout": "tiles", "title": "{{row.kpi_label}}", "value": "{{row.kpi_value}}", "unit": "{{row.kpi_unit}}", "delta": "{{row.delta}}", "delta_label": "{{row.since}}", "max": "{{row.kpi_max}}", "trend": "{{row.trend}}", "subtitle": "{{row.kpi_note}}", "badge": "{{row.kpi_badge}}", "footer": "{{row.kpi_foot}}", "from": {"set": "tiles"}}}
+{"kind": "cards", "bind": {"layout": "tiles", "title": "{{row.kpi_label}}", "value": "{{row.kpi_value}}", "unit": "{{row.kpi_unit}}", "subtitle": "{{row.kpi_note}}", "from": {"set": "tiles"}}}
 ```
 
 ### Number formats: format, digits, locale (`pane.number_formats`)
 
 ```
 {"kind": "chart", "mode": "list_data", "bind": {"type": "area", "x": "label", "label": "Deploys and failures", "series": [{"y": "value", "label": "Deploys"}, {"y": "failed", "label": "Failed"}], "format": "compact", "digits": 1, "locale": "de-DE"}}
+```
+
+### Stack: several panes in one view (`pane.stack`)
+
+```
+{"kind": "stack", "mode": "list_data", "bind": {"children": [{"kind": "cards", "bind": {"layout": "tiles", "title": "{{row.kpi_label}}", "value": "{{row.kpi_value}}", "unit": "{{row.kpi_unit}}", "subtitle": "{{row.kpi_note}}", "from": {"set": "tiles"}}}, {"kind": "chart", "bind": {"type": "bar", "x": "label", "y": "value", "label": "Deploys by day", "from": {"set": "trend"}}}, {"kind": "table", "bind": {"columns": [{"field": "name", "label": "Service"}, {"field": "state", "label": "State"}], "from": {"set": "services"}}}]}}
 ```
 
 ### What Bolt does limit about a run (`run.isolation`)

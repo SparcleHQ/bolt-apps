@@ -121,7 +121,7 @@ export const MAX_VIEWS = 8;                                   // the launcher MA
 const VIEW_NAME = /^[a-z][a-z0-9_-]{0,23}$/;                  // the launcher name_re
 export const NAV_ARG_RE = /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}$/; // the launcher NAV_ARG_RE
 export const isNavToken = (s) => typeof s === 'string' && NAV_ARG_RE.test(s) && !s.includes('..'); // the launcher isNavArg
-export const RIGHT_WIDGET_KINDS = ['card', 'map', 'image', 'calc', 'color', 'weather', 'date', 'markdown', 'entity_preview', 'chart', 'table', 'cards', 'detail', 'json_tree', 'diff', 'image_grid', 'heatmap', 'gauge']; // the launcher (heatmap and gauge from Bolt 182)
+export const RIGHT_WIDGET_KINDS = ['card', 'map', 'image', 'calc', 'color', 'weather', 'date', 'markdown', 'entity_preview', 'chart', 'table', 'cards', 'detail', 'json_tree', 'diff', 'image_grid', 'heatmap', 'gauge', 'stack']; // the launcher (heatmap and gauge from Bolt 182)
 const RIGHT_WIDGET_MODES = ['selected_row', 'list_data'];     // the launcher
 export const NO_APP_DATA_KINDS = ['image', 'color', 'weather', 'date', 'calc']; // the launcher NO_APP_DATA
 const BIND_NONE = ['map', 'image', 'calc', 'color', 'weather', 'date']; // the launcher BIND_NONE: these panes read nothing from bind
@@ -177,6 +177,9 @@ export function launcherRules(root, opts = {}) {
 		if (NO_APP_DATA_KINDS.includes(kind)) W('right_widget_no_data', `${p}.kind "${kind}" passes validation but Bolt shows "This app asks for a ${kind} pane, which cannot show app data" instead of your rows. Use table, detail, cards or chart${kind === 'image' ? ' (image_grid for pictures)' : ''}`);
 		const bad = (code, m) => (strict ? E : W)(code, strict ? m : `${m} (a warning for schema_version 1, an error from schema_version 2)`);
 		if (BIND_NONE.includes(kind) && bind && bind.t === 'm' && bind.entries.length) bad('right_widget_bind_unread', `${p}.bind.${bind.entries[0].key}: a ${kind} pane reads nothing from bind; remove the key${kind === 'map' ? ' (the map takes the launcher\'s own state; use an "Open in Maps" url action for a place)' : ''}`);
+		// stack (Bolt 0.1.184) is one pane that draws the whole list and hands each part its rows
+		if (kind === 'stack' && mode !== 'list_data') bad('right_widget_bind_unread', `${p}.mode: a stack needs mode: list_data`);
+		if (kind === 'stack' && !(bind && bind.t === 'm')) bad('right_widget_bind_unread', `${p}.bind.children: is required for a stack`);
 		// bind.from (a named row set, Bolt 0.1.184) feeds a pane that draws the whole list: the launcher refuses it on a selected_row pane
 		if (bind && bind.t === 'm' && get(bind, 'from') && mode !== 'list_data') bad('right_widget_bind_unread', `${p}.bind.from: needs mode: list_data (a selected_row pane reads one list row, never a row set)`);
 		// Every other kind: keys, types, enums and caps from the launcher's table (schema/bolt-rules.json). Strict for schema_version 2 and for every pack.

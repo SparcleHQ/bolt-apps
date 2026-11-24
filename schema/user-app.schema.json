@@ -1629,7 +1629,8 @@
                 "diff",
                 "image_grid",
                 "heatmap",
-                "gauge"
+                "gauge",
+                "stack"
               ],
               "oneOf": [
                 {
@@ -1703,6 +1704,10 @@
                 {
                   "const": "gauge",
                   "description": "One value on a min to max scale as a ring or half ring (Bolt 0.1.182 and later; a Bolt 0.1.181 refuses the whole pack that uses it)."
+                },
+                {
+                  "const": "stack",
+                  "description": "Several panes in one view: bind.children, 1 to 6 parts, each with its own kind and bind (and bind.from for its own row set). Needs mode list_data. Bolt 0.1.184 and later; an older Bolt refuses the whole app file. Set min_bolt_version 0.1.184 in bolt-app.json."
                 }
               ]
             },
@@ -1907,6 +1912,22 @@
                 "properties": {
                   "bind": {
                     "$ref": "#/$defs/bindGauge"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "kind": {
+                    "const": "stack"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "bind": {
+                    "$ref": "#/$defs/bindStack"
                   }
                 }
               }
@@ -2137,6 +2158,90 @@
               }
             }
           }
+        },
+        "limit": {
+          "type": [
+            "string",
+            "number"
+          ],
+          "maxLength": 4096,
+          "description": "A dashed horizontal line at this value. A number or a {{row.x}} reference read from the selected row. Not a number: no line. Bolt 0.1.184 and later; an older Bolt refuses the whole pack (a personal schema_version 1 file loads with a warning and the key does nothing). Set min_bolt_version 0.1.184 in bolt-app.json."
+        },
+        "limit_label": {
+          "$ref": "#/$defs/name",
+          "description": "Words on the limit line, shown clipped to 24 characters. Bolt 0.1.184 and later."
+        },
+        "marker": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "field"
+          ],
+          "properties": {
+            "field": {
+              "$ref": "#/$defs/name"
+            },
+            "label": {
+              "$ref": "#/$defs/name"
+            }
+          },
+          "description": "Labelled vertical marks, one per row whose field cell is set (not empty, 0, false or null), at most 8, row data only (not with values). label names the field that gives the text, else the cell itself. Bolt 0.1.184 and later."
+        },
+        "format": {
+          "enum": [
+            "number",
+            "percent",
+            "compact",
+            "bytes",
+            "duration"
+          ],
+          "description": "How numbers are written. bytes uses 1024 steps and duration reads seconds; both carry their own unit. Bolt 0.1.184 and later; set min_bolt_version 0.1.184."
+        },
+        "digits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6,
+          "description": "Most fraction digits. Bolt 0.1.184 and later."
+        },
+        "locale": {
+          "type": "string",
+          "maxLength": 35,
+          "description": "A language tag such as de-DE for digit grouping. Bolt 0.1.184 and later."
+        },
+        "from": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "set"
+          ],
+          "properties": {
+            "set": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,23}$",
+              "not": {
+                "enum": [
+                  "constructor",
+                  "prototype",
+                  "__proto__"
+                ]
+              },
+              "description": "Which named row set to draw. A script row joins a set with its own set field; tagged rows are not list rows."
+            },
+            "where": {
+              "type": "object",
+              "maxProperties": 3,
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean"
+                ],
+                "maxLength": 200
+              },
+              "description": "Up to 3 field-equals-value filters. A row without the field is left out."
+            }
+          },
+          "description": "Draw one named row set instead of the list rows. Needs mode: list_data. Bolt 0.1.184 and later; set min_bolt_version 0.1.184 in bolt-app.json."
         }
       }
     },
@@ -2184,12 +2289,36 @@
                   "number",
                   "percent",
                   "currency",
-                  "date"
+                  "date",
+                  "compact",
+                  "bytes",
+                  "duration"
                 ],
-                "description": "Rich widgets."
+                "description": "Rich widgets. compact, bytes and duration need Bolt 0.1.184 or later (set min_bolt_version 0.1.184)."
               },
               "unit": {
                 "$ref": "#/$defs/name"
+              },
+              "bars": {
+                "type": "boolean",
+                "description": "An inline bar under the cell, scaled to the largest shown value of the column. Numeric columns only; zero, negative and non-numbers draw no bar. Bolt 0.1.184 and later."
+              },
+              "mark": {
+                "enum": [
+                  "tone"
+                ],
+                "description": "A glyph before the cell text, read from the cell as a tone word (ok, warn, error and so on), by shape not colour. Bolt 0.1.184 and later."
+              },
+              "digits": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 6,
+                "description": "Most fraction digits. Bolt 0.1.184 and later."
+              },
+              "locale": {
+                "type": "string",
+                "maxLength": 35,
+                "description": "A language tag such as de-DE for digit grouping. Bolt 0.1.184 and later."
               }
             }
           }
@@ -2216,6 +2345,44 @@
         "totals_label": {
           "$ref": "#/$defs/name",
           "description": "Rich widgets."
+        },
+        "from": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "set"
+          ],
+          "properties": {
+            "set": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,23}$",
+              "not": {
+                "enum": [
+                  "constructor",
+                  "prototype",
+                  "__proto__"
+                ]
+              },
+              "description": "Which named row set to draw. A script row joins a set with its own set field; tagged rows are not list rows."
+            },
+            "where": {
+              "type": "object",
+              "maxProperties": 3,
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean"
+                ],
+                "maxLength": 200
+              },
+              "description": "Up to 3 field-equals-value filters. A row without the field is left out."
+            }
+          },
+          "description": "Draw one named row set instead of the list rows. Needs mode: list_data. Bolt 0.1.184 and later; set min_bolt_version 0.1.184 in bolt-app.json."
+        },
+        "activate": {
+          "$ref": "#/$defs/bindActivate"
         }
       }
     },
@@ -2274,6 +2441,98 @@
         },
         "trend": {
           "$ref": "#/$defs/text"
+        },
+        "visual": {
+          "enum": [
+            "meter",
+            "ring",
+            "bullet",
+            "number",
+            "spark",
+            "strip",
+            "stack"
+          ],
+          "description": "How a tile is drawn: meter (the default bar), ring (a donut: the value in the centre), bullet (a bar with a target mark), number (the plain value), spark (the sparkline and its limit), strip (one cell per check, from the trend list: 0 ok, 1 warn, 2 error) or stack (a stacked bar of up to 6 positive parts, from the trend list). Bolt 0.1.184 and later; an older Bolt refuses the whole pack (a personal schema_version 1 file loads with a warning and the key does nothing). Set min_bolt_version 0.1.184 in bolt-app.json."
+        },
+        "visual_from": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "The name of a row field whose value picks each tile's visual from the same list as visual, so one grid can mix tiles. An unknown or missing value uses visual, then the plain meter. Bolt 0.1.184 and later."
+        },
+        "target": {
+          "type": [
+            "string",
+            "number"
+          ],
+          "maxLength": 4096,
+          "description": "bullet only: the target mark, on the same min to max scale as the bar. A number or a {{row.x}} reference. Not a number: no mark. Bolt 0.1.184 and later."
+        },
+        "limit": {
+          "type": [
+            "string",
+            "number"
+          ],
+          "maxLength": 4096,
+          "description": "A dashed horizontal line on the tile sparkline, in the trend's own units. A number or a {{row.x}} reference. Not a number, or no sparkline: no line. Bolt 0.1.184 and later."
+        },
+        "format": {
+          "enum": [
+            "number",
+            "percent",
+            "compact",
+            "bytes",
+            "duration"
+          ],
+          "description": "How numbers are written. bytes uses 1024 steps and duration reads seconds; both carry their own unit. Bolt 0.1.184 and later; set min_bolt_version 0.1.184."
+        },
+        "digits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6,
+          "description": "Most fraction digits. Bolt 0.1.184 and later."
+        },
+        "locale": {
+          "type": "string",
+          "maxLength": 35,
+          "description": "A language tag such as de-DE for digit grouping. Bolt 0.1.184 and later."
+        },
+        "from": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "set"
+          ],
+          "properties": {
+            "set": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,23}$",
+              "not": {
+                "enum": [
+                  "constructor",
+                  "prototype",
+                  "__proto__"
+                ]
+              },
+              "description": "Which named row set to draw. A script row joins a set with its own set field; tagged rows are not list rows."
+            },
+            "where": {
+              "type": "object",
+              "maxProperties": 3,
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean"
+                ],
+                "maxLength": 200
+              },
+              "description": "Up to 3 field-equals-value filters. A row without the field is left out."
+            }
+          },
+          "description": "Draw one named row set instead of the list rows. Needs mode: list_data. Bolt 0.1.184 and later; set min_bolt_version 0.1.184 in bolt-app.json."
+        },
+        "activate": {
+          "$ref": "#/$defs/bindActivate"
         }
       },
       "if": {
@@ -2367,6 +2626,41 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 8
+        },
+        "from": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "set"
+          ],
+          "properties": {
+            "set": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,23}$",
+              "not": {
+                "enum": [
+                  "constructor",
+                  "prototype",
+                  "__proto__"
+                ]
+              },
+              "description": "Which named row set to draw. A script row joins a set with its own set field; tagged rows are not list rows."
+            },
+            "where": {
+              "type": "object",
+              "maxProperties": 3,
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean"
+                ],
+                "maxLength": 200
+              },
+              "description": "Up to 3 field-equals-value filters. A row without the field is left out."
+            }
+          },
+          "description": "Draw one named row set instead of the list rows. Needs mode: list_data. Bolt 0.1.184 and later; set min_bolt_version 0.1.184 in bolt-app.json."
         }
       }
     },
@@ -2427,6 +2721,41 @@
         },
         "unit": {
           "$ref": "#/$defs/name"
+        },
+        "from": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "set"
+          ],
+          "properties": {
+            "set": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,23}$",
+              "not": {
+                "enum": [
+                  "constructor",
+                  "prototype",
+                  "__proto__"
+                ]
+              },
+              "description": "Which named row set to draw. A script row joins a set with its own set field; tagged rows are not list rows."
+            },
+            "where": {
+              "type": "object",
+              "maxProperties": 3,
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean"
+                ],
+                "maxLength": 200
+              },
+              "description": "Up to 3 field-equals-value filters. A row without the field is left out."
+            }
+          },
+          "description": "Draw one named row set instead of the list rows. Needs mode: list_data. Bolt 0.1.184 and later; set min_bolt_version 0.1.184 in bolt-app.json."
         }
       }
     },
@@ -2496,8 +2825,250 @@
               }
             }
           }
+        },
+        "format": {
+          "enum": [
+            "number",
+            "percent",
+            "compact",
+            "bytes",
+            "duration"
+          ],
+          "description": "How numbers are written. bytes uses 1024 steps and duration reads seconds; both carry their own unit. Bolt 0.1.184 and later; set min_bolt_version 0.1.184."
+        },
+        "digits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6,
+          "description": "Most fraction digits. Bolt 0.1.184 and later."
+        },
+        "locale": {
+          "type": "string",
+          "maxLength": 35,
+          "description": "A language tag such as de-DE for digit grouping. Bolt 0.1.184 and later."
         }
       }
+    },
+    "bindStack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "children"
+      ],
+      "properties": {
+        "children": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 6,
+          "description": "The parts, top to bottom. At most 1,000 rows are drawn across all parts. No stack inside a stack. Bolt 0.1.184 and later.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "cards",
+                  "chart",
+                  "table",
+                  "heatmap",
+                  "gauge",
+                  "detail",
+                  "markdown"
+                ]
+              },
+              "mode": {
+                "enum": [
+                  "selected_row",
+                  "list_data"
+                ],
+                "description": "Default: list_data for cards, chart, table, heatmap; selected_row for gauge, detail, markdown. bind.from needs list_data."
+              },
+              "bind": {
+                "type": "object",
+                "description": "That kind's own bind (see bindCards, bindChart, bindTable, bindHeatmap, bindGauge, bindDetail, bindMarkdown)."
+              }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "cards"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "bind": {
+                      "$ref": "#/$defs/bindCards"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "chart"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "bind": {
+                      "$ref": "#/$defs/bindChart"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "table"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "bind": {
+                      "$ref": "#/$defs/bindTable"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "heatmap"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "bind": {
+                      "$ref": "#/$defs/bindHeatmap"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "gauge"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "bind": {
+                      "$ref": "#/$defs/bindGauge"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "detail"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "bind": {
+                      "$ref": "#/$defs/bindDetail"
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "kind": {
+                      "const": "markdown"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ]
+                },
+                "then": {
+                  "properties": {
+                    "bind": {
+                      "$ref": "#/$defs/bindMarkdown"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "bindActivate": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "What Enter or a click on one table row or tile does. Exactly one of nav or action. Bolt 0.1.184 and later; an older Bolt refuses the whole pack (a personal schema_version 1 file loads with a warning and the key does nothing). Set min_bolt_version 0.1.184 in bolt-app.json.",
+      "properties": {
+        "nav": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "view"
+          ],
+          "description": "Open a view of this app. arg is a {{row.x}} template that must give ONE plain token (letters, digits, _ . -, at most 64, not starting with - or . and no ..) when the item is pressed; a row whose token is not valid is not pressable.",
+          "properties": {
+            "view": {
+              "$ref": "#/$defs/name",
+              "description": "A key of presentation.views."
+            },
+            "arg": {
+              "$ref": "#/$defs/text"
+            }
+          }
+        },
+        "action": {
+          "$ref": "#/$defs/name",
+          "description": "The id of a declared url or composer action, run with the item's own row. A run or utility action cannot take an item's fields."
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "nav"
+          ]
+        },
+        {
+          "required": [
+            "action"
+          ]
+        }
+      ]
     }
   }
 }

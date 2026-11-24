@@ -19,6 +19,7 @@ import { get, str, notYamlHint } from '../lib/yamlsubset.mjs';
 import { assessYaml, plainPermission, listingPermissions, plainName, dataFilesUsed, escapeProblem, ASSESS_CODES, MAX_HASHED_FILE_BYTES } from '../lib/assess.mjs';
 import { iconProblem, chipMismatch, pipeNotSupportedProblems } from '../lib/assess.mjs';
 import { versionProblem, layoutProblems, namespaceProblems } from '../lib/boltrules.mjs';
+import { cmdMigrate } from '../lib/migrate.mjs';
 import { newList, newFromTemplate, listTemplates, hasTemplate, runApp, regen, upgradeKit, ship, doctor, staleCloneNote, bump } from '../lib/workflow.mjs';
 import { exportShared } from '../lib/shared.mjs';
 import { thinEngineName, thinAppDir, readScript, ENGINE_SRC } from '../lib/engine.mjs';
@@ -395,6 +396,7 @@ const HELP = `bolt-apps: author toolkit for Bolt Apps
   run <app-folder> [view [word]] [--sample|--live] [--json]  run the app as Bolt would and show the rows (the debug loop)
   regen <app-folder>                                      write utilities/<id>.yaml from an engine app's config (after editing config.json)
   upgrade-kit <app-folder>|--all [--dry-run]                       move an app with a private engine copy to the thin entry (refuses an edited engine); --all converts every example
+  migrate <app-folder> [--dry-run]                        move an app off deprecated keys (none are deprecated in 184: it says so and writes nothing)
   ship <app-folder>                                       lint, check, pack, verify with the next version picked; prints how to install
   doctor [app-folder]                                     check node, python, your key, folders and what would block an install
   lint [path] [--personal] [--json]                       offline shape checks (--personal: your own tier 3 or script app)
@@ -450,7 +452,7 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(file
 		let dest, lock; try { ({ dest, lock } = vendorKit(target, { flat: args.includes('--flat') })); } catch (e) { die(e.message); }
 		console.log(`vendored ${lock.name} ${lock.version} (sha256 ${lock.sha256.slice(0, 16)}...) into ${dest}`);
 	};
-	const cmds = { check: cmdCheck, kit: cmdKit, new: cmdNew, lint: cmdLint, keygen: cmdKeygen, pack: cmdPack, verify: cmdVerify, run: (a) => runApp(a), regen: (a) => regen(a), 'upgrade-kit': (a) => upgradeKit(a), ship: (a) => ship(a), doctor: (a) => doctor(a) };
+	const cmds = { check: cmdCheck, kit: cmdKit, new: cmdNew, lint: cmdLint, keygen: cmdKeygen, pack: cmdPack, verify: cmdVerify, run: (a) => runApp(a), regen: (a) => regen(a), 'upgrade-kit': (a) => upgradeKit(a), migrate: (a) => cmdMigrate(a, die), ship: (a) => ship(a), doctor: (a) => doctor(a) };
 	if (cmds[cmd]) await cmds[cmd](rest);
 	else if (cmd === '--version' || cmd === 'version') console.log(JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8')).version);
 	else if (!cmd || cmd === 'help' || cmd === '--help') console.log(HELP);

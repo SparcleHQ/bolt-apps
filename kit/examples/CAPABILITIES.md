@@ -92,6 +92,7 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | Number formats: format, digits, locale | supported | [chart-types](chart-types) | `toolkit/test/rowsets-formats-184.test.mjs` | Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). format is number, percent, compact, bytes (1024 steps) or duration (the value is seconds); percent writes the raw number and adds % (0.42 shows 0.42%, send 42 for 42%); digits 0 to 6; locale is a language tag of at most 35 characters. On chart, cards (tile value) and gauge, and on table columns (which also take compact, bytes and duration in format). bytes and duration carry their own unit, so unit is not added. Heatmap and detail panes take none of them. |
 | Stack: several panes in one view | supported | [chart-types](chart-types) | `toolkit/test/stack-184.test.mjs` | Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (stack is a new pane kind, so an older Bolt refuses the whole app file for every schema_version; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). kind stack, mode list_data, bind.children: 1 to 6 parts, each {kind, mode, bind}; kind is cards, chart, table, heatmap, gauge, detail or markdown (no stack inside a stack); each bind is that kind's own bind, and bind.from gives a part its own row set. At most 1,000 rows are drawn across the parts. A part that fails to draw shows one plain card and the others stay. A part with a bad kind shows a note naming it. bind.activate (pane-item events) is not supported inside a stack part in this version and lint refuses it. |
 | Press a table row or tile to open a view or run an action | supported | [widget-gallery](widget-gallery) | `toolkit/test/activate-184.test.mjs` | Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). Table and cards panes only. Exactly one of nav (a view of this app; arg is a {{row.x}} template that must give one plain token, else that item is not pressable) or action (a declared url or composer action; a run or utility action cannot take an item's fields). Enter, Space or a click on the item; Tab reaches it. A pressed row no longer copies itself. |
+| Script-app scaffold in the kit (no copied helpers) | supported | [script-template](script-template) | `kit/python/tests/test_scaffold.py` | Kit 0.3.11 or newer: an app that calls these must vendor that kit (`./bolt-apps kit vendor --flat my-app`). An older app keeps its own copied helpers and runs unchanged; nothing here changes what a pack carries. bridge_head covers the views-app shape (typed words view, arg, arg2, ...; one command per system); an app with another shape writes its own head. Not run in a real Bolt. |
 
 ## Snippets
 
@@ -595,4 +596,10 @@ WANT_SHARED = False   # in the loader block of the app's script: True runs Bolt'
 
 ```
 "bind": {"sort": {"field": "commits", "dir": "desc"}, "activate": {"nav": {"view": "detail", "arg": "{{row.service}}"}}}
+```
+
+### Script-app scaffold in the kit (no copied helpers) (`kit.scaffold`)
+
+```
+load_json = kit.json_loader(HERE, _PFX); words = kit.split_args(argv, FILE_WORDS); kit.run_guarded(main, sys.argv, debug=bool(os.environ.get("BOLT_APP_DEBUG")))   # also kit.Fail, kit.s, kit.fixture_mode, kit.back_to_overview, kit.tile_bind, kit.indent, kit.bridge_head, kit.bridge_yaml
 ```

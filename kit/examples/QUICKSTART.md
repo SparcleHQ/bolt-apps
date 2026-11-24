@@ -61,7 +61,7 @@ Edit between `new` and `run`. After editing an engine app's `scripts/<id>__confi
 | Script timeout | 1 to 60 s, default 10 | engine requests 10 s each, 14 s together |
 | Pane kinds with app data | card, markdown, entity_preview, chart, table, cards, detail, json_tree, diff, image_grid, heatmap, gauge | same |
 | Chart types | line, bar, sparkline (all Bolts); pie, donut, area, `bind.series` of up to 4 lines (Bolt 0.1.182 or newer) | same |
-| Panes newer than 181 | heatmap, gauge (Bolt 0.1.182 or newer; a 181 refuses the whole pack that uses one); tile keys `visual` (ring, bullet), `target`, `limit` (Bolt 0.1.184 or newer) | same |
+| Panes newer than 181 | heatmap, gauge (Bolt 0.1.182 or newer; a 181 refuses the whole pack that uses one); tile keys `visual` (meter, ring, bullet, number, spark, strip, stack), `visual_from` (a row field that picks each tile's visual, so one grid can mix them), `target`, `limit` (Bolt 0.1.184 or newer) | same |
 | Panes that cannot show app data | image, color, weather, date, calc (Bolt shows "This app asks for ... pane, which cannot show app data") | do not use |
 | Picture in an `entity_preview` pane | `image_url`: a 40 pixel avatar | the same; `hero` (a full-width picture, newer than 181) needs Bolt 182: a 181 refuses the whole pack that uses it. Set `min_bolt_version` 0.1.182 in `bolt-app.json` (see ENGINE.md, Hero picture) |
 | `map` pane | draws Bolt's own map, not your rows; any bind key is refused | do not use; open a place with a url action |

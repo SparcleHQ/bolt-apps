@@ -2279,9 +2279,18 @@
           "enum": [
             "meter",
             "ring",
-            "bullet"
+            "bullet",
+            "number",
+            "spark",
+            "strip",
+            "stack"
           ],
-          "description": "How the level against max is drawn on a tile: meter (the default bar), ring or bullet. Bolt 0.1.184 and later; an older Bolt refuses the whole pack (a personal schema_version 1 file loads with a warning and the key does nothing). Set min_bolt_version 0.1.184 in bolt-app.json."
+          "description": "How a tile is drawn: meter (the default bar), ring (a donut: the value in the centre), bullet (a bar with a target mark), number (the plain value), spark (the sparkline and its limit), strip (one cell per check, from the trend list: 0 ok, 1 warn, 2 error) or stack (a stacked bar of up to 6 positive parts, from the trend list). Bolt 0.1.184 and later; an older Bolt refuses the whole pack (a personal schema_version 1 file loads with a warning and the key does nothing). Set min_bolt_version 0.1.184 in bolt-app.json."
+        },
+        "visual_from": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "The name of a row field whose value picks each tile's visual from the same list as visual, so one grid can mix tiles. An unknown or missing value uses visual, then the plain meter. Bolt 0.1.184 and later."
         },
         "target": {
           "type": [

@@ -18,7 +18,22 @@
    "budget_left": 59,
    "cpu_used": 39.0,
    "cpu_limit": 60,
-   "cpu_target": 44.5
+   "cpu_target": 44.5,
+   "service_checks": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    2
+   ],
+   "alerts_by_severity": [
+    1,
+    2,
+    1
+   ]
   }
  },
  "services": {

@@ -38,6 +38,8 @@ presentation:
       subtitle: "{{row.kpi_note}}"
       badge: "{{row.kpi_badge}}"
       footer: "{{row.kpi_foot}}"
+      visual_from: "kpi_visual"
+      target: "{{row.target}}"
   views:
     overview: {}
     services:

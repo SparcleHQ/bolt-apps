@@ -84,7 +84,9 @@
     "limit": "{{row.limit}}",
     "subtitle": "{{row.kpi_note}}",
     "badge": "{{row.kpi_badge}}",
-    "footer": "{{row.kpi_foot}}"
+    "footer": "{{row.kpi_foot}}",
+    "visual_from": "kpi_visual",
+    "target": "{{row.target}}"
    }
   },
   "rows": [
@@ -107,6 +109,9 @@
        "badge": "BELOW OBJECTIVE"
       }
      ]
+    },
+    "extra": {
+     "kpi_visual": "meter"
     }
    },
    {
@@ -130,7 +135,8 @@
      ]
     },
     "extra": {
-     "limit": "{summary.p99_limit}"
+     "limit": "{summary.p99_limit}",
+     "kpi_visual": "spark"
     },
     "trend_path": "summary.p99_trend"
    },
@@ -158,6 +164,9 @@
        "badge": "HEALTHY"
       }
      ]
+    },
+    "extra": {
+     "kpi_visual": "ring"
     }
    },
    {
@@ -180,6 +189,10 @@
        "badge": "HEALTHY"
       }
      ]
+    },
+    "extra": {
+     "kpi_visual": "bullet",
+     "target": "{summary.cpu_target}"
     }
    },
    {
@@ -201,7 +214,11 @@
        "badge": "WARNING"
       }
      ]
-    }
+    },
+    "extra": {
+     "kpi_visual": "strip"
+    },
+    "trend_path": "summary.service_checks"
    },
    {
     "title": "Alerts",
@@ -225,7 +242,11 @@
        "badge": "HEALTHY"
       }
      ]
-    }
+    },
+    "extra": {
+     "kpi_visual": "stack"
+    },
+    "trend_path": "summary.alerts_by_severity"
    }
   ]
  },

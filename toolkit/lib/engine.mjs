@@ -1,6 +1,7 @@
 // The shared engine, kept once at kit/python/bolt_app_engine.py. A thin app (scripts/<id>__engine.py that only loads it) has no copy of
 // the engine in its folder; Bolt installs every script into one folder and Bolt 181 has no shared engine, so the PACK must carry it:
 // lint counts it as the app's script and pack writes it into the pack as scripts/<id>__bolt_app_engine.py. One copy per pack, none in the app folder.
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -53,13 +54,10 @@ export function expandThin(dir, id) {
 	} catch { return false; }
 }
 
-/** The FILE_WORDS line the private copies carry (before the shared engine also named its own file). */
-const OLD_FILE_WORDS = 'FILE_WORDS = [_PFX + w for w in ("config.json", "fixtures.json", "bolt_app_kit.py",)]   # named in the command so editing any of them asks again';
-/** The exact bytes of the engine every private copy was made from: the shared engine with the old FILE_WORDS line. Null when the shared engine no longer has that line to swap. */
-export function knownOldEngine() {
-	const shared = fs.readFileSync(ENGINE_SRC, 'utf8');
-	return FILE_WORDS.test(shared) ? Buffer.from(shared.replace(FILE_WORDS, () => OLD_FILE_WORDS), 'utf8') : null;
-}
+/** sha256 of the exact bytes of the engine every private copy was made from (the engine as it was before it was kept once). Pinned: it must never be
+ *  derived from the live shared engine, which changes by design; an old copy stays recognisable however the engine moves on. */
+export const OLD_ENGINE_SHA256 = '2469e3865bdbdb75bb60e66ac08b71f6677fc0bfc1b80dae7011aab07f57f08c';
+export const isKnownOldEngine = (buf) => crypto.createHash('sha256').update(buf).digest('hex') === OLD_ENGINE_SHA256;
 
 /** True when the app folder holds a thin entry (any scripts/<id>__engine.py with the marker). */
 export function thinAppDir(dir) {

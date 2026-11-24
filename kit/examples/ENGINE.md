@@ -134,7 +134,7 @@ A lookup row has Open (when its `url` renders to an https address) and Copy, and
 - `steps` + `rows` (a chain): each `rows[]` entry is drawn like an overview row, so its `copy` is ignored and Copy copies the row text. The check command warns about it (config_copy_ignored). Put the text you want copied in `title` or `subtitle`.
 
 ## Files named in the command
-The app file lists `<id>__config.json`, `<id>__fixtures.json` and `<id>__bolt_app_kit.py` after the script, so Bolt includes them in what the person approves and asks again if any changes. The engine ignores them as input.
+The app file lists `<id>__config.json`, `<id>__fixtures.json`, `<id>__bolt_app_kit.py` and, for a thin app, `<id>__bolt_app_engine.py` after the script, so Bolt includes them in what the person approves and asks again if any changes. The engine ignores them as input.
 
 ## Commands
 

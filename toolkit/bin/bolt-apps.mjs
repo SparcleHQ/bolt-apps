@@ -394,7 +394,7 @@ const HELP = `bolt-apps: author toolkit for Bolt Apps
   new <id> [--type snippet|search|transform|recognizer]   start a gallery app from a small template
   run <app-folder> [view [word]] [--sample|--live] [--json]  run the app as Bolt would and show the rows (the debug loop)
   regen <app-folder>                                      write utilities/<id>.yaml from an engine app's config (after editing config.json)
-  upgrade-kit <app-folder>|--all                          move an app with a private engine copy to the thin entry (refuses an edited engine); --all converts every example
+  upgrade-kit <app-folder>|--all [--dry-run]                       move an app with a private engine copy to the thin entry (refuses an edited engine); --all converts every example
   ship <app-folder>                                       lint, check, pack, verify with the next version picked; prints how to install
   doctor [app-folder]                                     check node, python, your key, folders and what would block an install
   lint [path] [--personal] [--json]                       offline shape checks (--personal: your own tier 3 or script app)

@@ -59,9 +59,9 @@ Edit between `new` and `run`. After editing an engine app's `scripts/<id>__confi
 | Footer label | 40 kept, 14 shown (from source, not yet seen in a running 181) | write 14 or fewer |
 | Rows in a list | 2000 | 200 in the row schema, 50 from the engine |
 | Script timeout | 1 to 60 s, default 10 | engine requests 10 s each, 14 s together |
-| Pane kinds with app data | card, markdown, entity_preview, chart, table, cards, detail, json_tree, diff, image_grid, heatmap, gauge | same |
+| Pane kinds with app data | card, markdown, entity_preview, chart, table, cards, detail, json_tree, diff, image_grid, heatmap, gauge, graph | same |
 | Chart types | line, bar, sparkline (all Bolts); pie, donut, area, `bind.series` of up to 4 lines (Bolt 0.1.182 or newer) | same |
-| Panes newer than 181 | heatmap, gauge (Bolt 0.1.182 or newer; a 181 refuses the whole pack that uses one) | same |
+| Panes newer than 181 | heatmap, gauge (Bolt 0.1.182 or newer; a 181 refuses the whole pack that uses one); graph, a service map (Bolt 0.1.184 or newer; any older Bolt refuses the whole pack, in every schema_version; set `min_bolt_version` 0.1.184: 60 nodes and 200 links drawn, more are grouped by `bind.group` or shown as a table) | same |
 | Panes that cannot show app data | image, color, weather, date, calc (Bolt shows "This app asks for ... pane, which cannot show app data") | do not use |
 | Picture in an `entity_preview` pane | `image_url`: a 40 pixel avatar | the same; `hero` (a full-width picture, newer than 181) needs Bolt 182: a 181 refuses the whole pack that uses it. Set `min_bolt_version` 0.1.182 in `bolt-app.json` (see ENGINE.md, Hero picture) |
 | `map` pane | draws Bolt's own map, not your rows; any bind key is refused | do not use; open a place with a url action |

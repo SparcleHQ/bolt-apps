@@ -4,7 +4,7 @@
   "chip": "widget-gallery-2",
   "title": "Widget gallery 2",
   "icon": "Image",
-  "description": "The card pane, the image grid and the cards grid with images. Sample data: generated colour swatches as inline images.",
+  "description": "The card pane, the image grid, the cards grid with images and the service map graph. Sample data: generated colour swatches as inline images and six invented services.",
   "service": "Widget gallery",
   "searchable": false
  },
@@ -27,11 +27,20 @@
    "map": {
     "title": "name"
    }
+  },
+  "calls": {
+   "path": "/v1/calls",
+   "map": {
+    "title": "name"
+   }
   }
  },
  "stats": {
   "swatches_total": {
    "endpoint": "swatches"
+  },
+  "services_total": {
+   "endpoint": "calls"
   }
  },
  "overview": {
@@ -84,6 +93,17 @@
      "label": "Cards",
      "value": "swatches_total",
      "note": "grid layout"
+    }
+   },
+   {
+    "title": "Service map",
+    "subtitle": "Nodes and links, laid out by Bolt (Bolt 0.1.184)",
+    "icon": "activity",
+    "view": "graph",
+    "tile": {
+     "label": "Services",
+     "value": "services_total",
+     "note": "in the map"
     }
    }
   ]
@@ -167,6 +187,35 @@
      "subtitle": "{{row.hex}}",
      "image": "{{row.src}}",
      "footer": "{{row.uses}} uses"
+    }
+   }
+  },
+  {
+   "id": "graph",
+   "title": "Service map",
+   "icon": "activity",
+   "endpoint": "calls",
+   "item": {
+    "title": "{name}",
+    "subtitle": "{state}",
+    "extra": {
+     "id": "{id}",
+     "name": "{name}",
+     "state": "{state}",
+     "calls": "{calls}",
+     "team": "{team}"
+    }
+   },
+   "widget": {
+    "kind": "graph",
+    "mode": "list_data",
+    "bind": {
+     "id": "id",
+     "label": "name",
+     "status": "state",
+     "to": "calls",
+     "group": "team",
+     "title": "Service map"
     }
    }
   }

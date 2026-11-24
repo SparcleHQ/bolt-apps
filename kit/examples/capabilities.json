@@ -250,6 +250,17 @@
       "kind": "gauge"
     },
     {
+      "id": "widget.graph",
+      "group": "layout",
+      "name": "Pane: graph (service map)",
+      "status": "supported",
+      "example": "kit/examples/widget-gallery-2",
+      "snippet": "{\"kind\": \"graph\", \"mode\": \"list_data\", \"bind\": {\"id\": \"id\", \"label\": \"name\", \"status\": \"state\", \"to\": \"calls\", \"group\": \"team\"}}",
+      "test": "toolkit/test/graph-184.test.mjs",
+      "limit": "Needs Bolt 0.1.184: set min_bolt_version 0.1.184 in bolt-app.json (any older Bolt refuses the whole pack that uses graph, in every schema_version; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). Each row is a node; bind.to names the ids it points to (commas or a list). Bolt lays it out: at most 60 nodes and 200 edges are drawn; past that it groups nodes by bind.group and says so, or shows a table with the reason when there is no group. status critical, warning or healthy is drawn filled, dashed or plain, never by color. Drawn by no real Bolt in this repo yet: the app is lint and fixture tested only.",
+      "kind": "graph"
+    },
+    {
       "id": "layout.list_widget",
       "group": "layout",
       "name": "presentation.widget (list, table, cards, detail)",

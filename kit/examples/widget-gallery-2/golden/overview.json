@@ -55,5 +55,24 @@
     "kpi_badge": "",
     "copy_text": "",
     "open_url": ""
+  },
+  {
+    "title": "Service map",
+    "subtitle": "Nodes and links, laid out by Bolt (Bolt 0.1.184)",
+    "icon": "activity",
+    "body": "",
+    "nav": {
+      "view": "graph"
+    },
+    "actions": [],
+    "kpi_label": "Services",
+    "kpi_value": 6,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "in the map",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
   }
 ]

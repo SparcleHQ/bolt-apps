@@ -50,5 +50,51 @@
     "uses": 13
    }
   ]
+ },
+ "calls": {
+  "data": [
+   {
+    "id": "web",
+    "name": "web",
+    "state": "healthy",
+    "calls": "checkout-api, cart",
+    "team": "front"
+   },
+   {
+    "id": "checkout-api",
+    "name": "checkout-api",
+    "state": "critical",
+    "calls": "payments, user-db",
+    "team": "orders"
+   },
+   {
+    "id": "payments",
+    "name": "payments",
+    "state": "warning",
+    "calls": "queue",
+    "team": "orders"
+   },
+   {
+    "id": "cart",
+    "name": "cart",
+    "state": "healthy",
+    "calls": "user-db",
+    "team": "orders"
+   },
+   {
+    "id": "user-db",
+    "name": "user-db",
+    "state": "warning",
+    "calls": "",
+    "team": "data"
+   },
+   {
+    "id": "queue",
+    "name": "queue",
+    "state": "healthy",
+    "calls": "",
+    "team": "data"
+   }
+  ]
  }
 }

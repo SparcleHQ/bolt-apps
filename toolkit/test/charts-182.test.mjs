@@ -25,7 +25,8 @@ test('rules: chart types and the two panes carry the version that first reads th
 	assert.deepEqual(t.since_values, { pie: SINCE, donut: SINCE, area: SINCE });
 	assert.equal(RULES.right_widget.bind.chart.series.since, SINCE);
 	assert.equal(RULES.right_widget.bind.chart.series.items, 4);
-	assert.deepEqual(RULES.kind_since, { heatmap: SINCE, gauge: SINCE });
+	assert.equal(RULES.kind_since.heatmap, SINCE);
+	assert.equal(RULES.kind_since.gauge, SINCE);
 	for (const k of ['heatmap', 'gauge']) assert.ok(RULES.widget_kinds.includes(k) && RULES.right_widget.bind[k], k);
 	assert.deepEqual(Object.keys(RULES.right_widget.bind.heatmap), ['x', 'y', 'value', 'rows', 'cols', 'col_labels', 'layout', 'label', 'unit']);
 	assert.deepEqual(Object.keys(RULES.right_widget.bind.gauge), ['value', 'min', 'max', 'label', 'unit', 'shape', 'thresholds']);

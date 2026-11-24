@@ -3,7 +3,7 @@
 ## What this teaches
 The chart types and panes Bolt 0.1.182 added, each drawn from rows: a pie, a donut, two lines (`bind.series`), an area, a heatmap and a gauge. Chart rows are plain list rows; the picture is the right pane. For line, bar and sparkline see `../chart-template`.
 
-**Needs Bolt 0.1.182 or newer.** A Bolt 181 refuses the whole pack that uses any of these, so `bolt-app.json` sets `min_bolt_version` 0.1.182 and `./bolt-apps lint` fails without it.
+**Needs Bolt 0.1.184 or newer.** A Bolt 181 refuses the whole pack that uses any of these, so `bolt-app.json` sets `min_bolt_version` 0.1.184 and `./bolt-apps lint` fails without it.
 
 | View | Pane | Bind keys used |
 |---|---|---|
@@ -12,6 +12,7 @@ The chart types and panes Bolt 0.1.182 added, each drawn from rows: a pie, a don
 | `heat_rows` | `heatmap`, mode `list_data` | `x`, `y`, `value`, `label`, `unit` (also `rows`, `cols`, `col_labels`, `layout`) |
 | `gauge_row` | `gauge`, mode `selected_row` | `value` (required), `min`, `max`, `label`, `unit`, `shape` (`ring` or `half`), `thresholds` (up to 8 of `at`, `label`, `tone`) |
 
+- Bolt 184 adds two things the overview and the area view use. The overview runs a named row set: its three tile rows carry `set: tiles` (config `extra`), its link rows carry none, and the pane binds `from: {set: tiles}`. The tile rows are not list rows, so the list shows only the links. The area view writes its numbers with `format: compact`, `digits: 1`, `locale: de-DE`. Both need `min_bolt_version` 0.1.184.
 - A pie draws positive values only (zero and negative are left out and the pane says so) and at most 12 slices (the rest become one `Other`). A value that is not a number is skipped and counted, never drawn as zero.
 - A series takes no color: colors come from Bolt. Series differ by line style and marker as well as tint.
 - Heatmap grids keep 24 columns and 24 rows; a gauge shows the selected row.

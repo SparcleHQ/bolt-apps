@@ -53,6 +53,57 @@ function bindVal(node, spec, where, out, ctx = {}) {
 	else if (t === 'textList') { if (!node || node.t !== 'l') bad(`must be a list, got ${kindWord(node?.t)}`); else { if (node.items.length > spec.items) bad(`has more than ${spec.items} entries`); node.items.forEach((x, i) => { if (!x || x.t !== 's' || [...x.v].length > spec.max) bad(`entry ${i} must be text of at most ${spec.max} characters`); }); } }
 	else if (t === 'list') { if (!node || node.t !== 'l') bad(`must be a list, got ${kindWord(node?.t)}`); else { if (node.items.length > spec.items) bad(`has more than ${spec.items} entries`); node.items.forEach((x, i) => bindMap(x, spec.keys, `${where}[${i}]`, out, ctx)); } }
 	else if (t === 'map') bindMap(node, spec.keys, where, out, ctx);
+	else if (t === 'rowSet') rowSetProblems(node, where, out);
+	else if (t === 'stackChildren') stackChildrenProblems(node, where, out, ctx, spec);
+}
+// stack.children (Bolt 0.1.184): 1 to 6 parts {kind, mode?, bind?}, depth 1; each bind is checked as that kind's own bind. Same caps as the launcher.
+function stackChildrenProblems(node, where, out, ctx, spec) {
+	const bad = (m) => out.push({ code: 'bind_invalid', message: `${where}: ${m}` });
+	const S = RULES.stack, kinds = Object.keys(S.child_kinds);
+	if (!node || node.t !== 'l') return bad(`must be a list, got ${kindWord(node?.t)}`);
+	if (node.items.length === 0) return bad('needs at least one part');
+	if (node.items.length > S.max_children) return bad(`has ${node.items.length} entries; the limit is ${S.max_children}`);
+	node.items.forEach((it, i) => {
+		const at = `${where}[${i}]`, b = (m) => out.push({ code: 'bind_invalid', message: `${at}${m}` });
+		if (!it || it.t !== 'm') return b(` must be a mapping, got ${kindWord(it?.t)}`);
+		for (const e of it.entries) if (!['kind', 'mode', 'bind'].includes(e.key)) return out.push({ code: 'bind_unknown_key', message: `${at}.${e.key}: not a key a stack part reads. Allowed: kind, mode, bind` });
+		const kv = get(it, 'kind')?.value;
+		if (!kv) return b('.kind is required');
+		if (kv.t !== 's') return b(`.kind must be one of ${kinds.join(', ')}, got ${kindWord(kv.t)}`);
+		if (!Object.hasOwn(S.child_kinds, kv.v)) return b(kv.v === 'stack' ? '.kind "stack" is not allowed: a stack cannot hold a stack' : `.kind "${kv.v.slice(0, 40)}" is not one of ${kinds.join(', ')}`);
+		let mode = S.child_kinds[kv.v];
+		const mv = get(it, 'mode')?.value;
+		if (mv) { if (mv.t !== 's' || !['selected_row', 'list_data'].includes(mv.v)) return b('.mode must be one of selected_row, list_data'); mode = mv.v; }
+		const bind = get(it, 'bind')?.value;
+		if (bind && get(bind, 'activate')) return b('.bind.activate is not supported inside a stack part');   // pane-item events (EVT-1) are not supported in a stack part in this slice
+		if (bind) {
+			out.push(...bindProblems(kv.v, bind, `${at}.bind`, ctx));
+			if (get(bind, 'from') && mode !== 'list_data') out.push({ code: 'bind_invalid', message: `${at}.bind.from: needs mode: list_data` });
+		}
+	});
+}
+// bind.from (Bolt 0.1.184): {set, where?}. The same closed rules the launcher applies when it loads the app file.
+const SET_NAME = /^[a-z][a-z0-9_-]{0,23}$/, RESERVED_NAMES = new Set(['constructor', 'prototype', '__proto__', 'toString', 'valueOf', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable', 'toLocaleString', '__defineGetter__', '__defineSetter__', '__lookupGetter__', '__lookupSetter__']);
+function rowSetProblems(node, where, out) {
+	const bad = (m) => out.push({ code: 'bind_invalid', message: `${where}: ${m}` });
+	if (!node || node.t !== 'm') return bad(`must be a mapping, got ${kindWord(node?.t)}`);
+	for (const e of node.entries) if (e.key !== 'set' && e.key !== 'where') return out.push({ code: 'bind_unknown_key', message: `${where}.${e.key}: not a key a row set reads. Allowed: set, where` });
+	const set = get(node, 'set')?.value;
+	if (!set) return bad('set is required');
+	if (set.t !== 's') return bad(`set must be text, got ${kindWord(set.t)}`);
+	if (!SET_NAME.test(set.v)) return bad(`set "${set.v}" must match ^[a-z][a-z0-9_-]{0,23}$`);
+	if (RESERVED_NAMES.has(set.v)) return bad(`set "${set.v}" is a reserved name`);
+	const w = get(node, 'where')?.value;
+	if (!w) return;
+	if (w.t !== 'm') return bad(`where must be a mapping, got ${kindWord(w.t)}`);
+	if (w.entries.length > 3) return bad(`where has ${w.entries.length} entries; at most 3 are allowed`);
+	for (const e of w.entries) {
+		if (e.key === '' || [...e.key].length > 200 || RESERVED_NAMES.has(e.key)) return bad(`where has a field name that is not allowed: "${e.key.slice(0, 40)}"`);
+		if (!e.value || e.value.t !== 's') return bad(`where.${e.key} must be text, a number or true/false, got ${kindWord(e.value?.t)}`);
+		// an unquoted null or a non-finite number is not a value Bolt compares against (it refuses it)
+		if (!e.value.q && /^(null|~|[-+]?\.(nan|inf)|[-+]?\.(NaN|Inf|NAN|INF))$/.test(e.value.v)) return bad(`where.${e.key} must be text, a number or true/false, got ${e.value.v === 'null' || e.value.v === '~' ? 'nothing' : 'a number that is not finite'}`);
+		if ([...e.value.v].length > 200) return bad(`where.${e.key} is longer than 200 characters`);
+	}
 }
 // A dotted version "0.1.182" as numbers; undefined when it is not one.
 export const parseBoltVersion = (v) => { const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(String(v ?? '')); return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : undefined; };
@@ -76,6 +127,7 @@ function bindMap(node, keysSpec, where, out, ctx = {}) {
 			const sp = keysSpec[e.key];
 			if (sp.since) { const g = gateProblem(where, e.key, sp.since, ctx); if (g) out.push(g); }
 			bindVal(e.value, sp, `${where}.${e.key}`, out, ctx);
+			if (e.key === 'locale' && e.value && e.value.t === 's' && !/^[A-Za-z0-9-]*$/.test(e.value.v)) out.push({ code: 'bind_locale_chars', level: 'warning', message: `${where}.${e.key}: "${e.value.v.slice(0, 40)}" has characters outside letters, digits and "-" (de-DE, not de_DE). Bolt ignores a locale it cannot read and uses the system one` });
 			if (sp.max_refs && e.value && e.value.t === 's') {
 				const n = (e.value.v.match(REF) || []).length;
 				if (n > sp.max_refs) out.push({ code: 'bind_too_many_refs', message: `${where}.${e.key}: has ${n} {{ }} references, at most ${sp.max_refs} are read (Bolt drops the picture). A picture that needs more parts is too big: use a smaller one` });
@@ -230,6 +282,33 @@ export function paneNavProblems(root) {
 			const holder = args.find((a) => a !== arg && new RegExp(`^query\\.word\\(\\s*${i}\\s*\\)$`).test(scalar(get(a, 'from')?.value) ?? ''));
 			const d = get(holder, 'default')?.value;
 			if (d && num(d) !== undefined) out.push({ code: 'view_arg_lead_default', message: `args default for query.word(${i}) is a number; quote it ("${d.v}"): a number default is not a nav token and turns navigation off` });
+		}
+	}
+	return out;
+}
+// ---- 7b: pane-item events (bind.activate on a table or cards pane, Bolt 0.1.184). The launcher does nothing for a target it cannot resolve, so each is an error here:
+// exactly one of nav or action, a view the app declares, an action that is a declared url or composer action (a run or utility action cannot take an item's fields),
+// a literal arg that is one plain token, and a view arg the launcher can place the view in. The shape and the version gate are in the bind table (bolt-rules.json).
+const ACTIVATE_KINDS = ['url', 'composer'];
+export function activateProblems(root) {
+	const out = [], pres = get(root, 'presentation')?.value, views = entries(get(pres, 'views')?.value), names = views.map((v) => v.key);
+	const acts = items(get(root, 'actions')?.value).map((a) => ({ id: scalar(get(a, 'id')?.value), kind: scalar(get(a, 'kind')?.value) }));
+	const hasViewArg = !!scalar(get(pres, 'view_arg')?.value);
+	const panes = [['presentation.right_widget', get(pres, 'right_widget')?.value], ...views.map((v) => [`presentation.views.${v.key}.right_widget`, get(v.value, 'right_widget')?.value])];
+	for (const [w, rw] of panes) {
+		const act = get(get(rw, 'bind')?.value, 'activate')?.value;
+		if (!act || act.t !== 'm' || !['table', 'cards'].includes(scalar(get(rw, 'kind')?.value))) continue;
+		const where = `${w}.bind.activate`, nav = get(act, 'nav'), action = get(act, 'action');
+		if (!nav === !action) { out.push({ code: 'activate_one_of', message: `${where}: must have exactly one of nav or action` }); continue; }
+		if (nav) {
+			const view = scalar(get(nav.value, 'view')?.value), arg = scalar(get(nav.value, 'arg')?.value);
+			if (view !== undefined && !names.includes(view)) out.push({ code: 'activate_view', message: `${where}.nav.view "${view}" is not a view of this app, so pressing an item does nothing (views: ${names.join(', ') || 'none'})` });
+			if (!hasViewArg) out.push({ code: 'activate_view_arg', message: `${where}.nav: the app has no presentation.view_arg (a query.word(N) arg), so the launcher has nowhere to put the view and pressing an item does nothing` });
+			if (arg !== undefined && !arg.includes('{{') && (!new RegExp(RULES.nav_token_pattern).test(arg) || arg.includes('..'))) out.push({ code: 'activate_arg', message: `${where}.nav.arg "${arg}" must be one plain token (${RULES.nav_token_pattern}, no ".."); use a {{row.field}} template for an item's own value` });
+		} else {
+			const id = scalar(action.value), def = id === undefined ? undefined : acts.find((a) => a.id === id);
+			if (id !== undefined && !def) out.push({ code: 'activate_action', message: `${where}.action "${id}" is not a declared action of this app, so pressing an item does nothing (actions: ${acts.map((a) => a.id).join(', ') || 'none'})` });
+			else if (def && !ACTIVATE_KINDS.includes(def.kind)) out.push({ code: 'activate_action_kind', message: `${where}.action "${id}" is a ${def.kind} action; only ${ACTIVATE_KINDS.join(' or ')} actions can take an item's fields, so pressing an item does nothing` });
 		}
 	}
 	return out;

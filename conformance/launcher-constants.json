@@ -104,6 +104,9 @@
   "actions.reserved_label_words_count": 12,
   "actions.forbidden_ids_count": 13,
   "env.benign_passthrough_count": 25,
+  "widget_kinds_added_184": [
+   "stack"
+  ],
   "widget_kinds_added_182": [
    "heatmap",
    "gauge"

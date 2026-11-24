@@ -346,6 +346,27 @@ right_widget:
 - Pane keys are read per Bolt version. **A Bolt 0.1.181 refuses the whole pack when one app uses `hero`** (`presentation.right_widget.bind.hero: unknown key for a entity_preview pane`), so no app in the pack installs; a local `schema_version: 1` file only warns and shows no hero. So an app that uses `hero` sets `"min_bolt_version": "0.1.182"` in `bolt-app.json`, and you give the pack only to people on Bolt 182 or newer. `lint`, `check` and `pack` fail an app that uses `hero` without it, with the message "needs Bolt 182". Bolt does not read `min_bolt_version`, so this is your promise, not a lock (the pack carries it in its signed listing, and `verify` reads it from there: it warns when a pack that uses `hero` declares nothing or less than 0.1.182).
 - Example: `kit/examples/hero-gallery` (offline; the script draws the pictures). Not seen in a running Bolt 182 yet: written from the 182 source and sample runs.
 
+## Press a row or tile (Bolt 0.1.184)
+
+A `table` or `cards` pane can make each item a control. `bind.activate` says what Enter, Space or a click on one item does: exactly one of `nav` or `action`.
+
+```yaml
+right_widget:
+  kind: table
+  mode: list_data
+  bind:
+    columns: [{ field: service, label: Service }, { field: commits, label: Commits }]
+    activate:
+      nav: { view: detail, arg: "{{row.service}}" }
+```
+
+- `nav` opens a view of the same app, the way a `nav` row does (one step deeper, Back and Esc return to the same row). `view` is a key of `presentation.views` and the app needs `view_arg`. `arg` is a `{{row.field}}` template that must give ONE plain token (letters, digits, `_ . -`, at most 64, not starting with `-` or `.`, no `..`). An item whose value is not a token, or has no such field, is not pressable and behaves as before (a table row copies itself, a tile copies its title). Structured context is not passed.
+- `action` is the `id` of a declared `url` or `composer` action; it runs with the item's own row. A `run` or `utility` action cannot take an item's fields, so it is refused by lint and does nothing in Bolt.
+- A view or action the app does not declare is a lint error, and a no-op in Bolt.
+- Tab reaches a pressable table row; a tile is a button. A held Enter does not press twice, and nothing runs while a dialog is open.
+- Set `"min_bolt_version": "0.1.184"` in `bolt-app.json`: a Bolt 0.1.183 or older refuses the whole pack that uses the key (a personal `schema_version: 1` file only warns and the item copies as before).
+- Example: `kit/examples/widget-gallery` (the table view drills into the detail view). Not seen in a running Bolt 184 yet: written from the 184 source and sample runs.
+
 ## Typing free text and views in a script app
 
 The view is read from query word 0 (`view_arg` bound to `query.word(0)`), so a script app that also takes free text treats the first word as a view only when it is one of its view names and otherwise reads every word as text (`=insights ~/data.csv`, `=insights trend`). A text that starts with a view name needs a leading `./` or a different spelling. Words before the view word would need plain-word defaults (lint `view_arg_lead_default`); a default of `-` is fine for words after it. A nav row carries no actions and cannot carry text with a slash; keep the last typed text in the kit cache. To give a drilled-in view a button, add an ordinary row with `kit.action_chain(id, label, target_chip, query)` pointing at the app's own chip: a utility action to itself. That is not yet proven in the launcher.

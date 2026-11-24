@@ -254,6 +254,12 @@
       "dir": "desc"
      },
      "totals_label": "Total",
+     "activate": {
+      "nav": {
+       "view": "detail",
+       "arg": "{{row.service}}"
+      }
+     },
      "columns": [
       {
        "field": "service",

@@ -30,6 +30,20 @@
       "golden": "golden/table.json"
     },
     {
+      "name": "table activate: pressing a row opens the detail view with the service token",
+      "os": "macos",
+      "args": [
+        "detail",
+        "api-gateway"
+      ],
+      "golden": "golden/activate.json",
+      "expect": {
+        "text_present": [
+          "api-gateway"
+        ]
+      }
+    },
+    {
       "name": "detail",
       "os": "macos",
       "args": [

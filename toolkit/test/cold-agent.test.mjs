@@ -165,7 +165,7 @@ test('the repo-root bolt-apps launcher runs the toolkit from any folder, through
 	assert.match(run1(link, ['--version']).stdout.split('\n')[0], /^\d+\.\d+\.\d+$/);
 	const hop1 = path.join(root, 'hop1'), hop2 = path.join(root, 'sub', 'hop2'); fs.mkdirSync(path.join(root, 'sub'));
 	fs.symlinkSync(launcher, hop1); fs.symlinkSync(path.join('..', 'hop1'), hop2);   // a two-link chain, the second one with a relative target
-	assert.match(run1(hop2, ['--version']).stdout.trim(), /^\d+\.\d+\.\d+$/);
+	assert.match(run1(hop2, ['--version']).stdout.split('\n')[0], /^\d+\.\d+\.\d+$/);
 	const fake = path.join(root, 'oldnode'); fs.mkdirSync(fake);   // a node that says it is version 16
 	fs.writeFileSync(path.join(fake, 'node'), '#!/bin/sh\ncase "$1" in -p) echo 16 ;; -v) echo v16.0.0 ;; *) echo ran ;; esac\n', { mode: 0o755 });
 	const old = run1('/bin/sh', [launcher, '--version'], { PATH: `${fake}:/usr/bin:/bin` });

@@ -75,6 +75,7 @@ function stackChildrenProblems(node, where, out, ctx, spec) {
 		const mv = get(it, 'mode')?.value;
 		if (mv) { if (mv.t !== 's' || !['selected_row', 'list_data'].includes(mv.v)) return b('.mode must be one of selected_row, list_data'); mode = mv.v; }
 		const bind = get(it, 'bind')?.value;
+		if (bind && get(bind, 'activate')) return b('.bind.activate is not supported inside a stack part');   // pane-item events (EVT-1) are not supported in a stack part in this slice
 		if (bind) {
 			out.push(...bindProblems(kv.v, bind, `${at}.bind`, ctx));
 			if (get(bind, 'from') && mode !== 'list_data') out.push({ code: 'bind_invalid', message: `${at}.bind.from: needs mode: list_data` });

@@ -69,6 +69,7 @@ test('lint refuses zero, seven and nested parts, unknown kinds and malformed par
 	bad(part('image'), 'children[0].kind');
 	bad(['- extra: 1'], 'children[0].extra');
 	bad(['- bind:', '    title: x'], 'children[0].kind: is required'.replace(': is', ' is').replace('.kind is', '.kind is'));
+	for (const k of ['cards', 'chart', 'table', 'heatmap', 'gauge', 'detail', 'markdown']) bad(part(k, 'bind:', '  activate:', '    nav: x'), 'children[0].bind.activate is not supported inside a stack part');
 	bad(part('table', 'mode: weird'), 'children[0].mode');
 	bad([...part('table'), ...part('chart', 'bind:', '  colr: x')], 'children[1].bind.colr');
 	bad(part('cards', 'bind:', '  layout: tiles'), 'children[0].bind.value');

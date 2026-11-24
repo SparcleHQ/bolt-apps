@@ -50,5 +50,127 @@
     "uses": 13
    }
   ]
+ },
+ "bullets": {
+  "data": [
+   {
+    "id": "cpu",
+    "name": "CPU versus limit",
+    "note": "cores used; target mark at 5.5",
+    "value": 6.2,
+    "max": 8,
+    "unit": "core",
+    "target": 5.5,
+    "limit": "none",
+    "trend": []
+   },
+   {
+    "id": "mem",
+    "name": "Memory, target as a number",
+    "note": "target mark at 70 percent",
+    "value": 58,
+    "max": 100,
+    "unit": "%",
+    "target": 70,
+    "limit": "none",
+    "trend": []
+   },
+   {
+    "id": "p99",
+    "name": "p99 latency, dashed limit",
+    "note": "limit line at 450 ms",
+    "value": 412,
+    "max": 600,
+    "unit": "ms",
+    "target": 380,
+    "limit": 450,
+    "trend": [
+     318,
+     340,
+     362,
+     355,
+     391,
+     420,
+     438,
+     412
+    ]
+   },
+   {
+    "id": "notarget",
+    "name": "Bullet, target is not a number",
+    "note": "no mark is drawn, the bar stays",
+    "value": 41,
+    "max": 100,
+    "unit": "%",
+    "target": "n/a",
+    "limit": "none",
+    "trend": []
+   },
+   {
+    "id": "nolimit",
+    "name": "Limit is not a number",
+    "note": "no dashed line, the sparkline stays",
+    "value": 23,
+    "max": 100,
+    "unit": "ms",
+    "target": 50,
+    "limit": "none",
+    "trend": [
+     19,
+     22,
+     21,
+     25,
+     24,
+     23
+    ]
+   },
+   {
+    "id": "nomax",
+    "name": "No max: plain value",
+    "note": "a bullet needs a max, so only the value shows",
+    "value": 17,
+    "max": "none",
+    "unit": "pt",
+    "target": 10,
+    "limit": "none",
+    "trend": []
+   }
+  ]
+ },
+ "rings": {
+  "data": [
+   {
+    "id": "budget",
+    "name": "Error budget left",
+    "note": "ring at 38 percent",
+    "value": 38,
+    "max": 100,
+    "unit": "%"
+   },
+   {
+    "id": "queue",
+    "name": "Queue depth",
+    "note": "72 of 80 slots",
+    "value": 72,
+    "max": 80,
+    "unit": "slot"
+   },
+   {
+    "id": "over",
+    "name": "Over max",
+    "note": "more than max: full ring and the over-max text",
+    "value": 130,
+    "max": 100,
+    "unit": "%"
+   },
+   {
+    "id": "nomax",
+    "name": "No max: plain value",
+    "note": "a ring needs a max, so only the value shows",
+    "value": 5,
+    "max": "none",
+    "unit": "pt"
+   }
+  ]
  }
 }

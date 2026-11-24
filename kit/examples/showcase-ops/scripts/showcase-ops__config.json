@@ -1,0 +1,442 @@
+{
+ "app": {
+  "id": "showcase-ops",
+  "chip": "showcase-ops",
+  "title": "Observability showcase",
+  "icon": "activity",
+  "description": "A fictional service estate as tiles: error budget ring, CPU against a limit as a bullet with a target mark, p99 latency with a dashed limit and the SLO as a plain meter. Needs Bolt 0.1.184. Invented sample data, no network.",
+  "service": "Observability showcase",
+  "searchable": true
+ },
+ "api": {
+  "base_url": "https://ops.example.invalid",
+  "fixture_default": true,
+  "fixture_file": "fixtures.json",
+  "fixture_banner": true
+ },
+ "cache": {
+  "ttl": 45,
+  "stale_max": 86400
+ },
+ "endpoints": {
+  "summary": {
+   "path": "/v1/summary",
+   "kind": "object"
+  },
+  "services": {
+   "path": "/v1/services",
+   "map": {
+    "title": "name",
+    "status": "state"
+   }
+  },
+  "alerts": {
+   "path": "/v1/alerts",
+   "map": {
+    "title": "name",
+    "status": "state"
+   }
+  }
+ },
+ "stats": {
+  "services_total": {
+   "endpoint": "services"
+  },
+  "services_healthy": {
+   "endpoint": "services",
+   "where": {
+    "status": [
+     "healthy"
+    ]
+   }
+  },
+  "alerts_firing": {
+   "endpoint": "alerts",
+   "where": {
+    "status": [
+     "firing"
+    ]
+   }
+  },
+  "alerts_critical": {
+   "endpoint": "alerts",
+   "where": {
+    "status": [
+     "firing"
+    ],
+    "severity": [
+     "critical"
+    ]
+   }
+  }
+ },
+ "overview": {
+  "widget": {
+   "kind": "cards",
+   "mode": "list_data",
+   "bind": {
+    "layout": "tiles",
+    "title": "{{row.kpi_label}}",
+    "value": "{{row.kpi_value}}",
+    "unit": "{{row.kpi_unit}}",
+    "max": "{{row.kpi_max}}",
+    "trend": "{{row.trend}}",
+    "limit": "{{row.limit}}",
+    "subtitle": "{{row.kpi_note}}",
+    "badge": "{{row.kpi_badge}}",
+    "footer": "{{row.kpi_foot}}"
+   }
+  },
+  "rows": [
+   {
+    "title": "SLO, last 30 days",
+    "subtitle": "plain meter. Objective {summary.slo_objective}%",
+    "icon": "shield-check",
+    "tile": {
+     "label": "SLO",
+     "value": "summary.slo_pct",
+     "max": 100,
+     "unit": "%",
+     "note": "objective {summary.slo_objective}%",
+     "badge": [
+      {
+       "if": "summary.slo_pct>=99.5",
+       "badge": "ON TARGET"
+      },
+      {
+       "badge": "BELOW OBJECTIVE"
+      }
+     ]
+    }
+   },
+   {
+    "title": "p99 latency",
+    "subtitle": "sparkline with a dashed limit at {summary.p99_limit} ms",
+    "icon": "activity",
+    "tile": {
+     "label": "p99 latency",
+     "value": "summary.p99_ms",
+     "max": 600,
+     "unit": "ms",
+     "note": "limit {summary.p99_limit} ms",
+     "badge": [
+      {
+       "if": "summary.p99_ms>=summary.p99_limit",
+       "badge": "OVER LIMIT"
+      },
+      {
+       "badge": "UNDER LIMIT"
+      }
+     ]
+    },
+    "extra": {
+     "limit": "{summary.p99_limit}"
+    },
+    "trend_path": "summary.p99_trend"
+   },
+   {
+    "title": "Error budget by service",
+    "subtitle": "average {summary.budget_left}% left across services. Enter opens the rings",
+    "icon": "shield-alert",
+    "view": "budget",
+    "tile": {
+     "label": "Error budget left",
+     "value": "summary.budget_left",
+     "max": 100,
+     "unit": "%",
+     "note": "all services",
+     "badge": [
+      {
+       "if": "summary.budget_left<25",
+       "badge": "CRITICAL"
+      },
+      {
+       "if": "summary.budget_left<50",
+       "badge": "WARNING"
+      },
+      {
+       "badge": "HEALTHY"
+      }
+     ]
+    }
+   },
+   {
+    "title": "CPU against limit by service",
+    "subtitle": "{summary.cpu_used} of {summary.cpu_limit} cores. Enter opens the bullets",
+    "icon": "cpu",
+    "view": "capacity",
+    "tile": {
+     "label": "CPU versus limit",
+     "value": "summary.cpu_used",
+     "max": "summary.cpu_limit",
+     "unit": "core",
+     "note": "all services",
+     "badge": [
+      {
+       "if": "summary.cpu_used>=summary.cpu_target",
+       "badge": "WARNING"
+      },
+      {
+       "badge": "HEALTHY"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Services",
+    "subtitle": "{services_healthy} of {services_total} healthy. Enter opens the list",
+    "icon": "Layers",
+    "view": "services",
+    "tile": {
+     "label": "Healthy services",
+     "value": "services_healthy",
+     "max": "services_total",
+     "note": "of all services",
+     "badge": [
+      {
+       "if": "services_healthy==services_total",
+       "badge": "HEALTHY"
+      },
+      {
+       "badge": "WARNING"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Alerts",
+    "subtitle": "{alerts_firing} firing, {alerts_critical} critical. Enter opens the list",
+    "icon": "AlertCircle",
+    "view": "alerts",
+    "tile": {
+     "label": "Alerts firing",
+     "value": "alerts_firing",
+     "note": "{alerts_critical} critical",
+     "badge": [
+      {
+       "if": "alerts_critical>0",
+       "badge": "CRITICAL"
+      },
+      {
+       "if": "alerts_firing>0",
+       "badge": "WARNING"
+      },
+      {
+       "badge": "HEALTHY"
+      }
+     ]
+    }
+   }
+  ]
+ },
+ "views": [
+  {
+   "id": "services",
+   "title": "Services",
+   "icon": "Layers",
+   "endpoint": "services",
+   "empty": "No services",
+   "sort": [
+    {
+     "field": "status",
+     "order": [
+      "down",
+      "degraded",
+      "healthy"
+     ]
+    },
+    {
+     "field": "title"
+    }
+   ],
+   "children": [
+    {
+     "view": "alerts",
+     "match": "service_id"
+    }
+   ],
+   "no_children": "No alerts for this service",
+   "item": {
+    "title": "{title}",
+    "subtitle": "{status|human} \u00b7 team {team} \u00b7 p99 {p99} ms",
+    "icon": "Layers",
+    "body": "## {title}\n\nTeam {team}. State **{status|human}**. Enter lists the alerts for this service. Invented sample data.",
+    "tile": {
+     "label": "Error budget left",
+     "value": "budget_left",
+     "max": 100,
+     "unit": "%",
+     "note": "this service",
+     "badge": [
+      {
+       "if": "status==down",
+       "badge": "CRITICAL"
+      },
+      {
+       "if": "status==degraded",
+       "badge": "WARNING"
+      },
+      {
+       "badge": "HEALTHY"
+      }
+     ]
+    },
+    "fields": [
+     {
+      "label": "State",
+      "value": "{status|human}"
+     },
+     {
+      "label": "Team",
+      "value": "{team}"
+     },
+     {
+      "label": "CPU",
+      "value": "{cpu_used} of {cpu_limit} cores"
+     },
+     {
+      "label": "p99",
+      "value": "{p99} ms"
+     },
+     {
+      "label": "Error budget",
+      "value": "{budget_left}% left"
+     }
+    ]
+   }
+  },
+  {
+   "id": "alerts",
+   "title": "Alerts",
+   "icon": "AlertCircle",
+   "endpoint": "alerts",
+   "empty": "No alerts",
+   "sort": [
+    {
+     "field": "severity",
+     "order": [
+      "critical",
+      "warning",
+      "info"
+     ]
+    },
+    {
+     "field": "title"
+    }
+   ],
+   "item": {
+    "title": "{severity|upper}: {title}",
+    "subtitle": "{service_id} \u00b7 {status|human} \u00b7 open {minutes} min",
+    "icon": "AlertCircle",
+    "body": "## {title}\n\n{detail}\n\nSeverity **{severity}**, service {service_id}, {status|human}. Invented sample data.",
+    "tile": {
+     "label": "Open for",
+     "value": "minutes",
+     "unit": "min",
+     "note": "since it started",
+     "badge": [
+      {
+       "if": "severity==critical",
+       "badge": "CRITICAL"
+      },
+      {
+       "if": "severity==warning",
+       "badge": "WARNING"
+      },
+      {
+       "badge": "INFO"
+      }
+     ]
+    },
+    "fields": [
+     {
+      "label": "Severity",
+      "value": "{severity|upper}"
+     },
+     {
+      "label": "Service",
+      "value": "{service_id}"
+     },
+     {
+      "label": "State",
+      "value": "{status|human}"
+     },
+     {
+      "label": "Open for",
+      "value": "{minutes} min"
+     }
+    ]
+   }
+  },
+  {
+   "id": "budget",
+   "title": "Error budget rings",
+   "icon": "shield-alert",
+   "endpoint": "services",
+   "sort": [
+    {
+     "field": "budget_left"
+    }
+   ],
+   "item": {
+    "title": "{title}",
+    "subtitle": "{status|human}",
+    "extra": {
+     "name": "{title}",
+     "value": "{budget_left}",
+     "note": "{status|human}"
+    }
+   },
+   "widget": {
+    "kind": "cards",
+    "mode": "list_data",
+    "bind": {
+     "layout": "tiles",
+     "visual": "ring",
+     "title": "{{row.name}}",
+     "value": "{{row.value}}",
+     "max": 100,
+     "unit": "%",
+     "subtitle": "{{row.note}}"
+    }
+   }
+  },
+  {
+   "id": "capacity",
+   "title": "CPU against limit",
+   "icon": "cpu",
+   "endpoint": "services",
+   "sort": [
+    {
+     "field": "cpu_used",
+     "desc": true
+    }
+   ],
+   "item": {
+    "title": "{title}",
+    "subtitle": "{cpu_used} of {cpu_limit} cores",
+    "extra": {
+     "name": "{title}",
+     "value": "{cpu_used}",
+     "max": "{cpu_limit}",
+     "target": "{cpu_target}",
+     "note": "target {cpu_target} cores"
+    }
+   },
+   "widget": {
+    "kind": "cards",
+    "mode": "list_data",
+    "bind": {
+     "layout": "tiles",
+     "visual": "bullet",
+     "title": "{{row.name}}",
+     "value": "{{row.value}}",
+     "max": "{{row.max}}",
+     "target": "{{row.target}}",
+     "unit": "core",
+     "subtitle": "{{row.note}}"
+    }
+   }
+  }
+ ]
+}

@@ -71,6 +71,32 @@
       }
     },
     {
+      "name": "tiles-184: tile visuals and fallbacks",
+      "os": "macos",
+      "args": [
+        "tiles-184"
+      ],
+      "golden": "golden/tiles-184.json",
+      "expect": {
+        "text_present": [
+          "CPU versus limit"
+        ]
+      }
+    },
+    {
+      "name": "ring-184: tile visuals and fallbacks",
+      "os": "macos",
+      "args": [
+        "ring-184"
+      ],
+      "golden": "golden/ring-184.json",
+      "expect": {
+        "text_present": [
+          "Error budget left"
+        ]
+      }
+    },
+    {
       "name": "no key and no sample switch: the sample data is shown, with the sample label and a key hint on a tile (api.on_missing_key sample)",
       "os": "macos",
       "fixture": "unset",

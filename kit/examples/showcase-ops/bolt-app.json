@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "showcase-ops",
+  "title": "Observability showcase",
+  "role": "Anyone who wants to see Bolt's tile rings, bullets, targets and sparkline limits on a realistic ops dashboard",
+  "saves": "Guessing how the new tile visuals look on a real service estate",
+  "summary": "Type =showcase-ops: a tile strip (SLO meter, p99 with a dashed limit, error budget, CPU), a services list that drills into alerts, and the alerts. Needs Bolt 0.1.184. Invented data, no network.",
+  "author": {
+    "name": "Bolt Apps examples",
+    "link": "https://github.com/SparcleHQ/bolt-apps"
+  },
+  "tier": 3,
+  "permissions": [
+    "runs_commands",
+    "network",
+    "files"
+  ],
+  "platforms": [
+    "macos",
+    "linux"
+  ],
+  "min_bolt_version": "0.1.184",
+  "requires": [
+    {
+      "interpreter": "python",
+      "min_version": "3.9"
+    }
+  ],
+  "tests": []
+}

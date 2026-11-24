@@ -1,0 +1,121 @@
+[
+  {
+    "title": "SLO, last 30 days",
+    "subtitle": "plain meter. Objective 99.5%",
+    "icon": "shield-check",
+    "body": "",
+    "actions": [],
+    "kpi_label": "SLO",
+    "kpi_value": 99.2,
+    "kpi_unit": "%",
+    "kpi_max": 100,
+    "kpi_note": "objective 99.5%",
+    "kpi_foot": "sample data",
+    "kpi_badge": "BELOW OBJECTIVE",
+    "copy_text": "- SLO, last 30 days - plain meter. Objective 99.5%",
+    "open_url": ""
+  },
+  {
+    "title": "p99 latency",
+    "subtitle": "sparkline with a dashed limit at 450 ms",
+    "icon": "activity",
+    "body": "",
+    "actions": [],
+    "kpi_label": "p99 latency",
+    "kpi_value": 412,
+    "kpi_unit": "ms",
+    "kpi_max": 600,
+    "kpi_note": "limit 450 ms",
+    "kpi_foot": "",
+    "kpi_badge": "UNDER LIMIT",
+    "copy_text": "- p99 latency - sparkline with a dashed limit at 450 ms",
+    "trend": [
+      318,
+      340,
+      362,
+      355,
+      391,
+      420,
+      438,
+      412
+    ],
+    "open_url": "",
+    "limit": 450
+  },
+  {
+    "title": "Error budget by service",
+    "subtitle": "average 59% left across services. Enter opens the rings",
+    "icon": "shield-alert",
+    "body": "",
+    "nav": {
+      "view": "budget"
+    },
+    "actions": [],
+    "kpi_label": "Error budget left",
+    "kpi_value": 59,
+    "kpi_unit": "%",
+    "kpi_max": 100,
+    "kpi_note": "all services",
+    "kpi_foot": "",
+    "kpi_badge": "HEALTHY",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "CPU against limit by service",
+    "subtitle": "39 of 60 cores. Enter opens the bullets",
+    "icon": "cpu",
+    "body": "",
+    "nav": {
+      "view": "capacity"
+    },
+    "actions": [],
+    "kpi_label": "CPU versus limit",
+    "kpi_value": 39,
+    "kpi_unit": "core",
+    "kpi_max": 60,
+    "kpi_note": "all services",
+    "kpi_foot": "",
+    "kpi_badge": "HEALTHY",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Services",
+    "subtitle": "5 of 8 healthy. Enter opens the list",
+    "icon": "Layers",
+    "body": "",
+    "nav": {
+      "view": "services"
+    },
+    "actions": [],
+    "kpi_label": "Healthy services",
+    "kpi_value": 5,
+    "kpi_unit": "",
+    "kpi_max": 8,
+    "kpi_note": "of all services",
+    "kpi_foot": "",
+    "kpi_badge": "WARNING",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Alerts",
+    "subtitle": "4 firing, 1 critical. Enter opens the list",
+    "icon": "AlertCircle",
+    "body": "",
+    "nav": {
+      "view": "alerts"
+    },
+    "actions": [],
+    "kpi_label": "Alerts firing",
+    "kpi_value": 4,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "1 critical",
+    "kpi_foot": "",
+    "kpi_badge": "CRITICAL",
+    "copy_text": "",
+    "open_url": ""
+  }
+]

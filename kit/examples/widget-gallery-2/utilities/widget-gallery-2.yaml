@@ -5,8 +5,8 @@ id: widget-gallery-2
 chip: widget-gallery-2
 title: "Widget gallery 2"
 icon: Image
-description: "The card pane, the image grid and the cards grid with images. Sample data: generated colour swatches as inline images."
-placeholder_examples: ["Enter for overview", "card", "grid", "cardsimg"]
+description: "The card pane, the image grid, the cards grid with images, and (Bolt 0.1.184) tile rings, bullets, targets and sparkline limits. Sample data."
+placeholder_examples: ["Enter for overview", "card", "grid", "cardsimg", "tiles-184", "ring-184"]
 emits: Generic
 args:
   - { name: view, from: "query.word(0)", default: overview }
@@ -68,6 +68,33 @@ presentation:
           subtitle: "{{row.hex}}"
           image: "{{row.src}}"
           footer: "{{row.uses}} uses"
+    tiles-184:
+      right_widget:
+        kind: cards
+        mode: list_data
+        bind:
+          layout: "tiles"
+          title: "{{row.name}}"
+          value: "{{row.value}}"
+          unit: "{{row.unit}}"
+          max: "{{row.max}}"
+          subtitle: "{{row.note}}"
+          trend: "{{row.trend}}"
+          visual: "bullet"
+          target: "{{row.target}}"
+          limit: "{{row.limit}}"
+    ring-184:
+      right_widget:
+        kind: cards
+        mode: list_data
+        bind:
+          layout: "tiles"
+          title: "{{row.name}}"
+          value: "{{row.value}}"
+          unit: "{{row.unit}}"
+          max: "{{row.max}}"
+          subtitle: "{{row.note}}"
+          visual: "ring"
     note:
       right_widget:
         kind: markdown

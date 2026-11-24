@@ -4,7 +4,7 @@
   "chip": "widget-gallery-2",
   "title": "Widget gallery 2",
   "icon": "Image",
-  "description": "The card pane, the image grid and the cards grid with images. Sample data: generated colour swatches as inline images.",
+  "description": "The card pane, the image grid, the cards grid with images, and (Bolt 0.1.184) tile rings, bullets, targets and sparkline limits. Sample data.",
   "service": "Widget gallery",
   "searchable": false
  },
@@ -27,11 +27,29 @@
    "map": {
     "title": "name"
    }
+  },
+  "bullets": {
+   "path": "/v1/bullets",
+   "map": {
+    "title": "name"
+   }
+  },
+  "rings": {
+   "path": "/v1/rings",
+   "map": {
+    "title": "name"
+   }
   }
  },
  "stats": {
   "swatches_total": {
    "endpoint": "swatches"
+  },
+  "bullets_total": {
+   "endpoint": "bullets"
+  },
+  "rings_total": {
+   "endpoint": "rings"
   }
  },
  "overview": {
@@ -84,6 +102,28 @@
      "label": "Cards",
      "value": "swatches_total",
      "note": "grid layout"
+    }
+   },
+   {
+    "title": "Tiles \u00b7 bullet, target and limit",
+    "subtitle": "Bolt 0.1.184: a target mark and a dashed limit line. Enter opens it",
+    "icon": "activity",
+    "view": "tiles-184",
+    "tile": {
+     "label": "Bullets",
+     "value": "bullets_total",
+     "note": "tiles, every key and fallback"
+    }
+   },
+   {
+    "title": "Tiles \u00b7 ring",
+    "subtitle": "Bolt 0.1.184: the level as a ring. Enter opens it",
+    "icon": "activity",
+    "view": "ring-184",
+    "tile": {
+     "label": "Rings",
+     "value": "rings_total",
+     "note": "tiles, with the fallbacks"
     }
    }
   ]
@@ -167,6 +207,72 @@
      "subtitle": "{{row.hex}}",
      "image": "{{row.src}}",
      "footer": "{{row.uses}} uses"
+    }
+   }
+  },
+  {
+   "id": "tiles-184",
+   "title": "Tiles: bullet",
+   "icon": "activity",
+   "endpoint": "bullets",
+   "item": {
+    "title": "{title}",
+    "subtitle": "{note}",
+    "extra": {
+     "name": "{title}",
+     "value": "{value}",
+     "max": "{max}",
+     "unit": "{unit}",
+     "note": "{note}",
+     "target": "{target}",
+     "limit": "{limit}"
+    },
+    "trend_field": "trend"
+   },
+   "widget": {
+    "kind": "cards",
+    "mode": "list_data",
+    "bind": {
+     "layout": "tiles",
+     "title": "{{row.name}}",
+     "value": "{{row.value}}",
+     "unit": "{{row.unit}}",
+     "max": "{{row.max}}",
+     "subtitle": "{{row.note}}",
+     "trend": "{{row.trend}}",
+     "visual": "bullet",
+     "target": "{{row.target}}",
+     "limit": "{{row.limit}}"
+    }
+   }
+  },
+  {
+   "id": "ring-184",
+   "title": "Tiles: ring",
+   "icon": "activity",
+   "endpoint": "rings",
+   "item": {
+    "title": "{title}",
+    "subtitle": "{note}",
+    "extra": {
+     "name": "{title}",
+     "value": "{value}",
+     "max": "{max}",
+     "unit": "{unit}",
+     "note": "{note}"
+    }
+   },
+   "widget": {
+    "kind": "cards",
+    "mode": "list_data",
+    "bind": {
+     "layout": "tiles",
+     "title": "{{row.name}}",
+     "value": "{{row.value}}",
+     "unit": "{{row.unit}}",
+     "max": "{{row.max}}",
+     "subtitle": "{{row.note}}",
+     "visual": "ring"
     }
    }
   }

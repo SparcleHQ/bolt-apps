@@ -1,0 +1,104 @@
+{
+  "script": "scripts/showcase-ops__engine.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/showcase-ops__bolt_app_kit.py",
+  "fixture": true,
+  "cases": [
+    {
+      "name": "overview: the tile strip",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "golden": "golden/overview.json",
+      "expect": {
+        "text_present": [
+          "SLO, last 30 days",
+          "p99 latency",
+          "Error budget by service",
+          "CPU against limit by service"
+        ]
+      }
+    },
+    {
+      "name": "services: worst state first",
+      "os": "macos",
+      "args": [
+        "services"
+      ],
+      "golden": "golden/services.json",
+      "expect": {
+        "text_present": [
+          "Payments worker"
+        ]
+      }
+    },
+    {
+      "name": "drill: one service lists its own alerts",
+      "os": "macos",
+      "args": [
+        "services",
+        "payments-worker"
+      ],
+      "golden": "golden/services-payments-worker.json",
+      "expect": {
+        "text_present": [
+          "Worker pool exhausted"
+        ]
+      }
+    },
+    {
+      "name": "alerts: critical first",
+      "os": "macos",
+      "args": [
+        "alerts"
+      ],
+      "golden": "golden/alerts.json",
+      "expect": {
+        "text_present": [
+          "CRITICAL: Worker pool exhausted"
+        ]
+      }
+    },
+    {
+      "name": "budget: one ring per service",
+      "os": "macos",
+      "args": [
+        "budget"
+      ],
+      "golden": "golden/budget.json",
+      "expect": {
+        "text_present": [
+          "Payments worker"
+        ]
+      }
+    },
+    {
+      "name": "capacity: one bullet per service with a target",
+      "os": "macos",
+      "args": [
+        "capacity"
+      ],
+      "golden": "golden/capacity.json",
+      "expect": {
+        "text_present": [
+          "Checkout API"
+        ]
+      }
+    },
+    {
+      "name": "offline preview",
+      "os": "macos",
+      "args": [
+        "services",
+        "demo-offline"
+      ],
+      "expect": {
+        "text_present": [
+          "Could not connect"
+        ]
+      }
+    }
+  ]
+}

@@ -18,9 +18,9 @@ submit:
   label: "Log expense"
 bridge:
   command:
-    macos: "python3 {{scripts_dir}}/form-template__engine.py {{amount}} {{category}} {{date}} {{description}} {{billable}} {{scripts_dir}}/form-template__config.json {{scripts_dir}}/form-template__fixtures.json {{scripts_dir}}/form-template__bolt_app_kit.py"
-    linux: "python3 {{scripts_dir}}/form-template__engine.py {{amount}} {{category}} {{date}} {{description}} {{billable}} {{scripts_dir}}/form-template__config.json {{scripts_dir}}/form-template__fixtures.json {{scripts_dir}}/form-template__bolt_app_kit.py"
-    windows: "python {{scripts_dir}}/form-template__engine.py {{amount}} {{category}} {{date}} {{description}} {{billable}} {{scripts_dir}}/form-template__config.json {{scripts_dir}}/form-template__fixtures.json {{scripts_dir}}/form-template__bolt_app_kit.py"
+    macos: "python3 {{scripts_dir}}/form-template__engine.py {{amount}} {{category}} {{date}} {{description}} {{billable}} {{scripts_dir}}/form-template__config.json {{scripts_dir}}/form-template__fixtures.json {{scripts_dir}}/form-template__bolt_app_kit.py {{scripts_dir}}/form-template__bolt_app_engine.py"
+    linux: "python3 {{scripts_dir}}/form-template__engine.py {{amount}} {{category}} {{date}} {{description}} {{billable}} {{scripts_dir}}/form-template__config.json {{scripts_dir}}/form-template__fixtures.json {{scripts_dir}}/form-template__bolt_app_kit.py {{scripts_dir}}/form-template__bolt_app_engine.py"
+    windows: "python {{scripts_dir}}/form-template__engine.py {{amount}} {{category}} {{date}} {{description}} {{billable}} {{scripts_dir}}/form-template__config.json {{scripts_dir}}/form-template__fixtures.json {{scripts_dir}}/form-template__bolt_app_kit.py {{scripts_dir}}/form-template__bolt_app_engine.py"
   parse: json
   timeout_seconds: 10
 presentation:

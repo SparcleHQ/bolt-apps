@@ -13,9 +13,9 @@ args:
   - { name: arg, from: "query.word(1)", default: "-" }
 bridge:
   command:
-    macos: "python3 {{scripts_dir}}/table-template__engine.py {{view}} {{arg}} {{scripts_dir}}/table-template__config.json {{scripts_dir}}/table-template__fixtures.json {{scripts_dir}}/table-template__bolt_app_kit.py"
-    linux: "python3 {{scripts_dir}}/table-template__engine.py {{view}} {{arg}} {{scripts_dir}}/table-template__config.json {{scripts_dir}}/table-template__fixtures.json {{scripts_dir}}/table-template__bolt_app_kit.py"
-    windows: "python {{scripts_dir}}/table-template__engine.py {{view}} {{arg}} {{scripts_dir}}/table-template__config.json {{scripts_dir}}/table-template__fixtures.json {{scripts_dir}}/table-template__bolt_app_kit.py"
+    macos: "python3 {{scripts_dir}}/table-template__engine.py {{view}} {{arg}} {{scripts_dir}}/table-template__config.json {{scripts_dir}}/table-template__fixtures.json {{scripts_dir}}/table-template__bolt_app_kit.py {{scripts_dir}}/table-template__bolt_app_engine.py"
+    linux: "python3 {{scripts_dir}}/table-template__engine.py {{view}} {{arg}} {{scripts_dir}}/table-template__config.json {{scripts_dir}}/table-template__fixtures.json {{scripts_dir}}/table-template__bolt_app_kit.py {{scripts_dir}}/table-template__bolt_app_engine.py"
+    windows: "python {{scripts_dir}}/table-template__engine.py {{view}} {{arg}} {{scripts_dir}}/table-template__config.json {{scripts_dir}}/table-template__fixtures.json {{scripts_dir}}/table-template__bolt_app_kit.py {{scripts_dir}}/table-template__bolt_app_engine.py"
   parse: json
   timeout_seconds: 25
 presentation:

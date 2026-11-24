@@ -32,7 +32,7 @@ export function readScript(dir, name, id, enc) {
 }
 
 const FILE_WORDS = /^FILE_WORDS = .*$/m;
-/** `new` copies a template that still carries its own engine. When that copy is the shared engine (only the FILE_WORDS line may differ), swap it for the thin entry: a new app starts without a private copy. Returns true when swapped. */
+/** `new` (thin by default) copies a template that may still carry its own engine. When that copy is the shared engine (only the FILE_WORDS line may differ), swap it for the thin entry: a new app starts without a private copy. Returns true when swapped. */
 export function thinIfShared(dir, id) {
 	const p = path.join(dir, 'scripts', `${id}__engine.py`);
 	try {
@@ -43,7 +43,7 @@ export function thinIfShared(dir, id) {
 	} catch { return false; }
 }
 
-/** A template that is itself thin (acme-dash) is copied by `new` as a full engine unless --full is NOT given (thin is the default): the hand-run `python3 scripts/<id>__engine.py --emit-yaml` of the docs works for a plain copy. Returns true when expanded. */
+/** A thin template is copied by `new --full` as a full engine copy, so the hand-run `python3 scripts/<id>__engine.py --emit-yaml` works on it. Returns true when expanded. */
 export function expandThin(dir, id) {
 	const p = path.join(dir, 'scripts', `${id}__engine.py`);
 	try {

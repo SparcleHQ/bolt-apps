@@ -14,9 +14,9 @@ args:
   - { name: q3, from: "query.word(2)", default: "-" }
 bridge:
   command:
-    macos: "python3 {{scripts_dir}}/lookup-template__engine.py {{q1}} {{q2}} {{q3}} {{scripts_dir}}/lookup-template__config.json {{scripts_dir}}/lookup-template__fixtures.json {{scripts_dir}}/lookup-template__bolt_app_kit.py"
-    linux: "python3 {{scripts_dir}}/lookup-template__engine.py {{q1}} {{q2}} {{q3}} {{scripts_dir}}/lookup-template__config.json {{scripts_dir}}/lookup-template__fixtures.json {{scripts_dir}}/lookup-template__bolt_app_kit.py"
-    windows: "python {{scripts_dir}}/lookup-template__engine.py {{q1}} {{q2}} {{q3}} {{scripts_dir}}/lookup-template__config.json {{scripts_dir}}/lookup-template__fixtures.json {{scripts_dir}}/lookup-template__bolt_app_kit.py"
+    macos: "python3 {{scripts_dir}}/lookup-template__engine.py {{q1}} {{q2}} {{q3}} {{scripts_dir}}/lookup-template__config.json {{scripts_dir}}/lookup-template__fixtures.json {{scripts_dir}}/lookup-template__bolt_app_kit.py {{scripts_dir}}/lookup-template__bolt_app_engine.py"
+    linux: "python3 {{scripts_dir}}/lookup-template__engine.py {{q1}} {{q2}} {{q3}} {{scripts_dir}}/lookup-template__config.json {{scripts_dir}}/lookup-template__fixtures.json {{scripts_dir}}/lookup-template__bolt_app_kit.py {{scripts_dir}}/lookup-template__bolt_app_engine.py"
+    windows: "python {{scripts_dir}}/lookup-template__engine.py {{q1}} {{q2}} {{q3}} {{scripts_dir}}/lookup-template__config.json {{scripts_dir}}/lookup-template__fixtures.json {{scripts_dir}}/lookup-template__bolt_app_kit.py {{scripts_dir}}/lookup-template__bolt_app_engine.py"
   parse: json
   timeout_seconds: 20
 presentation:

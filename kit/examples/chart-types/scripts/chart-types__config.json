@@ -59,7 +59,10 @@
         "trend": "{{row.trend}}",
         "subtitle": "{{row.kpi_note}}",
         "badge": "{{row.kpi_badge}}",
-        "footer": "{{row.kpi_foot}}"
+        "footer": "{{row.kpi_foot}}",
+        "from": {
+          "set": "tiles"
+        }
       }
     },
     "rows": [
@@ -67,66 +70,75 @@
         "title": "Pie from rows",
         "subtitle": "share of a whole: x and y",
         "icon": "line-chart",
-        "view": "pie_rows",
-        "tile": {
-          "label": "Total",
-          "value": "deploys_total",
-          "note": "deploys"
-        }
+        "view": "pie_rows"
       },
       {
         "title": "Donut from rows",
         "subtitle": "a pie with the total in the centre",
         "icon": "line-chart",
-        "view": "donut_rows",
-        "tile": {
-          "label": "Total",
-          "value": "deploys_total",
-          "note": "deploys"
-        }
+        "view": "donut_rows"
       },
       {
         "title": "Two lines from rows",
         "subtitle": "bind.series: y per line",
         "icon": "line-chart",
-        "view": "multi_rows",
-        "tile": {
-          "label": "Total",
-          "value": "deploys_total",
-          "note": "deploys"
-        }
+        "view": "multi_rows"
       },
       {
         "title": "Area from rows",
-        "subtitle": "two filled lines",
+        "subtitle": "two filled lines, numbers written with format, digits and locale",
         "icon": "line-chart",
-        "view": "area_rows",
-        "tile": {
-          "label": "Total",
-          "value": "deploys_total",
-          "note": "deploys"
-        }
+        "view": "area_rows"
       },
       {
         "title": "Heatmap from rows",
         "subtitle": "x, y and a value per cell",
         "icon": "activity",
-        "view": "heat_rows",
-        "tile": {
-          "label": "Requests",
-          "value": "requests_total",
-          "note": "this week"
-        }
+        "view": "heat_rows"
       },
       {
         "title": "Gauge from a row",
         "subtitle": "one value on a 0 to 100 scale",
         "icon": "activity",
-        "view": "gauge_row",
+        "view": "gauge_row"
+      },
+      {
+        "title": "Deploys this week",
+        "subtitle": "a tile from the set tiles",
+        "icon": "line-chart",
+        "tile": {
+          "label": "Deploys",
+          "value": "deploys_total",
+          "note": "this week"
+        },
+        "extra": {
+          "set": "tiles"
+        }
+      },
+      {
+        "title": "Requests this week",
+        "subtitle": "a tile from the set tiles",
+        "icon": "activity",
+        "tile": {
+          "label": "Requests",
+          "value": "requests_total",
+          "note": "this week"
+        },
+        "extra": {
+          "set": "tiles"
+        }
+      },
+      {
+        "title": "Best health score",
+        "subtitle": "a tile from the set tiles",
+        "icon": "activity",
         "tile": {
           "label": "Best score",
           "value": "score_max",
           "note": "of 100"
+        },
+        "extra": {
+          "set": "tiles"
         }
       }
     ]
@@ -244,7 +256,10 @@
               "y": "failed",
               "label": "Failed"
             }
-          ]
+          ],
+          "format": "compact",
+          "digits": 1,
+          "locale": "de-DE"
         }
       }
     },

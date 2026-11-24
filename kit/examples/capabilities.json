@@ -818,6 +818,44 @@
       ]
     },
     {
+      "id": "pane.row_sets",
+      "group": "panes",
+      "name": "Named row sets: one script run feeds several panes",
+      "status": "supported",
+      "snippet": "{\"kind\": \"cards\", \"mode\": \"list_data\", \"bind\": {\"layout\": \"tiles\", \"title\": \"{{row.kpi_label}}\", \"value\": \"{{row.kpi_value}}\", \"unit\": \"{{row.kpi_unit}}\", \"delta\": \"{{row.delta}}\", \"delta_label\": \"{{row.since}}\", \"max\": \"{{row.kpi_max}}\", \"trend\": \"{{row.trend}}\", \"subtitle\": \"{{row.kpi_note}}\", \"badge\": \"{{row.kpi_badge}}\", \"footer\": \"{{row.kpi_foot}}\", \"from\": {\"set\": \"tiles\"}}}",
+      "test": "toolkit/test/rowsets-formats-184.test.mjs",
+      "limit": "Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). A script row may carry set (^[a-z][a-z0-9_-]{0,23}$, not constructor or prototype); a pane with bind.from draws only that set's rows, narrowed by up to 3 where field-equals-value filters. Needs mode list_data on chart, table, cards, heatmap or image_grid. Tagged rows are not list rows and do not count in the selection. At most 12 sets per run; a row with an unusable set stays a list row. Only a pane that uses from splits rows.",
+      "example": "kit/examples/chart-types",
+      "example_keys": [
+        "from",
+        "set"
+      ],
+      "keys": [
+        "from",
+        "set"
+      ]
+    },
+    {
+      "id": "pane.number_formats",
+      "group": "panes",
+      "name": "Number formats: format, digits, locale",
+      "status": "supported",
+      "snippet": "{\"kind\": \"chart\", \"mode\": \"list_data\", \"bind\": {\"type\": \"area\", \"x\": \"label\", \"label\": \"Deploys and failures\", \"series\": [{\"y\": \"value\", \"label\": \"Deploys\"}, {\"y\": \"failed\", \"label\": \"Failed\"}], \"format\": \"compact\", \"digits\": 1, \"locale\": \"de-DE\"}}",
+      "test": "toolkit/test/rowsets-formats-184.test.mjs",
+      "limit": "Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). format is number, percent, compact, bytes (1024 steps) or duration (the value is seconds); digits 0 to 6; locale is a language tag of at most 35 characters. On chart, cards (tile value) and gauge, and on table columns (which also take compact, bytes and duration in format). bytes and duration carry their own unit, so unit is not added. Heatmap and detail panes take none of them.",
+      "example": "kit/examples/chart-types",
+      "example_keys": [
+        "format",
+        "digits",
+        "locale"
+      ],
+      "keys": [
+        "format",
+        "digits",
+        "locale"
+      ]
+    },
+    {
       "id": "run.isolation",
       "group": "security",
       "name": "What Bolt does limit about a run",

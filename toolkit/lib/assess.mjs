@@ -177,6 +177,8 @@ export function launcherRules(root, opts = {}) {
 		if (NO_APP_DATA_KINDS.includes(kind)) W('right_widget_no_data', `${p}.kind "${kind}" passes validation but Bolt shows "This app asks for a ${kind} pane, which cannot show app data" instead of your rows. Use table, detail, cards or chart${kind === 'image' ? ' (image_grid for pictures)' : ''}`);
 		const bad = (code, m) => (strict ? E : W)(code, strict ? m : `${m} (a warning for schema_version 1, an error from schema_version 2)`);
 		if (BIND_NONE.includes(kind) && bind && bind.t === 'm' && bind.entries.length) bad('right_widget_bind_unread', `${p}.bind.${bind.entries[0].key}: a ${kind} pane reads nothing from bind; remove the key${kind === 'map' ? ' (the map takes the launcher\'s own state; use an "Open in Maps" url action for a place)' : ''}`);
+		// bind.from (a named row set, Bolt 0.1.184) feeds a pane that draws the whole list: the launcher refuses it on a selected_row pane
+		if (bind && bind.t === 'm' && get(bind, 'from') && mode !== 'list_data') bad('right_widget_bind_unread', `${p}.bind.from: needs mode: list_data (a selected_row pane reads one list row, never a row set)`);
 		// Every other kind: keys, types, enums and caps from the launcher's table (schema/bolt-rules.json). Strict for schema_version 2 and for every pack.
 		if (!BIND_NONE.includes(kind) && bind && bind.t === 'm') for (const bp of bindProblems(kind, bind, `${p}.bind`, { minBolt: opts.minBolt, minBoltKnown: opts.minBoltKnown })) {
 			if (bp.gate || bp.level === 'warning' || bp.code === 'bind_too_many_refs') (bp.level === 'warning' ? W : E)(bp.code, bp.message);   // a gate on a newer Bolt, or a plain warning, is never softened or hardened by schema_version

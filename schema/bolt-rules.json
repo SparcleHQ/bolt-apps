@@ -273,6 +273,32 @@
     "unit": {
      "t": "text",
      "max": 200
+    },
+    "format": {
+     "t": "enum",
+     "values": [
+      "number",
+      "percent",
+      "compact",
+      "bytes",
+      "duration"
+     ],
+     "since": "0.1.184"
+    },
+    "digits": {
+     "t": "int",
+     "lo": 0,
+     "hi": 6,
+     "since": "0.1.184"
+    },
+    "locale": {
+     "t": "text",
+     "max": 35,
+     "since": "0.1.184"
+    },
+    "from": {
+     "t": "rowSet",
+     "since": "0.1.184"
     }
    },
    "table": {
@@ -314,12 +340,31 @@
         "number",
         "percent",
         "currency",
-        "date"
-       ]
+        "date",
+        "compact",
+        "bytes",
+        "duration"
+       ],
+       "since_values": {
+        "compact": "0.1.184",
+        "bytes": "0.1.184",
+        "duration": "0.1.184"
+       }
       },
       "unit": {
        "t": "text",
        "max": 200
+      },
+      "digits": {
+       "t": "int",
+       "lo": 0,
+       "hi": 6,
+       "since": "0.1.184"
+      },
+      "locale": {
+       "t": "text",
+       "max": 35,
+       "since": "0.1.184"
       }
      },
      "items": 40
@@ -344,6 +389,10 @@
     "totals_label": {
      "t": "text",
      "max": 200
+    },
+    "from": {
+     "t": "rowSet",
+     "since": "0.1.184"
     }
    },
    "cards": {
@@ -401,6 +450,32 @@
     "trend": {
      "t": "text",
      "max": 4096
+    },
+    "format": {
+     "t": "enum",
+     "values": [
+      "number",
+      "percent",
+      "compact",
+      "bytes",
+      "duration"
+     ],
+     "since": "0.1.184"
+    },
+    "digits": {
+     "t": "int",
+     "lo": 0,
+     "hi": 6,
+     "since": "0.1.184"
+    },
+    "locale": {
+     "t": "text",
+     "max": 35,
+     "since": "0.1.184"
+    },
+    "from": {
+     "t": "rowSet",
+     "since": "0.1.184"
     }
    },
    "detail": {
@@ -471,6 +546,10 @@
      "t": "int",
      "lo": 1,
      "hi": 8
+    },
+    "from": {
+     "t": "rowSet",
+     "since": "0.1.184"
     }
    },
    "map": {},
@@ -518,6 +597,10 @@
     "unit": {
      "t": "text",
      "max": 200
+    },
+    "from": {
+     "t": "rowSet",
+     "since": "0.1.184"
     }
    },
    "gauge": {
@@ -572,6 +655,28 @@
        ]
       }
      }
+    },
+    "format": {
+     "t": "enum",
+     "values": [
+      "number",
+      "percent",
+      "compact",
+      "bytes",
+      "duration"
+     ],
+     "since": "0.1.184"
+    },
+    "digits": {
+     "t": "int",
+     "lo": 0,
+     "hi": 6,
+     "since": "0.1.184"
+    },
+    "locale": {
+     "t": "text",
+     "max": 35,
+     "since": "0.1.184"
     }
    }
   },

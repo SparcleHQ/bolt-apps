@@ -37,9 +37,8 @@ def split_args(argv, file_words, keep_dash=False):
     return a if keep_dash else [w for w in a if w != "-"]
 
 
-def fixture_mode(default):
-    """Sample mode: BOLT_APP_FIXTURE=1 or 0 decides, anything else leaves the config's default."""
-    env = os.environ.get("BOLT_APP_FIXTURE")
+def fixture_mode(env, default):
+    """Sample mode. `env` is the app's own read of BOLT_APP_FIXTURE (the kit reads no variables): "1" or "0" decides, anything else leaves the config's default."""
     return (env == "1") if env in ("0", "1") else bool(default)
 
 
@@ -47,9 +46,9 @@ def back_to_overview(sub="Back to the overview"):
     return back_row(sub, view=NOTE_VIEW)
 
 
-def run_guarded(main, argv):
+def run_guarded(main, argv, debug=False):
     """Run main(argv). A row the contract refuses is the author's bug and is named; any other crash is one plain row, never a traceback
-    (BOLT_APP_DEBUG, which `bolt-apps run` sets, sends the real error to the terminal)."""
+    (debug, which the app takes from BOLT_APP_DEBUG as `bolt-apps run` sets it, sends the real error to the terminal)."""
     try:
         main(argv)
     except SystemExit:
@@ -57,7 +56,7 @@ def run_guarded(main, argv):
     except KitError as e:
         emit([error_row("Row contract: %s" % clean_text(str(e), 200), title="This app could not run")])
     except Exception as e:
-        if os.environ.get("BOLT_APP_DEBUG"):
+        if debug:
             import traceback
             traceback.print_exc()
         emit([error_row("%s while building the rows. Run the script in a terminal to see why." % e.__class__.__name__)])

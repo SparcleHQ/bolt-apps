@@ -70,6 +70,8 @@ Pure standard library, Python 3.9+, no environment-driven test hooks (the only v
 
 **Copy text.** `safe_copy` is the allowlist from `bolt_safenet.py`: NFKC, letters, digits and a short punctuation set, one `- ` bullet per line so the first shell token is never a command. `action_copy(..., safe=False)` is for a bare command a person will run themselves; it is still cleaned.
 
+**Script-app scaffold (0.3.11).** What every script app used to copy into its own file lives once in the kit (`bolt_app_kit/scaffold.py`): `Fail`, `s`, `json_loader(HERE, _PFX)`, `split_args(argv, FILE_WORDS)`, `fixture_mode(os.environ.get("BOLT_APP_FIXTURE"), default)`, `back_to_overview`, `run_guarded(main, argv, debug)` (a crash is one plain row, never a traceback), `indent`, `tile_bind`, and `bridge_head` / `bridge_yaml` for the head of a generated app file. An app keeps only its own logic and its own panes. It changes no row and no app file: `check` output and goldens of every example are identical before and after. An app on an older kit keeps its copies and runs unchanged.
+
 ## 4. Cross-platform apps
 
 ### Facts (as Bolt behaves)

@@ -37,32 +37,21 @@ class Helpers(unittest.TestCase):
         self.assertEqual(len(k.tile_bind(0)), 7)
 
     def test_fixture_mode_env_wins_over_config(self):
-        old = os.environ.get("BOLT_APP_FIXTURE")
-        try:
-            os.environ["BOLT_APP_FIXTURE"] = "1"
-            self.assertTrue(k.fixture_mode(False))
-            os.environ["BOLT_APP_FIXTURE"] = "0"
-            self.assertFalse(k.fixture_mode(True))
-            os.environ["BOLT_APP_FIXTURE"] = "maybe"
-            self.assertTrue(k.fixture_mode(True))
-            del os.environ["BOLT_APP_FIXTURE"]
-            self.assertFalse(k.fixture_mode(False))
-        finally:
-            if old is None:
-                os.environ.pop("BOLT_APP_FIXTURE", None)
-            else:
-                os.environ["BOLT_APP_FIXTURE"] = old
+        self.assertTrue(k.fixture_mode("1", False))
+        self.assertFalse(k.fixture_mode("0", True))
+        self.assertTrue(k.fixture_mode("maybe", True))
+        self.assertFalse(k.fixture_mode(None, False))
 
 
 class Run(unittest.TestCase):
-    def run_main(self, main):
+    def run_main(self, main, debug=False):
         import importlib
         sc = importlib.import_module("bolt_app_kit.scaffold")
         got = []
         real = sc.emit
         sc.emit = lambda rows, **kw: got.append(rows)   # the real emit ends the process
         try:
-            k.run_guarded(main, ["x.py"])
+            k.run_guarded(main, ["x.py"], debug=debug)
         finally:
             sc.emit = real
         return json.dumps(got)
@@ -78,6 +67,17 @@ class Run(unittest.TestCase):
         def main(argv):
             raise k.KitError("bad row")
         self.assertIn("Row contract: bad row", self.run_main(main))
+
+    def test_debug_prints_the_traceback_to_the_terminal(self):
+        import io
+        from contextlib import redirect_stderr
+        def main(argv):
+            raise ValueError("boom")
+        err = io.StringIO()
+        with redirect_stderr(err):
+            out = self.run_main(main, debug=True)
+        self.assertIn("ValueError: boom", err.getvalue())
+        self.assertIn("ValueError while building the rows", out)
 
     def test_system_exit_passes_through(self):
         def main(argv):

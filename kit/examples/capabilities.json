@@ -1008,6 +1008,16 @@
       "snippet": "./bolt-apps regen ~/my-apps/my-app   # an app made by new holds a short entry, not an engine copy; pack carries the engine once. An older app with its own copy: ./bolt-apps upgrade-kit ~/my-apps/my-app",
       "test": "toolkit/test/upgrade-kit.test.mjs",
       "limit": "The pack carries the engine (`scripts/<id>__bolt_app_engine.py`), so it runs on every Bolt that runs script apps; the engine is not part of the shared kit, so Bolt 182 does not share it yet. A thin app cannot run its entry by hand outside the toolkit: use regen. upgrade-kit refuses an edited engine. Installing a converted app again asks the person to approve it again, because its command now names one more file."
+    },
+    {
+      "id": "kit.scaffold",
+      "group": "platform",
+      "name": "Script-app scaffold in the kit (no copied helpers)",
+      "status": "supported",
+      "example": "kit/examples/script-template",
+      "snippet": "load_json = kit.json_loader(HERE, _PFX); words = kit.split_args(argv, FILE_WORDS); kit.run_guarded(main, sys.argv, debug=bool(os.environ.get(\"BOLT_APP_DEBUG\")))   # also kit.Fail, kit.s, kit.fixture_mode, kit.back_to_overview, kit.tile_bind, kit.indent, kit.bridge_head, kit.bridge_yaml",
+      "test": "kit/python/tests/test_scaffold.py",
+      "limit": "Kit 0.3.11 or newer: an app that calls these must vendor that kit (./bolt-apps kit vendor --flat <app>). An older app keeps its own copied helpers and runs unchanged; nothing here changes what a pack carries. bridge_head covers the views-app shape (typed words view, arg, arg2, ...; one command per system); an app with another shape writes its own head. Not run in a real Bolt."
     }
   ]
 }

@@ -818,6 +818,26 @@
       ]
     },
     {
+      "id": "pane.chart_limit_marker",
+      "group": "panes",
+      "name": "Chart limit line and marks",
+      "status": "supported",
+      "example": "kit/examples/widget-gallery",
+      "snippet": "\"bind\": {\"type\": \"bar\", \"x\": \"label\", \"y\": \"value\", \"limit\": 80, \"limit_label\": \"capacity\", \"marker\": {\"field\": \"event\"}}",
+      "test": "toolkit/test/annotations-184.test.mjs",
+      "limit": "Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). limit is a number or a {{row.x}} reference to the selected row, drawn as a dashed line; limit_label is clipped to 24 characters. marker names a row field: rows where it is set (not empty, 0, false or null) get a labelled vertical mark, at most 8, one row per point only. A limit far outside the data stays off the axis with a triangle. Pie and donut show a note instead. Not verified in real Bolt."
+    },
+    {
+      "id": "pane.table_bars_mark",
+      "group": "panes",
+      "name": "Table column bars and tone glyph",
+      "status": "supported",
+      "example": "kit/examples/widget-gallery",
+      "snippet": "\"columns\": [{\"field\": \"commits\", \"label\": \"Commits\", \"bars\": true}, {\"field\": \"health\", \"label\": \"Health\", \"mark\": \"tone\"}]",
+      "test": "toolkit/test/annotations-184.test.mjs",
+      "limit": "Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). bars draws an inline bar scaled to the largest shown value of a numeric column (zero, negative and non-numbers draw none). mark tone reads the cell as a tone word (ok, warn, error and so on) and draws a glyph whose shape tells the tone. Not verified in real Bolt."
+    },
+    {
       "id": "run.isolation",
       "group": "security",
       "name": "What Bolt does limit about a run",

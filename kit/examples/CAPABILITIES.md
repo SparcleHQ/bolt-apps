@@ -68,6 +68,8 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | Rows that open as files | supported | no example yet | `conformance/launcher-constants.json` | Needs emits: File and a row path starting /, ~/ or a drive letter; a trailing slash is a folder; a UNC path is refused. From the source, not run live. |
 | One action takes Enter (primary) | supported | no example yet | `conformance/launcher-constants.json` | At most one primary in the app file; it takes Enter on every row and the others go in the Tab menu. |
 | Chart rows mixed with plain rows | supported | [widget-gallery](widget-gallery) | `conformance/launcher-constants.json` | A row without the y field is skipped, so one list can hold chart rows and plain rows. The unit is cut at 8 characters. |
+| Chart limit line and marks | supported | [widget-gallery](widget-gallery) | `toolkit/test/annotations-184.test.mjs` | Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). limit is a number or a {{row.x}} reference to the selected row, drawn as a dashed line; limit_label is clipped to 24 characters. marker names a row field: rows where it is set (not empty, 0, false or null) get a labelled vertical mark, at most 8, one row per point only. A limit far outside the data stays off the axis with a triangle. Pie and donut show a note instead. Not verified in real Bolt. |
+| Table column bars and tone glyph | supported | [widget-gallery](widget-gallery) | `toolkit/test/annotations-184.test.mjs` | Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). bars draws an inline bar scaled to the largest shown value of a numeric column (zero, negative and non-numbers draw none). mark tone reads the cell as a tone word (ok, warn, error and so on) and draws a glyph whose shape tells the tone. Not verified in real Bolt. |
 | What Bolt does limit about a run | partial | automatic | `conformance/launcher-constants.json` | Each run gets a fresh private working folder (not the app folder) unless bridge.cwd is home, its process tree is killed on timeout, and there are CPU and process limits. Files and network are not confined. Bolt sets 6 variables: the 3 Python ones and GIT_CONFIG_NOSYSTEM, GIT_TERMINAL_PROMPT, GIT_OPTIONAL_LOCKS. |
 | Sample data: no key, no network | supported | [portal-template](portal-template) | `kit/python/tests/test_portal_engine.py` | Ship live (api.fixture_default false) unless the app is sample-only by design (see sample.offline_only). Put "fixture": true at the top of check.json; an installed pack cannot be switched to sample data. |
 | Several sources at once inside one deadline | supported | [system-glance](system-glance) | `kit/python/tests/test_probe.py` | Partial failure shows per-source rows; an unread value is never zero. |
@@ -453,6 +455,18 @@ actions:
 
 ```
 {"kind": "chart", "mode": "list_data", "bind": {"type": "bar", "x": "label", "y": "value", "label": "label"}}
+```
+
+### Chart limit line and marks (`pane.chart_limit_marker`)
+
+```
+"bind": {"type": "bar", "x": "label", "y": "value", "limit": 80, "limit_label": "capacity", "marker": {"field": "event"}}
+```
+
+### Table column bars and tone glyph (`pane.table_bars_mark`)
+
+```
+"columns": [{"field": "commits", "label": "Commits", "bars": true}, {"field": "health", "label": "Health", "mark": "tone"}]
 ```
 
 ### What Bolt does limit about a run (`run.isolation`)

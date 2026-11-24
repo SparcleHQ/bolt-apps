@@ -14,20 +14,20 @@
       "golden": "golden/overview.json"
     },
     {
-      "name": "chart: bars, no Back row",
+      "name": "chart limit and marker: bars, a capacity line, two marks, no Back row",
       "os": "macos",
       "args": [
         "chart"
       ],
-      "golden": "golden/chart.json"
+      "golden": "golden/chart-limit-marker.json"
     },
     {
-      "name": "table",
+      "name": "table bars and mark: commit bars and a health glyph",
       "os": "macos",
       "args": [
         "table"
       ],
-      "golden": "golden/table.json"
+      "golden": "golden/table-bars-mark.json"
     },
     {
       "name": "detail",

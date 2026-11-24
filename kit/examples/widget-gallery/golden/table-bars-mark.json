@@ -19,7 +19,8 @@
     "lang": "Go",
     "status": "up",
     "commits": 124,
-    "open_prs": 2
+    "open_prs": 2,
+    "health": "ok"
   },
   {
     "title": "web-frontend · up",
@@ -41,7 +42,8 @@
     "lang": "TS",
     "status": "up",
     "commits": 301,
-    "open_prs": 0
+    "open_prs": 0,
+    "health": "ok"
   },
   {
     "title": "worker-queue · degraded",
@@ -63,7 +65,8 @@
     "lang": "Rust",
     "status": "degraded",
     "commits": 57,
-    "open_prs": 11
+    "open_prs": 11,
+    "health": "warn"
   },
   {
     "title": "billing-svc · up",
@@ -85,7 +88,8 @@
     "lang": "Go",
     "status": "up",
     "commits": 88,
-    "open_prs": 1
+    "open_prs": 1,
+    "health": "ok"
   },
   {
     "title": "search-index · down",
@@ -107,6 +111,7 @@
     "lang": "Rust",
     "status": "down",
     "commits": 203,
-    "open_prs": 42
+    "open_prs": 42,
+    "health": "error"
   }
 ]

@@ -50,6 +50,10 @@ presentation:
           x: "label"
           y: "value"
           label: "label"
+          limit: 80
+          limit_label: "capacity"
+          marker:
+            field: "event"
     table:
       right_widget:
         kind: table
@@ -63,7 +67,8 @@ presentation:
             - { field: "service", label: "Service", total: "count" }
             - { field: "lang", label: "Lang" }
             - { field: "status", label: "Status" }
-            - { field: "commits", label: "Commits", align: "right", total: "sum" }
+            - { field: "health", label: "Health", mark: "tone" }
+            - { field: "commits", label: "Commits", align: "right", total: "sum", bars: true }
             - { field: "open_prs", label: "PRs", align: "right", total: "sum" }
     detail:
       right_widget:

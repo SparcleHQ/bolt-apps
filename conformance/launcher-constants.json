@@ -107,6 +107,9 @@
   "widget_kinds_added_182": [
    "heatmap",
    "gauge"
+  ],
+  "widget_kinds_added_185": [
+   "tabs"
   ]
  },
  "chart_types": {

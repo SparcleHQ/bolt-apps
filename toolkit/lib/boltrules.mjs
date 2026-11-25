@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { get, str } from './yamlsubset.mjs';
-// Characters that draw nothing: Unicode Cf (zero width, bidi controls, soft hyphen, BOM, tags) and the line and paragraph separators. Same set as the launcher and bolt-native refuse in a tab label.
+// Characters that draw nothing: Unicode Cf (zero width, bidi controls, soft hyphen, BOM, tags) and the line and paragraph separators. Same set as the launcher refuses in a tab label.
 const INVISIBLE = /[\p{Cf}\u2028\u2029]/gu;
 
 export const RULES = JSON.parse(fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../schema/bolt-rules.json'), 'utf8'));

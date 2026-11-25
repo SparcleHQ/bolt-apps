@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { caps } from '../../scripts/build-capabilities.mjs';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const read = (f) => fs.readFileSync(path.join(REPO, f), 'utf8');
@@ -42,7 +43,9 @@ export function gaps(items, docs) {
 		const exRe = it.kind ? new RegExp(`["']kind["']?\\s*:\\s*["']${esc(it.name)}["']`) : new RegExp(`["']?${esc(it.name)}["']?\\s*:`);
 		const miss = [];
 		if (!w.test(docs.capabilities)) miss.push('CAPABILITIES row');
-		if (!docs.examples.some((t) => exRe.test(t))) miss.push('example reference');
+		// A key whose capability row says sample_due (the list contract-evolution.test.mjs pins) is excused the example only; every other check still applies.
+		const due = (docs.dueSnippets || []).some((t) => new RegExp(`["']${esc(it.name)}["']\\s*:`).test(t));
+		if (!due && !docs.examples.some((t) => exRe.test(t))) miss.push('example reference');
 		if (!w.test(docs.quickstart)) miss.push('QUICKSTART mention');
 		if (miss.length) res.push({ ...it, miss });
 	}
@@ -55,6 +58,7 @@ const realDocs = () => ({
 	capabilities: read('kit/examples/CAPABILITIES.md') + '\n' + read('kit/examples/capabilities.json'),
 	quickstart: read('kit/examples/QUICKSTART.md'),
 	examples: exampleFiles().map(read),
+	dueSnippets: caps.rows.filter((r) => r.sample_due).map((r) => r.snippet || ''),
 });
 const rulesFile = () => JSON.parse(fs.readFileSync(process.env.BOLT_RULES_FILE || path.join(REPO, 'schema/bolt-rules.json'), 'utf8'));
 
@@ -80,4 +84,13 @@ test('docs gate self-test: a new key with no docs is caught, a documented one is
 	const noExample = { ...full, examples: [] };
 	assert.deepEqual(gaps(items, noExample).map((g) => g.miss), [['example reference'], ['example reference'], ['example reference']]);
 	assert.ok(atLeast('0.1.184', GATE_FROM) && atLeast('0.1.190', GATE_FROM) && atLeast('0.2.0', GATE_FROM) && !atLeast('0.1.183', GATE_FROM));
+});
+
+test('docs gate: sample_due excuses only the example, and only for a key its row snippet names', () => {
+	const item = { id: 'right_widget.bind.cards.visual', name: 'visual', since: '0.1.184', kind: false };
+	const base = { capabilities: 'visual', quickstart: 'visual', examples: [] };
+	assert.deepEqual(gaps([item], base).map((g) => g.miss), [['example reference']]);
+	assert.deepEqual(gaps([item], { ...base, dueSnippets: ['"bind": {"visual": "bullet"}'] }), []);
+	assert.deepEqual(gaps([item], { ...base, capabilities: '', dueSnippets: ['"visual": "x"'] }).map((g) => g.miss), [['CAPABILITIES row']]);
+	assert.equal(gaps([item], { ...base, dueSnippets: ['"other": 1'] }).length, 1);
 });

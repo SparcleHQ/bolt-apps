@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { get, str } from './yamlsubset.mjs';
+// Characters that draw nothing: Unicode Cf (zero width, bidi controls, soft hyphen, BOM, tags) and the line and paragraph separators. Same set as the launcher and bolt-native refuse in a tab label.
+const INVISIBLE = /[\p{Cf}\u2028\u2029]/gu;
 
 export const RULES = JSON.parse(fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../schema/bolt-rules.json'), 'utf8'));
 const entries = (n) => (n && n.t === 'm' ? n.entries : []);
@@ -44,7 +46,7 @@ export function structureProblems(root) {
 function bindVal(node, spec, where, out, ctx = {}) {
 	const bad = (m) => out.push({ code: 'bind_invalid', message: `${where}: ${m}` });
 	const t = spec.t;
-	if (t === 'text') { if (!node || node.t !== 's') return bad(`must be text, got ${kindWord(node?.t)}`); if ([...node.v].length > spec.max) bad(`is longer than ${spec.max} characters`); if (spec.no_control && /[\u0000-\u001f\u007f-\u009f]/.test(node.v)) bad('must not contain control characters or line breaks'); if (spec.no_control && !node.v.trim()) bad('must not be empty'); }
+	if (t === 'text') { if (!node || node.t !== 's') return bad(`must be text, got ${kindWord(node?.t)}`); if ([...node.v].length > spec.max) bad(`is longer than ${spec.max} characters`); if (spec.no_control) { const plain = node.v.replace(INVISIBLE, ''); if (/[\u0000-\u001f\u007f-\u009f]/.test(node.v) || (plain !== node.v && plain.trim())) bad('must not contain control characters or line breaks'); if (!plain.trim()) bad('must not be empty'); } }
 	else if (t === 'textOrNumber') { if (!node || node.t !== 's') bad(`must be text or a number, got ${kindWord(node?.t)}`); else if ([...node.v].length > spec.max) bad(`is longer than ${spec.max} characters`); }
 	else if (t === 'enum') { const v = scalar(node); if (v === undefined || !spec.values.includes(v)) bad(`must be one of ${spec.values.join(', ')}, got ${JSON.stringify(v ?? null)}`);
 		else if (spec.since_values && Object.hasOwn(spec.since_values, v)) { const g = gateProblem(where.replace(/\.[^.]+$/, ''), `${where.split('.').pop()} "${v}"`, spec.since_values[v], ctx); if (g) out.push(g); } }

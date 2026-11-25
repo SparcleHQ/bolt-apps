@@ -58,6 +58,19 @@ test('lint holds the launcher tab rules: 1 to 12 tabs, labels, status needs coun
 	assert.match(msgs(app(['tabs:', '  - label: A', '    status: critical', '    widget: { kind: table }'])), /status needs count_from|count_from/);
 });
 
+test('labels refuse invisible format characters (Unicode Cf, U+2028, U+2029) the way the launcher does', () => {
+	const label = (l) => app(['tabs:', `  - label: "${l}"`, '    widget: { kind: table }']);
+	// Some of them the file reader already refuses anywhere in a file (the app reads as unknown, tier 3): that must stay so.
+	for (const c of ['\u200B', '\u2028', '\u2029', '\u202E', '\u00AD', '\u2060', '\uFEFF']) {
+		const r = assessYaml(label(c), 'demo', { minBoltKnown: true, minBolt: SINCE });
+		assert.equal(r.unknown, true, JSON.stringify(c));
+	}
+	// The rest parse, and the tab label rule is what refuses them: blank without them is "must not be empty", else the control-character words.
+	for (const blank of ['\u200D', '\u200C \u200D', '\u180E', '\u061C', '\u{E0001}', '\u200D\u061C']) assert.match(msgs(label(blank)), /must not be empty/, JSON.stringify(blank));
+	for (const mixed of ['a\u200Db', 'a\u200C', '\u180Ea', 'a\u061Cb', 'a\u{E0001}']) assert.match(msgs(label(mixed)), /must not contain control characters or line breaks/, JSON.stringify(mixed));
+	assert.deepEqual(errs(label('Caf\u00E9')), []);
+});
+
 test('a tab status is critical or warning', () => {
 	assert.deepEqual(errs(app(['tabs:', '  - label: A', '    count_from: { set: a }', '    status: warning', '    widget: { kind: table }'])), []);
 	assert.match(msgs(app(['tabs:', '  - label: A', '    count_from: { set: a }', '    status: fine', '    widget: { kind: table }'])), /must be one of critical, warning/);

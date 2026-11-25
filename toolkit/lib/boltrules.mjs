@@ -44,14 +44,15 @@ export function structureProblems(root) {
 function bindVal(node, spec, where, out, ctx = {}) {
 	const bad = (m) => out.push({ code: 'bind_invalid', message: `${where}: ${m}` });
 	const t = spec.t;
-	if (t === 'text') { if (!node || node.t !== 's') return bad(`must be text, got ${kindWord(node?.t)}`); if ([...node.v].length > spec.max) bad(`is longer than ${spec.max} characters`); }
+	if (t === 'text') { if (!node || node.t !== 's') return bad(`must be text, got ${kindWord(node?.t)}`); if ([...node.v].length > spec.max) bad(`is longer than ${spec.max} characters`); if (spec.no_control && /[\u0000-\u001f\u007f-\u009f]/.test(node.v)) bad('must not contain control characters or line breaks'); if (spec.no_control && !node.v.trim()) bad('must not be empty'); }
 	else if (t === 'textOrNumber') { if (!node || node.t !== 's') bad(`must be text or a number, got ${kindWord(node?.t)}`); else if ([...node.v].length > spec.max) bad(`is longer than ${spec.max} characters`); }
 	else if (t === 'enum') { const v = scalar(node); if (v === undefined || !spec.values.includes(v)) bad(`must be one of ${spec.values.join(', ')}, got ${JSON.stringify(v ?? null)}`);
 		else if (spec.since_values && Object.hasOwn(spec.since_values, v)) { const g = gateProblem(where.replace(/\.[^.]+$/, ''), `${where.split('.').pop()} "${v}"`, spec.since_values[v], ctx); if (g) out.push(g); } }
 	else if (t === 'bool') { const v = scalar(node); if (!(v === 'true' || v === 'false') || node.q) bad('must be true or false'); }
 	else if (t === 'int') { const v = num(node); if (!Number.isInteger(v) || v < spec.lo || v > spec.hi) bad(`must be a whole number from ${spec.lo} to ${spec.hi}`); }
 	else if (t === 'textList') { if (!node || node.t !== 'l') bad(`must be a list, got ${kindWord(node?.t)}`); else { if (node.items.length > spec.items) bad(`has more than ${spec.items} entries`); node.items.forEach((x, i) => { if (!x || x.t !== 's' || [...x.v].length > spec.max) bad(`entry ${i} must be text of at most ${spec.max} characters`); }); } }
-	else if (t === 'list') { if (!node || node.t !== 'l') bad(`must be a list, got ${kindWord(node?.t)}`); else { if (node.items.length > spec.items) bad(`has more than ${spec.items} entries`); node.items.forEach((x, i) => bindMap(x, spec.keys, `${where}[${i}]`, out, ctx)); } }
+	else if (t === 'list') { if (!node || node.t !== 'l') bad(`must be a list, got ${kindWord(node?.t)}`); else { if (spec.min && node.items.length < spec.min) bad(`needs at least ${spec.min} ${spec.min === 1 ? 'entry' : 'entries'}`); if (node.items.length > spec.items) bad(`has more than ${spec.items} entries`); node.items.forEach((x, i) => bindMap(x, spec.keys, `${where}[${i}]`, out, ctx)); } }
+	else if (t === 'any_map') { if (!node || node.t !== 'm') bad(`must be a mapping, got ${kindWord(node?.t)}`); }   // a mapping Bolt checks as another pane's own bind at install; this toolkit does not look inside
 	else if (t === 'map') bindMap(node, spec.keys, where, out, ctx);
 }
 // A dotted version "0.1.182" as numbers; undefined when it is not one.
@@ -75,6 +76,7 @@ function bindMap(node, keysSpec, where, out, ctx = {}) {
 		else {
 			const sp = keysSpec[e.key];
 			if (sp.since) { const g = gateProblem(where, e.key, sp.since, ctx); if (g) out.push(g); }
+			if (sp.requires && !get(node, sp.requires)) out.push({ code: 'bind_invalid', message: `${where}.${e.key}: needs ${sp.requires} beside it` });
 			bindVal(e.value, sp, `${where}.${e.key}`, out, ctx);
 			if (sp.max_refs && e.value && e.value.t === 's') {
 				const n = (e.value.v.match(REF) || []).length;

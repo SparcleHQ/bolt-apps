@@ -294,6 +294,8 @@
       "name": "Pane: tabs (several views in one pane)",
       "status": "supported",
       "example": "kit/examples/tabs-gallery",
+      "since": "0.1.185",
+      "older_bolt": "A Bolt older than 0.1.185 refuses the whole pack that uses it; set min_bolt_version 0.1.185.",
       "snippet": "{\"kind\": \"tabs\", \"mode\": \"list_data\", \"bind\": {\"tabs\": [{\"label\": \"Overview\", \"widget\": {\"kind\": \"stack\", \"bind\": {\"children\": [{\"kind\": \"cards\"}]}}}, {\"label\": \"Alerts\", \"count_from\": {\"set\": \"alerts\"}, \"status\": \"critical\", \"widget\": {\"kind\": \"table\", \"bind\": {\"from\": {\"set\": \"alerts\"}}}}]}}",
       "test": "toolkit/test/tabs-185.test.mjs",
       "limit": "Needs Bolt 0.1.185 (min_bolt_version 0.1.185): a 184 or older refuses the whole pack that uses it. 1 to 12 tabs, each one whole pane (cards, chart, table, heatmap, gauge, detail, markdown or a stack), never tabs; the label is up to 40 characters; count_from is a row set whose size the tab shows; status (critical or warning) needs count_from and shows a shape and a word while the count is above zero. Only the chosen tab is drawn. Count and status are not in the sample. Lint and fixture tested only: the pane is drawn by no real Bolt in this repo yet.",

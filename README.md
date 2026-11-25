@@ -16,8 +16,9 @@ that turns pasted CSV into a Markdown table.
 
 ## What a Bolt App is
 
-Bolt Apps extend what Bolt can do. Start with a snippet or a search prefix. Add a YAML file that
-reshapes or recognizes what you paste. For your own use you can also add a command or script that
+Bolt Apps extend what Bolt can do. Start with a snippet or a search prefix. Build an app that
+reshapes or recognizes what you paste, then pack it into a `.boltpack`, the main way to install
+one. For your own use you can also add a command or script that
 returns rows (the [toolkit](toolkit/README.md) packs it with `--personal`); the gallery takes tier 1
 and 2 apps only, so that kind stays yours. Skills and agents import from Settings, Agents, Import.
 Connectors, detectors and compliance packs are for company admins. Every app has a safety tier, so
@@ -73,8 +74,12 @@ hand:
 
 - **Snippet:** Settings, Search & Commands, Snippets, Add snippet; paste the `content`.
 - **Search engine:** Settings, Search & Commands, Search Engines, Add engine.
-- **User App:** Open Settings, then Desktop App. If User Apps is hidden, switch Settings to
-  Advanced. Under User Apps, click Open folder, save the `.yaml` there, and click Reload.
+- **User App, main route (a pack):** pack the app (`./bolt-apps pack <folder>`, or `--personal`
+  for your own tier 3 app) and drop the `.boltpack` on the Bolt launcher or Bolt Apps. Bolt shows
+  what the app can do and asks you to confirm.
+- **User App, for your own apps (a plain file):** Open Settings, then Desktop App. If User Apps is
+  hidden, switch Settings to Advanced. Under User Apps, click Open folder, save the `.yaml` there,
+  and click Reload.
   If the app says Needs approval, expand its row, choose Review and accept, and review
   the files before clicking Accept. Bolt 0.1.181 shows this step for a manually installed
   transform such as [CSV to Markdown](apps/csv-to-markdown).
@@ -115,6 +120,10 @@ Needs Node 18+ and Python 3.9+. Want tiles, drill down with Back, a detail panel
 Drop the `.boltpack` on the Bolt launcher or Bolt Apps; Bolt shows the review card (it rates a personal app high risk and says the pack is self-signed: both expected; install it), then Bolt's own "Install an unverified Bolt pack?" dialog (click Install). Then open Settings, Desktop App, User Apps, expand the app and click Review and accept; every reship needs that again. `ship` raises the version each time (Bolt refuses a pack that is not newer than the installed one) and keeps one signing key. This personal pack is how a rich app ships: it runs a script and calls the network (tier 3), so the gallery does not take it.
 [`kit/examples/acme-dash`](kit/examples/acme-dash) shows the same template with 8 views and three levels.
 Walkthrough with the row formats: <https://sparcle.app/docs/extend/rich-apps/>. Agents: [AGENTS.md](AGENTS.md) section 4c.
+
+**Compatibility:** older apps keep working in Bolt 0.1.184. An older Bolt refuses a whole pack that uses a newer widget. Read [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) before you hand out a pack that uses a new widget.
+
+**Cold-agent run (manual):** `make cold-agent` (needs `COLD_AGENT_CMD`) gives a fresh agent only the public docs and a task, then runs lint, check and verify on what it built. It needs a live agent, so CI does not run it; CI runs only its offline checker on a good and a bad sample app. See [scripts/cold-agent.sh](scripts/cold-agent.sh).
 
 ## Contributing
 

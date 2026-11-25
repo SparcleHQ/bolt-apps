@@ -1,0 +1,45 @@
+# Author CI template for a Bolt App. Copy this file to .github/workflows/bolt-apps-check.yml in your
+# own repository. It runs the public Bolt Apps toolkit (lint, check, verify) on each app folder you list.
+#
+# Set APP_DIRS to your app folders, one per line. Each folder holds a bolt-app.json (or an engine app
+# with a check.json). No secrets are needed. Pin BOLT_APPS_REF to a release tag or a commit of
+# https://github.com/SparcleHQ/bolt-apps so a toolkit change never breaks your build unannounced.
+name: bolt-apps-check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  BOLT_APPS_REF: main
+  APP_DIRS: |
+    apps/my-app
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Get the toolkit
+        run: |
+          git clone --quiet https://github.com/SparcleHQ/bolt-apps "$RUNNER_TEMP/bolt-apps"
+          git -C "$RUNNER_TEMP/bolt-apps" checkout --quiet "$BOLT_APPS_REF"
+      - name: bolt-apps lint, check, verify
+        run: |
+          status=0
+          for dir in $APP_DIRS; do
+            for cmd in lint check verify; do
+              "$RUNNER_TEMP/bolt-apps/bolt-apps" "$cmd" "$dir" || status=1
+            done
+          done
+          exit $status

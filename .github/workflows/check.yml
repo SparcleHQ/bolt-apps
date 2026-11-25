@@ -1,13 +1,9 @@
-# Runs the Bolt Apps checker on every app a pull request changes. A failure blocks
-# the merge once "check" is a required status check on main (Settings, Branches).
+# Runs the Bolt Apps toolkit (lint, check, verify) on every app a pull request changes. A failure
+# blocks the merge once "check" is a required status check on main (Settings, Branches).
 #
-# The checker is part of Bolt's own code and is not published yet. Until it is,
-# this job fetches it from the repository named in the repository variable
-# BOLT_APPS_CHECKER_REPO (ref BOLT_APPS_CHECKER_REF, default main) with the
-# read-only token in the secret BOLT_APPS_CHECKER_TOKEN. Without them the job fails
-# on purpose with "checker not wired yet", so nothing can merge unchecked.
-# Pull requests from forks never receive secrets, so they also fail here; a
-# published checker is required before contributions open.
+# The toolkit is public and lives in this repository (toolkit/), so this job needs no token and
+# runs for pull requests from forks too. Authors can copy the same job into their own repository:
+# see kit/ci/bolt-apps-check.yml.
 name: check
 
 on:
@@ -34,35 +30,15 @@ jobs:
           echo "apps=$apps" >> "$GITHUB_OUTPUT"
           echo "Changed apps: ${apps:-none}"
 
-      - name: Checker wired?
-        env:
-          BOLT_APPS_CHECKER_TOKEN: ${{ secrets.BOLT_APPS_CHECKER_TOKEN }}
-          BOLT_APPS_CHECKER_REPO: ${{ vars.BOLT_APPS_CHECKER_REPO }}
-        run: |
-          if [ -z "$BOLT_APPS_CHECKER_TOKEN" ] || [ -z "$BOLT_APPS_CHECKER_REPO" ]; then
-            echo "::error::checker not wired yet: the BOLT_APPS_CHECKER_TOKEN secret or the BOLT_APPS_CHECKER_REPO variable is missing, so bolt-apps check cannot run. Nothing merges unchecked."
-            exit 1
-          fi
-
-      - name: Get the checker
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ vars.BOLT_APPS_CHECKER_REPO }}
-          ref: ${{ vars.BOLT_APPS_CHECKER_REF || 'main' }}
-          token: ${{ secrets.BOLT_APPS_CHECKER_TOKEN }}
-          path: _checker
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Install checker dependencies
-        working-directory: _checker
-        run: |
-          test -f scripts/bolt-apps/cli.mjs || { echo "::error::checker not wired yet: scripts/bolt-apps/cli.mjs is not on ${{ vars.BOLT_APPS_CHECKER_REF || 'main' }} of the checker repository."; exit 1; }
-          npm ci --ignore-scripts
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-      - name: bolt-apps check
+      - name: bolt-apps lint, check, verify
         timeout-minutes: 10
         env:
           # Passed as an environment variable, never pasted into the script text, so a folder
@@ -77,14 +53,16 @@ jobs:
               continue
             fi
             if [ ! -d "apps/$id" ]; then echo "apps/$id removed, nothing to check"; continue; fi
-            rc=0
-            timeout --kill-after=10s 120s node _checker/scripts/bolt-apps/cli.mjs check "apps/$id" || rc=$?
-            if [ "$rc" = 124 ] || [ "$rc" = 137 ]; then
-              echo "::error file=apps/$id/bolt-app.json::apps/$id: the check did not finish within 120 seconds and was stopped"
-              status=1
-            elif [ "$rc" != 0 ]; then
-              echo "::error file=apps/$id/bolt-app.json::apps/$id: failed or was refused by bolt-apps check (exit $rc); the lines above say why"
-              status=1
-            fi
+            for cmd in lint check verify; do
+              rc=0
+              timeout --kill-after=10s 120s ./bolt-apps "$cmd" "apps/$id" || rc=$?
+              if [ "$rc" = 124 ] || [ "$rc" = 137 ]; then
+                echo "::error file=apps/$id/bolt-app.json::apps/$id: bolt-apps $cmd did not finish within 120 seconds and was stopped"
+                status=1
+              elif [ "$rc" != 0 ]; then
+                echo "::error file=apps/$id/bolt-app.json::apps/$id: bolt-apps $cmd failed or refused the app (exit $rc); the lines above say why"
+                status=1
+              fi
+            done
           done
           exit $status

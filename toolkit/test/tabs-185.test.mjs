@@ -6,6 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { assessYaml } from '../lib/assess.mjs';
 import { RULES } from '../lib/boltrules.mjs';
+import { FIXES } from '../lib/verify.mjs';
 
 const SINCE = '0.1.185';
 const app = (bindLines, mode = 'list_data') => ['schema_version: 2', 'runtime: bridge', 'id: demo', 'chip: demo', 'title: "Demo"', 'icon: globe', 'description: "Demo"', 'emits: Generic',
@@ -84,6 +85,15 @@ test('a tab widget is checked like the launcher checks a part: stack needs list_
 	assert.deepEqual(errs(w('{ kind: stack, mode: list_data, bind: { children: [{ kind: cards }] } }')), []);
 	if (RULES.right_widget.bind.table.from) assert.deepEqual(errs(w('{ kind: table, bind: { from: { set: a } } }')), []);   // bind.from is a table key from Bolt 184 (not in this rules file until then)
 	assert.deepEqual(errs(w('{ kind: gauge, mode: selected_row, bind: { value: "{{row.a}}" } }')), []);
+});
+
+test('the version gate for tabs names the right versions: a 184 or older refuses, set 0.1.185', () => {
+	const m = msgs(app(ONE), { minBolt: undefined });
+	assert.match(m, /needs Bolt 185/);
+	assert.match(m, /0\.1\.184 or older REFUSES THE WHOLE PACK/);
+	assert.match(m, /Set "min_bolt_version": "0\.1\.185"/);
+	assert.doesNotMatch(m, /0\.1\.181/);
+	assert.match(FIXES.bind_needs_newer_bolt, /0\.1\.185/);
 });
 
 test('a tab status is critical or warning', () => {

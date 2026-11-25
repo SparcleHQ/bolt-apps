@@ -1045,6 +1045,7 @@
         ]
       },
       "expect": [
+        "bind_needs_newer_bolt",
         "right_widget_bind_unread"
       ],
       "bolt_error_contains": "a stack needs mode: list_data"
@@ -1060,6 +1061,7 @@
         ]
       },
       "expect": [
+        "bind_needs_newer_bolt",
         "right_widget_bind_unread"
       ],
       "bolt_error_contains": "stack"
@@ -1075,6 +1077,7 @@
         ]
       },
       "expect": [
+        "bind_needs_newer_bolt",
         "right_widget_bind_unread"
       ],
       "bolt_error_contains": "activate is not supported inside a tab"

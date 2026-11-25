@@ -66,9 +66,11 @@ export function gateProblem(where, key, since, ctx) {
 	const have = parseBoltVersion(ctx.minBolt), need = parseBoltVersion(since);
 	if (have && need && boltAtLeast(have, need)) return null;
 	const ver = since.replace(/^0\.1\./, ''), packed = ctx.minBoltKnown === false;   // packed: a built pack is being read, only a warning (the author may still hand it only to Bolt 182 users)
+	// a pane kind first read by 185 (tabs) is refused as an unknown kind by a 184 or older; the 182 keys are refused by a 181 as an unknown key
+	const refuser = Number(since.split('.')[2]) >= 185 ? '0.1.184 or older' : '0.1.181', refusal = Number(since.split('.')[2]) >= 185 ? 'an unknown right_widget kind' : '"unknown key for a entity_preview pane"';
 	const where2 = packed ? "the pack's listing" : 'bolt-app.json';
 	const why = ctx.minBolt === undefined ? `${where2} declares no min_bolt_version` : `${where2} says min_bolt_version "${ctx.minBolt}"`;
-	return { code: 'bind_needs_newer_bolt', gate: true, level: packed ? 'warning' : 'error', message: `${where}.${key}: needs Bolt ${ver}. A Bolt 0.1.181 REFUSES THE WHOLE PACK when one app uses it ("unknown key for a entity_preview pane"), so no app in the pack would install there. ${why}. Set "min_bolt_version": "${since}" in bolt-app.json to confirm you will give the pack only to people on Bolt ${ver} or newer (Bolt 181 does not read the field and cannot stop the install, it just refuses the pack), or remove ${key}` };
+	return { code: 'bind_needs_newer_bolt', gate: true, level: packed ? 'warning' : 'error', message: `${where}.${key}: needs Bolt ${ver}. A Bolt ${refuser} REFUSES THE WHOLE PACK when one app uses it (${refusal}), so no app in the pack would install there. ${why}. Set "min_bolt_version": "${since}" in bolt-app.json to confirm you will give the pack only to people on Bolt ${ver} or newer (an older Bolt does not read the field and cannot stop the install, it just refuses the pack), or remove ${key}` };
 }
 const REF = /\{\{[^}]*\}\}/g;   // the same count the Bolt pane makes: one reference per {{ ... }}
 function bindMap(node, keysSpec, where, out, ctx = {}) {

@@ -19,7 +19,7 @@
     "macos",
     "linux"
   ],
-  "min_bolt_version": "0.1.182",
+  "min_bolt_version": "0.1.184",
   "requires": [
     {
       "interpreter": "python",

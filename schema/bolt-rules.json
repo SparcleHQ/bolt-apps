@@ -29,6 +29,7 @@
   "image_grid",
   "heatmap",
   "gauge",
+  "stack",
   "tabs"
  ],
  "no_app_data_kinds": [
@@ -274,6 +275,57 @@
     "unit": {
      "t": "text",
      "max": 200
+    },
+    "limit": {
+     "t": "textOrNumber",
+     "max": 4096,
+     "since": "0.1.184"
+    },
+    "limit_label": {
+     "t": "text",
+     "max": 200,
+     "since": "0.1.184"
+    },
+    "marker": {
+     "t": "map",
+     "since": "0.1.184",
+     "keys": {
+      "field": {
+       "t": "text",
+       "max": 200,
+       "required": true
+      },
+      "label": {
+       "t": "text",
+       "max": 200
+      }
+     }
+    },
+    "format": {
+     "t": "enum",
+     "values": [
+      "number",
+      "percent",
+      "compact",
+      "bytes",
+      "duration"
+     ],
+     "since": "0.1.184"
+    },
+    "digits": {
+     "t": "int",
+     "lo": 0,
+     "hi": 6,
+     "since": "0.1.184"
+    },
+    "locale": {
+     "t": "text",
+     "max": 35,
+     "since": "0.1.184"
+    },
+    "from": {
+     "t": "rowSet",
+     "since": "0.1.184"
     }
    },
    "table": {
@@ -315,12 +367,42 @@
         "number",
         "percent",
         "currency",
-        "date"
-       ]
+        "date",
+        "compact",
+        "bytes",
+        "duration"
+       ],
+       "since_values": {
+        "compact": "0.1.184",
+        "bytes": "0.1.184",
+        "duration": "0.1.184"
+       }
       },
       "unit": {
        "t": "text",
        "max": 200
+      },
+      "bars": {
+       "t": "bool",
+       "since": "0.1.184"
+      },
+      "mark": {
+       "t": "enum",
+       "values": [
+        "tone"
+       ],
+       "since": "0.1.184"
+      },
+      "digits": {
+       "t": "int",
+       "lo": 0,
+       "hi": 6,
+       "since": "0.1.184"
+      },
+      "locale": {
+       "t": "text",
+       "max": 35,
+       "since": "0.1.184"
       }
      },
      "items": 40
@@ -345,6 +427,34 @@
     "totals_label": {
      "t": "text",
      "max": 200
+    },
+    "from": {
+     "t": "rowSet",
+     "since": "0.1.184"
+    },
+    "activate": {
+     "t": "map",
+     "keys": {
+      "nav": {
+       "t": "map",
+       "keys": {
+        "view": {
+         "t": "text",
+         "max": 200,
+         "required": true
+        },
+        "arg": {
+         "t": "text",
+         "max": 4096
+        }
+       }
+      },
+      "action": {
+       "t": "text",
+       "max": 200
+      }
+     },
+     "since": "0.1.184"
     }
    },
    "cards": {
@@ -402,6 +512,84 @@
     "trend": {
      "t": "text",
      "max": 4096
+    },
+    "visual": {
+     "t": "enum",
+     "values": [
+      "meter",
+      "ring",
+      "bullet",
+      "number",
+      "spark",
+      "strip",
+      "stack"
+     ],
+     "since": "0.1.184"
+    },
+    "visual_from": {
+     "t": "text",
+     "max": 200,
+     "since": "0.1.184"
+    },
+    "target": {
+     "t": "textOrNumber",
+     "max": 4096,
+     "since": "0.1.184"
+    },
+    "limit": {
+     "t": "textOrNumber",
+     "max": 4096,
+     "since": "0.1.184"
+    },
+    "format": {
+     "t": "enum",
+     "values": [
+      "number",
+      "percent",
+      "compact",
+      "bytes",
+      "duration"
+     ],
+     "since": "0.1.184"
+    },
+    "digits": {
+     "t": "int",
+     "lo": 0,
+     "hi": 6,
+     "since": "0.1.184"
+    },
+    "locale": {
+     "t": "text",
+     "max": 35,
+     "since": "0.1.184"
+    },
+    "from": {
+     "t": "rowSet",
+     "since": "0.1.184"
+    },
+    "activate": {
+     "t": "map",
+     "keys": {
+      "nav": {
+       "t": "map",
+       "keys": {
+        "view": {
+         "t": "text",
+         "max": 200,
+         "required": true
+        },
+        "arg": {
+         "t": "text",
+         "max": 4096
+        }
+       }
+      },
+      "action": {
+       "t": "text",
+       "max": 200
+      }
+     },
+     "since": "0.1.184"
     }
    },
    "detail": {
@@ -472,6 +660,10 @@
      "t": "int",
      "lo": 1,
      "hi": 8
+    },
+    "from": {
+     "t": "rowSet",
+     "since": "0.1.184"
     }
    },
    "map": {},
@@ -519,6 +711,10 @@
     "unit": {
      "t": "text",
      "max": 200
+    },
+    "from": {
+     "t": "rowSet",
+     "since": "0.1.184"
     }
    },
    "gauge": {
@@ -573,6 +769,35 @@
        ]
       }
      }
+    },
+    "format": {
+     "t": "enum",
+     "values": [
+      "number",
+      "percent",
+      "compact",
+      "bytes",
+      "duration"
+     ],
+     "since": "0.1.184"
+    },
+    "digits": {
+     "t": "int",
+     "lo": 0,
+     "hi": 6,
+     "since": "0.1.184"
+    },
+    "locale": {
+     "t": "text",
+     "max": 35,
+     "since": "0.1.184"
+    }
+   },
+   "stack": {
+    "children": {
+     "t": "stackChildren",
+     "required": true,
+     "items": 6
     }
    },
    "tabs": {
@@ -1172,6 +1397,20 @@
  "kind_since": {
   "heatmap": "0.1.182",
   "gauge": "0.1.182",
+  "stack": "0.1.184",
   "tabs": "0.1.185"
+ },
+ "stack": {
+  "child_kinds": {
+   "cards": "list_data",
+   "chart": "list_data",
+   "table": "list_data",
+   "heatmap": "list_data",
+   "gauge": "selected_row",
+   "detail": "selected_row",
+   "markdown": "selected_row"
+  },
+  "max_children": 6,
+  "row_budget": 1000
  }
 }

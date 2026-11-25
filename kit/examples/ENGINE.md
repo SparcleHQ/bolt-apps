@@ -94,7 +94,7 @@ Totals over a field: `{ "endpoint": "tickets", "field_sum": "hours" }` adds the 
 `{ label, value (a stat or field name, or a number), max, unit (4 characters), note, foot, badge }`. `badge` is a word or a list of `{ "if": "ready>=80", "badge": "ON TRACK" }` rules, first match wins, last one without `if`. A value that cannot be read gives no tile, and its badge comes only from rules with an `if` on another field: `status==open` still applies, while the last rule without `if` and every rule that has the value's field on its left, or reads that field on its right (ordering operators also skip its name when absent; == and != keep the absent name as plain text), are skipped, so a count that did not load is never called CLEAR and a text such as N/A never meets `remaining>=10`. A plain word badge is left out.
 
 ## `views[]`
-`id` (view count: see [the rules table](QUICKSTART.md#4-the-rules-table)), `title`, `icon`, `endpoint`, `sort` (`[{ field, order[], desc }]`), `children` (`[{ view, match }]` drills to rows of another view whose `match` field equals this row's id), `no_children`, `empty`, `widget` (`{ kind, mode, bind }`, copied into the app file; default is a detail preview built from `item.fields`). Pane kinds with app data: card, markdown, entity_preview, chart, table, cards, detail, json_tree, diff, image_grid, heatmap, gauge, tabs (the same list as the rules table; chart types are in its Chart types row, and the pie, donut, area, series, heatmap and gauge panes need Bolt 182).
+`id` (view count: see [the rules table](QUICKSTART.md#4-the-rules-table)), `title`, `icon`, `endpoint`, `sort` (`[{ field, order[], desc }]`), `children` (`[{ view, match }]` drills to rows of another view whose `match` field equals this row's id), `no_children`, `empty`, `widget` (`{ kind, mode, bind }`, copied into the app file; default is a detail preview built from `item.fields`). Pane kinds with app data: card, markdown, entity_preview, chart, table, cards, detail, json_tree, diff, image_grid, heatmap, gauge, stack, tabs (the same list as the rules table; chart types are in its Chart types row, the pie, donut, area, series, heatmap and gauge panes need Bolt 182, the stack pane needs Bolt 184, and the tabs pane needs Bolt 185).
 
 More view options: `id_field` (the row field that holds its id, default `id`; an id made of letters, digits, underscores, dots and hyphens and at most 64 long is the row's drill arg as it is unless it ends in a dot and 12 lowercase hex digits; those ids and any non-token id drill by an ASCII form plus a short hash of the whole id), `pane_id` (the pane name the rows use, default the view id), and on a `children` entry `parent_field` (the row field compared to `match`, default the view's `id_field`).
 
@@ -345,6 +345,27 @@ right_widget:
 - A row text field is cut at 4,000 characters, so the picture is split over `img1`, `img2`, ... and `src` joins them. 16 parts is about 47 KB of picture. The kit does the split: `kit.hero_fields(bytes_or_data_uri)` returns the `imgN` fields and `kit.hero_src_template(n)` the `src` text. It refuses a picture over 1 MiB, one that is not png, jpeg, gif or webp (Bolt also takes avif and bmp, but the standard library cannot recognise or resize them, so the helper refuses avif and bmp bytes: pass a `data:image/avif;base64,...` string instead and it is trusted and split as it is) and one that needs more than 16 parts; in that case use a smaller picture (the standard library cannot resize, so hand it a small one; ask the picture host for a small size, or draw it small). Catch `kit.KitError` and send the row without the picture fields: the row still shows, with no hero.
 - Pane keys are read per Bolt version. **A Bolt 0.1.181 refuses the whole pack when one app uses `hero`** (`presentation.right_widget.bind.hero: unknown key for a entity_preview pane`), so no app in the pack installs; a local `schema_version: 1` file only warns and shows no hero. So an app that uses `hero` sets `"min_bolt_version": "0.1.182"` in `bolt-app.json`, and you give the pack only to people on Bolt 182 or newer. `lint`, `check` and `pack` fail an app that uses `hero` without it, with the message "needs Bolt 182". Bolt does not read `min_bolt_version`, so this is your promise, not a lock (the pack carries it in its signed listing, and `verify` reads it from there: it warns when a pack that uses `hero` declares nothing or less than 0.1.182).
 - Example: `kit/examples/hero-gallery` (offline; the script draws the pictures). Not seen in a running Bolt 182 yet: written from the 182 source and sample runs.
+
+## Press a row or tile (Bolt 0.1.184)
+
+A `table` or `cards` pane can make each item a control. `bind.activate` says what Enter, Space or a click on one item does: exactly one of `nav` or `action`.
+
+```yaml
+right_widget:
+  kind: table
+  mode: list_data
+  bind:
+    columns: [{ field: service, label: Service }, { field: commits, label: Commits }]
+    activate:
+      nav: { view: detail, arg: "{{row.service}}" }
+```
+
+- `nav` opens a view of the same app, the way a `nav` row does (one step deeper, Back and Esc return to the same row). `view` is a key of `presentation.views` and the app needs `view_arg`. `arg` is a `{{row.field}}` template that must give ONE plain token (letters, digits, `_ . -`, at most 64, not starting with `-` or `.`, no `..`). An item whose value is not a token, or has no such field, is not pressable and behaves as before (a table row copies itself, a tile copies its title). Structured context is not passed.
+- `action` is the `id` of a declared `url` or `composer` action; it runs with the item's own row. A `run` or `utility` action cannot take an item's fields, so it is refused by lint and does nothing in Bolt.
+- A view or action the app does not declare is a lint error, and a no-op in Bolt.
+- Tab reaches a pressable table row; a tile is a button. A held Enter does not press twice, and nothing runs while a dialog is open.
+- Set `"min_bolt_version": "0.1.184"` in `bolt-app.json`: a Bolt 0.1.183 or older refuses the whole pack that uses the key (a personal `schema_version: 1` file only warns and the item copies as before).
+- Example: `kit/examples/widget-gallery` (the table view drills into the detail view). Not seen in a running Bolt 184 yet: written from the 184 source and sample runs.
 
 ## Typing free text and views in a script app
 

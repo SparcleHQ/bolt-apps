@@ -25,11 +25,12 @@ test('rules: chart types and the two panes carry the version that first reads th
 	assert.deepEqual(t.since_values, { pie: SINCE, donut: SINCE, area: SINCE });
 	assert.equal(RULES.right_widget.bind.chart.series.since, SINCE);
 	assert.equal(RULES.right_widget.bind.chart.series.items, 4);
+	assert.deepEqual(RULES.kind_since, { heatmap: SINCE, gauge: SINCE, stack: '0.1.184' });   // stack: stack-184.test.mjs
 	assert.equal(RULES.kind_since.heatmap, SINCE);
 	assert.equal(RULES.kind_since.gauge, SINCE);
 	for (const k of ['heatmap', 'gauge']) assert.ok(RULES.widget_kinds.includes(k) && RULES.right_widget.bind[k], k);
-	assert.deepEqual(Object.keys(RULES.right_widget.bind.heatmap), ['x', 'y', 'value', 'rows', 'cols', 'col_labels', 'layout', 'label', 'unit']);
-	assert.deepEqual(Object.keys(RULES.right_widget.bind.gauge), ['value', 'min', 'max', 'label', 'unit', 'shape', 'thresholds']);
+	assert.deepEqual(Object.keys(RULES.right_widget.bind.heatmap), ['x', 'y', 'value', 'rows', 'cols', 'col_labels', 'layout', 'label', 'unit', 'from']);   // from: Bolt 184 (rowsets-formats-184.test.mjs)
+	assert.deepEqual(Object.keys(RULES.right_widget.bind.gauge), ['value', 'min', 'max', 'label', 'unit', 'shape', 'thresholds', 'format', 'digits', 'locale']);   // format, digits, locale: Bolt 184
 });
 
 test('lint accepts pie, donut, area and series with min_bolt_version 0.1.182', () => {
@@ -79,8 +80,9 @@ test('QUICKSTART: rule 5 no longer says pie, heatmap and gauge are not shipped, 
 
 test('the chart-types example app passes lint with its min_bolt_version and fails without it', () => {
 	const dir = path.join(REPO, 'kit/examples/chart-types'), y = fs.readFileSync(path.join(dir, 'utilities/chart-types.yaml'), 'utf8');
-	assert.equal(JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')).min_bolt_version, SINCE);
-	assert.deepEqual(errs(y, { pack: true }), []);
+	assert.equal(JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')).min_bolt_version, '0.1.184');   // the example also teaches the Bolt 184 row set and format keys
+	assert.deepEqual(errs(y, { pack: true, minBolt: '0.1.184' }), []);
+	assert.ok(errs(y, { pack: true }).includes('bind_needs_newer_bolt'), 'the Bolt 184 keys need 184, not 182');
 	const bad = P(y, { pack: true, minBolt: undefined }).filter((p) => p.code === 'bind_needs_newer_bolt');
 	assert.ok(bad.length >= 6, `each of the six panes needs the gate, got ${bad.length}`);
 	for (const t of ['pie', 'donut', 'area', 'heatmap', 'gauge']) assert.ok(y.includes(t), t);

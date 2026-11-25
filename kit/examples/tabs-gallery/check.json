@@ -1,0 +1,25 @@
+{
+  "script": "scripts/tabs-gallery__engine.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/tabs-gallery__bolt_app_kit.py",
+  "fixture": true,
+  "cases": [
+    {
+      "name": "overview",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "golden": "golden/overview.json"
+    },
+    {
+      "name": "tabs over rows (Bolt 185)",
+      "os": "macos",
+      "args": [
+        "tabs_rows"
+      ],
+      "golden": "golden/tabs-rows.json"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "tabs-gallery",
+  "title": "Tabs gallery",
+  "role": "Anyone who wants several views in one right pane",
+  "saves": "Working out the bind keys of the tabs pane Bolt 185 added",
+  "summary": "Type =tabs-gallery, open Tabs over rows, then switch between a line, a pie and a table over the same rows. Needs Bolt 0.1.185 or newer. Runs on sample data.",
+  "author": {
+    "name": "Bolt Apps examples",
+    "link": "https://github.com/SparcleHQ/bolt-apps"
+  },
+  "tier": 3,
+  "permissions": [
+    "runs_commands",
+    "network",
+    "files"
+  ],
+  "platforms": [
+    "macos",
+    "linux"
+  ],
+  "min_bolt_version": "0.1.185",
+  "requires": [
+    {
+      "interpreter": "python",
+      "min_version": "3.9"
+    }
+  ],
+  "tests": []
+}

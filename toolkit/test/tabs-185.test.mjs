@@ -67,3 +67,29 @@ test('tabs with a bind the other kinds do not read: the other kinds refuse the t
 	const y = app(ONE).replace('kind: tabs', 'kind: table');
 	assert.ok(errs(y).includes('right_widget_bind_unread'));
 });
+
+// The agent guide and the sample: an agent reading QUICKSTART must be told tabs needs Bolt 0.1.185, and a working sample must exist.
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const REPO185 = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const rd = (f) => fs.readFileSync(path.join(REPO185, f), 'utf8');
+
+test('guide: the rules step tells an agent that tabs needs min_bolt_version 0.1.185 and that an older Bolt refuses the pack', () => {
+	const step = rd('kit/examples/QUICKSTART.md').split('\n').find((l) => l.startsWith('5. Use only the panes'));
+	assert.ok(step, 'step 5 exists');
+	assert.match(step, /`tabs`/);
+	assert.match(step, /min_bolt_version` 0\.1\.185/);
+	assert.match(step, /184 or older refuses the whole pack/);
+});
+
+test('sample: tabs-gallery uses a tabs pane, declares 0.1.185, is listed in the index and named by the tabs capability row', () => {
+	const dir = 'kit/examples/tabs-gallery';
+	assert.equal(JSON.parse(rd(`${dir}/bolt-app.json`)).min_bolt_version, SINCE);
+	const yaml = rd(`${dir}/utilities/tabs-gallery.yaml`);
+	assert.match(yaml, /kind: tabs/);
+	assert.match(yaml, /label: "Trend"/);
+	assert.deepEqual(errs(yaml.replace(/^schema_version: 1/m, 'schema_version: 2')), []);
+	assert.ok(JSON.parse(rd('kit/examples/index.json')).apps.some((a) => a.id === 'tabs-gallery'));
+	assert.equal(JSON.parse(rd('kit/examples/capabilities.json')).rows.find((r) => r.id === 'widget.tabs').example, dir);
+});

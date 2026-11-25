@@ -1,0 +1,21 @@
+[
+  {
+    "title": "Tabs over rows",
+    "subtitle": "one pane, three tabs",
+    "icon": "line-chart",
+    "body": "",
+    "nav": {
+      "view": "tabs_rows"
+    },
+    "actions": [],
+    "kpi_label": "Total",
+    "kpi_value": 428,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "deploys",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  }
+]

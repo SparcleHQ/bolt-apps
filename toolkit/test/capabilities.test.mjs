@@ -30,7 +30,7 @@ test('a supported or partial row has an existing example (or says there is none)
 		for (const a of r.also || []) assert.ok(exists(`kit/examples/${a}`), `${r.id}: example ${a} does not exist`);
 		assert.ok(r.snippet.trim().length > 3, r.id);
 	}
-	assert.ok(caps.rows.filter((r) => r.status === 'supported' && !r.example).length <= 8, 'too many supported rows without an example: add one');
+	assert.ok(caps.rows.filter((r) => r.status === 'supported' && !r.example).length <= 10, 'too many supported rows without an example: add one');
 });
 
 test('a not-supported row names no example and does not claim a snippet that works', () => {

@@ -1,10 +1,11 @@
 {
   "schema": "capabilities-v1",
-  "about": "One row per thing an app can do. Derived from the code and schema/bolt-rules.json. Nothing here is verified in real Bolt yet.",
+  "about": "One row per thing an app can do. Derived from the code and schema/bolt-rules.json. Nothing here is verified in real Bolt yet. Every row carries since (the first Bolt that reads it, or none), older_bolt (what an older Bolt does) and a sample (example, or example_note with sample_due). A reserved row is a named extension point that is not available: lint refuses it and it is never listed as supported.",
   "status_words": [
     "supported",
     "partial",
-    "not supported"
+    "not supported",
+    "reserved"
   ],
   "rows": [
     {
@@ -16,7 +17,9 @@
       "snippet": "{\"kind\": \"card\", \"mode\": \"selected_row\", \"bind\": {\"title\": \"{{row.name}}\", \"subtitle\": \"{{row.note}}\", \"actions\": [\"copy\"]}}",
       "test": "kit/examples/widget-gallery-2/check.json",
       "limit": "One card for the selected row. Strings in bind: up to 4096 characters.",
-      "kind": "card"
+      "kind": "card",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "widget.markdown",
@@ -30,7 +33,9 @@
       "kind": "markdown",
       "also": [
         "pulse-feed"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "widget.entity_preview",
@@ -47,7 +52,9 @@
         "pulse-feed",
         "coroot",
         "obs"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "widget.chart",
@@ -63,7 +70,9 @@
         "chart-template",
         "expense-tracker",
         "obs"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "widget.table",
@@ -79,7 +88,9 @@
         "table-template",
         "coroot",
         "obs"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "widget.cards",
@@ -94,7 +105,9 @@
       "also": [
         "coroot",
         "obs"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "widget.detail",
@@ -105,7 +118,9 @@
       "snippet": "{\"kind\": \"detail\", \"mode\": \"selected_row\", \"bind\": {\"title\": \"{{row.service}}\"}}",
       "test": "kit/examples/widget-gallery/check.json",
       "limit": "Label and value fields of the selected row.",
-      "kind": "detail"
+      "kind": "detail",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "widget.json_tree",
@@ -119,7 +134,9 @@
       "kind": "json_tree",
       "also": [
         "json-tree-browser"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "widget.diff",
@@ -134,7 +151,9 @@
       "also": [
         "pipeline-board",
         "repo-radar"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "widget.image_grid",
@@ -145,7 +164,9 @@
       "snippet": "{\"kind\": \"image_grid\", \"mode\": \"list_data\", \"bind\": {\"src\": \"{{row.src}}\", \"caption\": \"{{row.name}}\", \"columns\": 3}}",
       "test": "kit/examples/widget-gallery-2/check.json",
       "limit": "1 to 8 columns. Inline data:image only (png, jpeg, gif, webp, avif, bmp), 1 MiB each and 4 MiB per render; remote images never load in a personal app. A tile is a square, cropped. Clicking a tile asks the launcher to open the tile's src as a link; an inline image is not one, so read it as a refusal and caption every tile instead (from the launcher source, not seen running).",
-      "kind": "image_grid"
+      "kind": "image_grid",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "widget.entity_preview_image",
@@ -155,7 +176,9 @@
       "example": "kit/examples/script-template",
       "snippet": "{\"kind\": \"entity_preview\", \"mode\": \"selected_row\", \"bind\": {\"title\": \"{{row.title}}\", \"image_url\": \"{{row.img1}}{{row.img2}}\"}}",
       "test": "kit/python/tests/test_script_template_live.py",
-      "limit": "The selected row's picture draws above the title, but as a 40 pixel square avatar by design of the entity preview (181 gives a User App no large variant): for a large picture use a markdown pane (row markdown.inline_picture), or from Bolt 182 the entity_preview hero (row widget.entity_preview_hero). image_url must expand to an inline data:image (up to 1 MiB); a web address draws nothing. A row text field is cut at 4,000 characters, so a picture of more than about 3 KB is split over fields and joined in the template. Read from the launcher source and sample runs, not seen in a running Bolt."
+      "limit": "The selected row's picture draws above the title, but as a 40 pixel square avatar by design of the entity preview (181 gives a User App no large variant): for a large picture use a markdown pane (row markdown.inline_picture), or from Bolt 182 the entity_preview hero (row widget.entity_preview_hero). image_url must expand to an inline data:image (up to 1 MiB); a web address draws nothing. A row text field is cut at 4,000 characters, so a picture of more than about 3 KB is split over fields and joined in the template. Read from the launcher source and sample runs, not seen in a running Bolt.",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "widget.entity_preview_hero",
@@ -165,7 +188,9 @@
       "example": "kit/examples/hero-gallery",
       "snippet": "{\"kind\": \"entity_preview\", \"mode\": \"selected_row\", \"bind\": {\"hero\": {\"src\": \"{{row.img1}}{{row.img2}}\", \"alt\": \"{{row.hero_alt}}\", \"caption\": \"{{row.hero_caption}}\", \"credit\": \"{{row.hero_credit}}\"}, \"title\": \"{{row.title}}\", \"body\": \"{{row.body}}\"}}",
       "test": "kit/python/tests/test_hero.py",
-      "limit": "Needs Bolt 182. A full-width picture above the tile and title, aspect kept, at most 360 px high, with a rounded frame, an optional caption and credit line (caption, alt and credit at most 200 characters each). src must expand to an inline data:image (png, jpeg, gif, webp, avif or bmp, up to 1 MiB); a web address is blocked, and a missing or invalid src draws no hero and leaves the pane as it was. src is a template that may join at most 16 {{ }} references (4096 characters), and a row text field is cut at 4,000 characters, so a picture can take at most 16 fields: about 47 KB. The stdlib cannot resize, so give kit.hero_fields() an already small png, jpeg, gif or webp (it refuses avif and bmp bytes, which Bolt takes: pass a data:image/avif;base64 string and it is split as it is) (it refuses one that needs more than 16 parts: use a smaller picture). A Bolt 0.1.181 REFUSES THE WHOLE PACK when one app uses hero (\"unknown key for a entity_preview pane\"), and a local schema_version 1 file only warns and shows no hero: so bolt-app.json must say min_bolt_version 0.1.182 (a proposal: Bolt does not read it, bolt-apps lint, check and pack require it, and the pack carries it in its listing) and the pack must go only to people on Bolt 182 or newer. image_url stays the 40 pixel avatar. From the Bolt 182 source and sample runs, not seen in a running Bolt 182."
+      "limit": "Needs Bolt 182. A full-width picture above the tile and title, aspect kept, at most 360 px high, with a rounded frame, an optional caption and credit line (caption, alt and credit at most 200 characters each). src must expand to an inline data:image (png, jpeg, gif, webp, avif or bmp, up to 1 MiB); a web address is blocked, and a missing or invalid src draws no hero and leaves the pane as it was. src is a template that may join at most 16 {{ }} references (4096 characters), and a row text field is cut at 4,000 characters, so a picture can take at most 16 fields: about 47 KB. The stdlib cannot resize, so give kit.hero_fields() an already small png, jpeg, gif or webp (it refuses avif and bmp bytes, which Bolt takes: pass a data:image/avif;base64 string and it is split as it is) (it refuses one that needs more than 16 parts: use a smaller picture). A Bolt 0.1.181 REFUSES THE WHOLE PACK when one app uses hero (\"unknown key for a entity_preview pane\"), and a local schema_version 1 file only warns and shows no hero: so bolt-app.json must say min_bolt_version 0.1.182 (a proposal: Bolt does not read it, bolt-apps lint, check and pack require it, and the pack carries it in its listing) and the pack must go only to people on Bolt 182 or newer. image_url stays the 40 pixel avatar. From the Bolt 182 source and sample runs, not seen in a running Bolt 182.",
+      "since": "0.1.182",
+      "older_bolt": "A Bolt older than 0.1.182 refuses the whole pack that uses it; set min_bolt_version 0.1.182."
     },
     {
       "id": "markdown.inline_picture",
@@ -175,7 +200,9 @@
       "example": "kit/examples/script-template",
       "snippet": "{\"kind\": \"markdown\", \"mode\": \"selected_row\", \"bind\": {\"body\": \"![{{row.hero_alt}}]({{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}){{row.hero_lines}}\", \"actions\": [\"open\", \"copy\"]}}",
       "test": "kit/python/tests/test_script_template_live.py",
-      "limit": "A markdown body keeps an inline data:image (png, jpeg, gif, webp, avif, bmp; up to 1 MiB, 4 MiB a render) and draws it at its own size, shrunk to the pane width with its proportions kept (Tailwind base rule max-width 100%, height auto; no crop, no fixed height); a tall picture scrolls in the pane. The bind.body template is limited to 16384 characters (the expanded body is not), so about 24 fields of 4,000 characters (a 400 pixel wide JPEG of 70 KB); keep it to one row (the detail), not every list row. Text from an API must be escaped for markdown (script-template md_escape) or its brackets, links and html act as markdown. Read from the pane source, a vitest on the real MarkdownWidget and a browser measurement of the same CSS, not seen in a running Bolt."
+      "limit": "A markdown body keeps an inline data:image (png, jpeg, gif, webp, avif, bmp; up to 1 MiB, 4 MiB a render) and draws it at its own size, shrunk to the pane width with its proportions kept (Tailwind base rule max-width 100%, height auto; no crop, no fixed height); a tall picture scrolls in the pane. The bind.body template is limited to 16384 characters (the expanded body is not), so about 24 fields of 4,000 characters (a 400 pixel wide JPEG of 70 KB); keep it to one row (the detail), not every list row. Text from an API must be escaped for markdown (script-template md_escape) or its brackets, links and html act as markdown. Read from the pane source, a vitest on the real MarkdownWidget and a browser measurement of the same CSS, not seen in a running Bolt.",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "data.web_picture",
@@ -185,7 +212,9 @@
       "example": "kit/examples/script-template",
       "snippet": "{\"kind\": \"cards\", \"mode\": \"list_data\", \"bind\": {\"layout\": \"grid\", \"title\": \"{{row.title}}\", \"image\": \"{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}\"}}",
       "test": "kit/python/tests/test_script_template_live.py",
-      "limit": "The app cannot point a pane at a web picture (every pane loads inline data: images only). Its script fetches a small JPEG from an allowlisted host (name the picture host in hosts, not only the API host), checks it, and puts it in the row as data:image/jpeg;base64 split over img1 to img4 (about 12 KB of picture in all). Ask the host for a small size; one that is too big is dropped, the row stays. Read from the launcher source and sample runs, not seen in a running Bolt."
+      "limit": "The app cannot point a pane at a web picture (every pane loads inline data: images only). Its script fetches a small JPEG from an allowlisted host (name the picture host in hosts, not only the API host), checks it, and puts it in the row as data:image/jpeg;base64 split over img1 to img4 (about 12 KB of picture in all). Ask the host for a small size; one that is too big is dropped, the row stays. Read from the launcher source and sample runs, not seen in a running Bolt.",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "widget.no_app_data",
@@ -202,7 +231,9 @@
         "weather",
         "date",
         "calc"
-      ]
+      ],
+      "since": "none",
+      "older_bolt": "Not available in any Bolt: lint refuses it."
     },
     {
       "id": "widget.map",
@@ -215,7 +246,9 @@
       "limit": "Draws the launcher own map, not your rows; any bind key is refused. No message is shown.",
       "kinds": [
         "map"
-      ]
+      ],
+      "since": "none",
+      "older_bolt": "Not available in any Bolt: lint refuses it."
     },
     {
       "id": "widget.chart_182",
@@ -225,7 +258,9 @@
       "example": "kit/examples/chart-types",
       "snippet": "{\"kind\": \"chart\", \"mode\": \"list_data\", \"bind\": {\"type\": \"pie\", \"x\": \"label\", \"y\": \"value\", \"label\": \"Deploys by day\"}}",
       "test": "toolkit/test/charts-182.test.mjs",
-      "limit": "Needs Bolt 0.1.182: set min_bolt_version 0.1.182 in bolt-app.json, because a 181 refuses the whole pack. Pie and donut take positive values and at most 12 slices; bind.series is up to 4 lines on line or area, with no color."
+      "limit": "Needs Bolt 0.1.182: set min_bolt_version 0.1.182 in bolt-app.json, because a 181 refuses the whole pack. Pie and donut take positive values and at most 12 slices; bind.series is up to 4 lines on line or area, with no color.",
+      "since": "0.1.182",
+      "older_bolt": "A Bolt older than 0.1.182 refuses the whole pack that uses it; set min_bolt_version 0.1.182."
     },
     {
       "id": "widget.heatmap",
@@ -236,7 +271,9 @@
       "snippet": "{\"kind\": \"heatmap\", \"mode\": \"list_data\", \"bind\": {\"x\": \"hour\", \"y\": \"day\", \"value\": \"requests\"}}",
       "test": "kit/examples/chart-types/check.json",
       "limit": "Needs Bolt 0.1.182 (min_bolt_version 0.1.182). Grid, matrix or calendar data, 24 columns and 24 rows at most. Drawn by no real Bolt in this repo yet: the app is lint and fixture tested only.",
-      "kind": "heatmap"
+      "kind": "heatmap",
+      "since": "0.1.182",
+      "older_bolt": "A Bolt older than 0.1.182 refuses the whole pack that uses it; set min_bolt_version 0.1.182."
     },
     {
       "id": "widget.gauge",
@@ -247,7 +284,9 @@
       "snippet": "{\"kind\": \"gauge\", \"mode\": \"selected_row\", \"bind\": {\"value\": \"{{row.score}}\", \"max\": \"100\", \"shape\": \"half\"}}",
       "test": "kit/examples/chart-types/check.json",
       "limit": "Needs Bolt 0.1.182 (min_bolt_version 0.1.182). bind.value is required; the selected row is shown. Drawn by no real Bolt in this repo yet: the app is lint and fixture tested only.",
-      "kind": "gauge"
+      "kind": "gauge",
+      "since": "0.1.182",
+      "older_bolt": "A Bolt older than 0.1.182 refuses the whole pack that uses it; set min_bolt_version 0.1.182."
     },
     {
       "id": "layout.list_widget",
@@ -257,7 +296,9 @@
       "example": "kit/examples/portal-template",
       "snippet": "presentation:\n  widget: list",
       "test": "kit/examples/portal-template/check.json",
-      "limit": "Only validated: it names the row layout and does not change the left list. With table, cards or detail and no right_widget the right panel opens empty (from the source, not run live). Use list."
+      "limit": "Only validated: it names the row layout and does not change the left list. With table, cards or detail and no right_widget the right panel opens empty (from the source, not run live). Use list.",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "layout.views",
@@ -270,7 +311,9 @@
       "limit": "At most {rules:views.max} entries in presentation.views; the overview needs no entry (the engine uses 7 plus an overview entry); view ids match {rules:views.name_pattern}.",
       "also": [
         "pipeline-board"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "nav.drill",
@@ -283,7 +326,9 @@
       "limit": "One Enter. A nav arg is one plain token matching {rules:nav_token_pattern}; no slash. A chain to another app, or a chain a script writes on a row, only pre-fills the next command (second Enter); a fixed-text chain to the same app written in the app file runs directly. Use nav to drill.",
       "also": [
         "obs"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "nav.back",
@@ -296,7 +341,9 @@
       "limit": "A nav row carries no actions. The first row of a drilled list is selected when it opens: give your Back row a pane text (title, subtitle, body), or a detail, card, diff or json_tree pane draws only dash placeholders. The engine does it for you (it declares a `note` view); a script app passes `kit.back_row(subtitle, view=kit.NOTE_VIEW)` and declares a `note` markdown view. check fails a selectable row that binds nothing (`pane_blank_row`).",
       "also": [
         "branch-explorer"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "nav.children",
@@ -310,7 +357,9 @@
       "also": [
         "branch-explorer",
         "pipeline-board"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "nav.id_field",
@@ -328,7 +377,9 @@
       "example_keys": [
         "id_field",
         "parent_field"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "search.filter_word",
@@ -341,7 +392,9 @@
       "limit": "The word filters title, subtitle, badge and the first 5 fields. It is the second word typed; there is no filter field in a row.",
       "also": [
         "pulse-feed"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "search.searchable",
@@ -351,7 +404,9 @@
       "example": "kit/examples/table-template",
       "snippet": "(nothing to set: Bolt always does this)",
       "test": "kit/examples/table-template/check.json",
-      "limit": "Bolt always filters the rows of the last run as you type: every term must be in the title or subtitle, and a Run row is added. presentation.searchable is accepted and does nothing."
+      "limit": "Bolt always filters the rows of the last run as you type: every term must be in the title or subtitle, and a Run row is added. presentation.searchable is accepted and does nothing.",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "cache.fresh_stale",
@@ -365,7 +420,9 @@
       "also": [
         "coroot",
         "obs"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "pane.per_row",
@@ -378,7 +435,9 @@
       "limit": "Works when the row `pane` names a declared view whose right_widget has mode selected_row and kind entity_preview, detail, markdown, json_tree, chart, table or card. Ignored for mode list_data, a view with no right_widget, or kind diff, cards or image_grid.",
       "also": [
         "pipeline-board"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "pane.tiles",
@@ -393,7 +452,35 @@
         "acme-dash",
         "expense-tracker",
         "obs"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
+    },
+    {
+      "id": "pane.tile_visuals",
+      "group": "panes",
+      "name": "Tile visuals: ring, bullet, number, spark, strip, stack, and a sparkline limit",
+      "status": "supported",
+      "example_note": "no example yet; copy the snippet",
+      "snippet": "\"bind\": {\"layout\": \"tiles\", \"value\": \"{{row.value}}\", \"max\": \"{{row.max}}\", \"visual\": \"bullet\", \"target\": \"{{row.target}}\", \"trend\": \"{{row.trend}}\", \"limit\": \"{{row.limit}}\"}",
+      "test": "toolkit/test/tiles-184.test.mjs",
+      "limit": "Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). visual is meter (default), ring, bullet, number, spark, strip or stack. A donut is the ring: there is no other shape. ring, bullet and meter need a max; target and limit are numbers or {{row.x}} references; anything else draws the plain meter. strip and stack read the trend list: strip cells are 0 ok, 1 warn, 2 error (last 30 kept); stack takes up to 6 positive parts. A multi-series line or a full chart is not a tile: use a chart pane inside a stack pane, or its own view. Tiles in entity_preview tiles_above do not read these keys.",
+      "since": "0.1.184",
+      "older_bolt": "A Bolt older than 0.1.184 refuses the whole pack that uses it (a new kind, or a key in a schema_version 2 pack); a personal schema_version 1 file warns and ignores the key. Set min_bolt_version 0.1.184.",
+      "sample_due": "184.1"
+    },
+    {
+      "id": "pane.tile_visual_from",
+      "group": "panes",
+      "name": "A grid that mixes tile visuals, one per row",
+      "status": "supported",
+      "snippet": "\"bind\": {\"layout\": \"tiles\", \"visual_from\": \"kpi_visual\", \"value\": \"{{row.kpi_value}}\", \"max\": \"{{row.kpi_max}}\", \"target\": \"{{row.target}}\", \"trend\": \"{{row.trend}}\", \"limit\": \"{{row.limit}}\"}",
+      "test": "toolkit/test/tiles-184-per-row.test.mjs",
+      "limit": "Bolt 0.1.184 or newer, with min_bolt_version 0.1.184. visual_from names a row field (up to 200 characters) whose value is meter, ring, bullet, number, spark, strip or stack. An unknown, missing or non-text value uses visual, then the plain meter; it never fails. Row order and the selected tile are unchanged; target and limit still work per row.",
+      "example_note": "no example yet; copy the snippet",
+      "since": "0.1.184",
+      "older_bolt": "A Bolt older than 0.1.184 refuses the whole pack that uses it (a new kind, or a key in a schema_version 2 pack); a personal schema_version 1 file warns and ignores the key. Set min_bolt_version 0.1.184.",
+      "sample_due": "184.1"
     },
     {
       "id": "actions.footer",
@@ -408,7 +495,9 @@
         "pulse-feed",
         "cli-wrapper-template",
         "obs"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "actions.run",
@@ -422,7 +511,9 @@
       "example_note": "no example yet; copy the snippet",
       "keys": [
         "kind: run"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "actions.icon",
@@ -436,7 +527,9 @@
       "example_note": "no example yet; copy the snippet",
       "keys": [
         "action_icon"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "actions.maps_link",
@@ -446,7 +539,9 @@
       "example": "kit/examples/places-list",
       "snippet": "\"url\": \"https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=17/{lat}/{lon}\"",
       "test": "kit/examples/places-list/check.json",
-      "limit": "A personal app cannot draw the map pane; the row Open button opens the place in a browser."
+      "limit": "A personal app cannot draw the map pane; the row Open button opens the place in a browser.",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "actions.row",
@@ -461,7 +556,9 @@
         "places-list",
         "around",
         "sky-watch"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "icons.names",
@@ -471,7 +568,9 @@
       "example": "kit/examples/portal-template",
       "snippet": "\"icon\": \"globe\"",
       "test": "kit/python/tests/test_review_engine.py",
-      "limit": "Icon names are case-sensitive: config.json names come from kit/schema/icons.json; footer-action icons come from actions.icons."
+      "limit": "Icon names are case-sensitive: config.json names come from kit/schema/icons.json; footer-action icons come from actions.icons.",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "inputs.form",
@@ -484,7 +583,9 @@
       "limit": "Types text, number, date, select, toggle. Bad input shows one \"Not saved\" row and saves nothing.",
       "also": [
         "unit-convert"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "inputs.secret",
@@ -495,7 +596,9 @@
       "snippet": "(not used by any example; read the key with get_secret instead)",
       "test": "toolkit/test/bolt-rules.test.mjs",
       "limit": "The launcher accepts type secret but the value reaches the script as a plain word and the run log is not measured. Use the keychain or a 0600 .env file.",
-      "example_note": "no example: not recommended"
+      "example_note": "no example: not recommended",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "api.rest_list",
@@ -519,7 +622,9 @@
         "places-list",
         "json-tree-browser",
         "sky-watch"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "api.id_hydrate",
@@ -538,7 +643,9 @@
       ],
       "also": [
         "pulse-feed"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "api.query_key_auth",
@@ -548,7 +655,9 @@
       "example": "kit/examples/feed-template",
       "snippet": "\"api\": {\"auth_in\": \"query\", \"auth_param\": \"api_key\"}",
       "test": "kit/python/tests/test_round2_engine.py",
-      "limit": "The key is stripped from the answer before anything is cached or shown. Prefer a header when the API allows it."
+      "limit": "The key is stripped from the answer before anything is cached or shown. Prefer a header when the API allows it.",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "api.header_auth",
@@ -558,7 +667,9 @@
       "example": "kit/examples/portal-template",
       "snippet": "\"api\": {\"key_env\": \"EXAMPLE_API_KEY\", \"auth_header\": \"Authorization\", \"auth_prefix\": \"Bearer \"}",
       "test": "kit/examples/portal-template/check.json",
-      "limit": "The key goes only to the host of base_url."
+      "limit": "The key goes only to the host of base_url.",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "api.keyless",
@@ -568,7 +679,9 @@
       "example": "kit/examples/lookup-template",
       "snippet": "\"api\": {\"base_url\": \"https://api.open-meteo.com\", \"fixture_default\": false}",
       "test": "kit/examples/lookup-template/check.json",
-      "limit": "Leave key_env out."
+      "limit": "Leave key_env out.",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "api.date_tokens",
@@ -584,7 +697,9 @@
       ],
       "example_keys": [
         "{today"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "api.object_keyed_lists",
@@ -600,7 +715,9 @@
       ],
       "example_keys": [
         "flatten"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "api.second_host",
@@ -610,7 +727,9 @@
       "example": "kit/examples/lookup-template",
       "snippet": "\"api\": {\"allowed_hosts\": [\"geocoding-api.open-meteo.com\"]}",
       "test": "kit/examples/lookup-template/check.json",
-      "limit": "Full addresses must be https on the base_url host or a host in allowed_hosts. The key is never sent to a second host."
+      "limit": "Full addresses must be https on the base_url host or a host in allowed_hosts. The key is never sent to a second host.",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "api.require",
@@ -620,7 +739,9 @@
       "example": "kit/examples/lookup-template",
       "snippet": "\"require\": [\"current\"]",
       "test": "kit/examples/lookup-template/check.json",
-      "limit": "On an object endpoint; an answer without them counts as failed, never as zero."
+      "limit": "On an object endpoint; an answer without them counts as failed, never as zero.",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "api.chain",
@@ -630,7 +751,9 @@
       "example": "kit/examples/lookup-template",
       "snippet": "\"lookup\": {\"steps\": [\"geocode\", \"weather\"]}",
       "test": "kit/examples/lookup-template/check.json",
-      "limit": "Lookup mode only: {earlier_step.field} and {query}; values are URL-quoted. Views mode cannot call a per-id endpoint."
+      "limit": "Lookup mode only: {earlier_step.field} and {query}; values are URL-quoted. Views mode cannot call a per-id endpoint.",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "api.cli",
@@ -644,7 +767,9 @@
       "snippet_note": true,
       "also": [
         "system-glance"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "api.local_http",
@@ -654,7 +779,9 @@
       "example": "kit/examples/local-service-template",
       "snippet": "http:\n  port: 11434\n  request: { method: GET, path: /api/tags }\n  parse: json",
       "test": "toolkit/test/personal.test.mjs",
-      "limit": "Loopback only, one GET or POST, no script, no secrets. Bolt reserves ports 13017 to 13027 and 15432 to 15441."
+      "limit": "Loopback only, one GET or POST, no script, no secrets. Bolt reserves ports 13017 to 13027 and 15432 to 15441.",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "api.file",
@@ -665,7 +792,9 @@
       "snippet": "(path comes from the query word; see insights.py)",
       "test": "kit/examples/file-insights-template/check.json",
       "limit": "Declare files; caps on size; a path cannot travel in a nav arg.",
-      "snippet_note": true
+      "snippet_note": true,
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "api.mcp",
@@ -676,7 +805,9 @@
       "snippet": "(see the MCP workaround script in ENGINE.md)",
       "test": "toolkit/test/cold-agent.test.mjs",
       "limit": "No native MCP runtime. A bridge script can call one tool over stdio; tested only against a stand-in server, not a real MCP server.",
-      "example_note": "snippet in ENGINE.md"
+      "example_note": "snippet in ENGINE.md",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "secrets.private_key",
@@ -691,7 +822,9 @@
         "around",
         "repo-radar",
         "obs"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "secrets.redaction",
@@ -702,7 +835,9 @@
       "snippet": "kit.redact_tree(answer, [key], auth_param)",
       "test": "kit/python/tests/test_round2_security.py",
       "limit": "Strips the key (as written, URL-encoded, hex, base64, any letter case), user:password@ and credential-named query values, also inside nested, fragment and encoded links. Cannot strip: HTTP Basic base64 at another alignment, HTML entities, colon-separated hex, a split key, a key held as a JSON number, a value encoded twice. A key under 3 characters is refused.",
-      "snippet_note": true
+      "snippet_note": true,
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "rows.failure_channel",
@@ -716,7 +851,9 @@
       "keys": [
         "stderr_cut_bytes"
       ],
-      "example_note": "see the kit error_row"
+      "example_note": "see the kit error_row",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "nav.binding",
@@ -732,7 +869,9 @@
       ],
       "example_keys": [
         "view_arg"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "nav.keyboard",
@@ -746,7 +885,9 @@
       "keys": [
         "stack_max"
       ],
-      "example_note": "automatic"
+      "example_note": "automatic",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "drill.cache",
@@ -760,7 +901,9 @@
       "keys": [
         "drill_ttl_ms"
       ],
-      "example_note": "automatic"
+      "example_note": "automatic",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "runtime.vars",
@@ -774,7 +917,9 @@
       "keys": [
         "limit_var"
       ],
-      "example_note": "see the engine app files"
+      "example_note": "see the engine app files",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "rows.emits_file",
@@ -788,7 +933,9 @@
       "keys": [
         "row_pane_kinds"
       ],
-      "example_note": "no example yet"
+      "example_note": "no example yet",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "actions.primary",
@@ -802,7 +949,9 @@
       "keys": [
         "scan_max"
       ],
-      "example_note": "no example yet"
+      "example_note": "no example yet",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "pane.chart_mixed",
@@ -815,7 +964,33 @@
       "limit": "A row without the y field is skipped, so one list can hold chart rows and plain rows. The unit is cut at {rules:widgets.chart_unit_cut} characters.",
       "keys": [
         "chart_unit_cut"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
+    },
+    {
+      "id": "pane.chart_limit_marker",
+      "group": "panes",
+      "name": "Chart limit line and marks",
+      "status": "supported",
+      "example": "kit/examples/widget-gallery",
+      "snippet": "\"bind\": {\"type\": \"bar\", \"x\": \"label\", \"y\": \"value\", \"limit\": 80, \"limit_label\": \"capacity\", \"marker\": {\"field\": \"event\"}}",
+      "test": "toolkit/test/annotations-184.test.mjs",
+      "limit": "Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). limit is a number or a {{row.x}} reference to the selected row, drawn as a dashed line; limit_label is clipped to 24 characters. marker names a row field: rows where it is set (not empty, 0, false or null) get a labelled vertical mark, at most 8, one row per point only. A limit far outside the data stays off the axis with a triangle. Pie and donut show a note instead. Not verified in real Bolt.",
+      "since": "0.1.184",
+      "older_bolt": "A Bolt older than 0.1.184 refuses the whole pack that uses it (a new kind, or a key in a schema_version 2 pack); a personal schema_version 1 file warns and ignores the key. Set min_bolt_version 0.1.184."
+    },
+    {
+      "id": "pane.table_bars_mark",
+      "group": "panes",
+      "name": "Table column bars and tone glyph",
+      "status": "supported",
+      "example": "kit/examples/widget-gallery",
+      "snippet": "\"columns\": [{\"field\": \"commits\", \"label\": \"Commits\", \"bars\": true}, {\"field\": \"health\", \"label\": \"Health\", \"mark\": \"tone\"}]",
+      "test": "toolkit/test/annotations-184.test.mjs",
+      "limit": "Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). bars draws an inline bar scaled to the largest shown value of a numeric column (zero, negative and non-numbers draw none). mark tone reads the cell as a tone word (ok, warn, error and so on) and draws a glyph whose shape tells the tone. Not verified in real Bolt.",
+      "since": "0.1.184",
+      "older_bolt": "A Bolt older than 0.1.184 refuses the whole pack that uses it (a new kind, or a key in a schema_version 2 pack); a personal schema_version 1 file warns and ignores the key. Set min_bolt_version 0.1.184."
     },
     {
       "id": "run.isolation",
@@ -829,7 +1004,9 @@
       "keys": [
         "GIT_OPTIONAL_LOCKS"
       ],
-      "example_note": "automatic"
+      "example_note": "automatic",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "sample.mode",
@@ -843,7 +1020,9 @@
       "also": [
         "acme-dash",
         "script-template"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "parallel.sources",
@@ -860,7 +1039,9 @@
         "around",
         "pulse-feed",
         "sky-watch"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "permissions.block",
@@ -871,7 +1052,9 @@
       "snippet": "permissions:\n  network:\n    - { host: api.example.com }",
       "test": "toolkit/test/cold-agent.test.mjs",
       "limit": "Declared and shown at install and compared with what the files use (permissions_differ). Bolt does not enforce it at run time (link host limits will start applying when the device wiring ships).",
-      "example_note": "no example yet"
+      "example_note": "no example yet",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "security.sandbox",
@@ -881,7 +1064,9 @@
       "example": null,
       "snippet": "(none)",
       "test": "toolkit/test/docs-drift.test.mjs",
-      "limit": "Not shipped. A personal script runs as you, with your files and network. Confinement is planned. Install only code you have read."
+      "limit": "Not shipped. A personal script runs as you, with your files and network. Confinement is planned. Install only code you have read.",
+      "since": "none",
+      "older_bolt": "Not available in any Bolt: lint refuses it."
     },
     {
       "id": "platform.windows",
@@ -892,7 +1077,9 @@
       "snippet": "\"windows\": \"python {{scripts_dir}}/my-app__engine.py {{view}} {{arg}}\"",
       "test": "toolkit/test/kit.test.mjs",
       "limit": "Unproven: the command table accepts a windows entry and check can run fixtures labelled windows, but nothing has been run on Windows.",
-      "example_note": "see any example app file"
+      "example_note": "see any example app file",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "platform.chip_equals_id",
@@ -902,7 +1089,9 @@
       "example": "kit/examples/portal-template",
       "snippet": "chip: portal-template",
       "test": "toolkit/test/namespacing.test.mjs",
-      "limit": "The app file's chip must be its id (`chip_not_id` is an error in lint --personal, verify and pack). Bolt 181 and main look apps up by id, so a different chip is offered in the launcher but never runs: an empty list and no error."
+      "limit": "The app file's chip must be its id (`chip_not_id` is an error in lint --personal, verify and pack). Bolt 181 and main look apps up by id, so a different chip is offered in the launcher but never runs: an empty list and no error.",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "api.start_states",
@@ -912,7 +1101,9 @@
       "example": "kit/examples/portal-template",
       "snippet": "\"on_missing_key\": \"sample\"",
       "test": "toolkit/test/namespacing.test.mjs",
-      "limit": "api.on_missing_key is setup (default: no key shows one setup row, no sample data) or sample (no key shows the labelled sample data, with the label and key hint on a tile in tile views). A key file with open permissions keeps its own row. BOLT_APP_FIXTURE=1 always shows sample data. Sample label by pane kind: a tiles grid carries it on the first tile (badge, footer or note); an entity_preview or markdown list gets a visible SAMPLE DATA row and a key-hint row; chart, table, diff, json_tree, image_grid, detail and card views carry it in the first row's subtitle (a label row there would be a data point or a blank pane)."
+      "limit": "api.on_missing_key is setup (default: no key shows one setup row, no sample data) or sample (no key shows the labelled sample data, with the label and key hint on a tile in tile views). A key file with open permissions keeps its own row. BOLT_APP_FIXTURE=1 always shows sample data. Sample label by pane kind: a tiles grid carries it on the first tile (badge, footer or note); an entity_preview or markdown list gets a visible SAMPLE DATA row and a key-hint row; chart, table, diff, json_tree, image_grid, detail and card views carry it in the first row's subtitle (a label row there would be a data point or a blank pane).",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "platform.reapprove",
@@ -922,7 +1113,9 @@
       "example": "kit/examples/portal-template",
       "snippet": "Settings, Desktop App, User Apps, expand the app, Review and accept",
       "test": "toolkit/test/namespacing.test.mjs",
-      "limit": "A personal app is approved per set of files. Every reship changes the files, so approve again; the first run asks too. On 181 pressing Enter on an unapproved app shows an empty list (fixed on a later build)."
+      "limit": "A personal app is approved per set of files. Every reship changes the files, so approve again; the first run asks too. On 181 pressing Enter on an unapproved app shows an empty list (fixed on a later build).",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "platform.share_code",
@@ -931,7 +1124,9 @@
       "status": "not supported",
       "snippet": "none: each pack is self-contained (its own copy of the kit)",
       "test": "toolkit/test/namespacing.test.mjs",
-      "limit": "On 181 every app ships its own files under scripts/ID__name, kit included, so a kit fix needs a re-vendor and a reship of each app (a later upgrade-kit command is planned). A shared library installed once is a Bolt 182 feature, not available now."
+      "limit": "On 181 every app ships its own files under scripts/ID__name, kit included, so a kit fix needs a re-vendor and a reship of each app (a later upgrade-kit command is planned). A shared library installed once is a Bolt 182 feature, not available now.",
+      "since": "none",
+      "older_bolt": "Not available in any Bolt: lint refuses it."
     },
     {
       "id": "nav.free_text",
@@ -944,7 +1139,9 @@
       "limit": "The launcher draws such a run with the APP-LEVEL right_widget, not a view's, so that widget must tolerate rows with no value: use a selected_row entity_preview (tile on top), never a tiles grid over mixed rows. check runs your sample cases with a free-text first word and refuses a tiles grid there (tile_row_without_value).",
       "also": [
         "sky-watch"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "nav.typed_word_and_drill",
@@ -957,7 +1154,9 @@
       "limit": "Not in one app when the API must be asked per typed word: lookup mode has {query} but no drill or Back, views mode has drill and Back but its first word is a view, never a query (an unknown first word shows the overview). What works in views mode: a view name then one word filters that list inside the app, and Enter drills through children. Otherwise build two apps (two chips). ENGINE.md, Two shapes of app.",
       "also": [
         "lookup-template"
-      ]
+      ],
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "actions.lookup_row",
@@ -967,7 +1166,9 @@
       "example": "kit/examples/lookup-template",
       "snippet": "\"lookup\": {\"rows\": [{\"title\": \"{place.name}\", \"url\": \"https://example.com/{place.id}\"}]}",
       "test": "toolkit/test/cold-run.test.mjs",
-      "limit": "Open (url) and Copy only: no drill, no Back, no extra actions. In a chained lookup (steps and rows) a row's copy is ignored and Copy copies the row text; check warns (config_copy_ignored). With a single endpoint and an item, item.copy works."
+      "limit": "Open (url) and Copy only: no drill, no Back, no extra actions. In a chained lookup (steps and rows) a row's copy is ignored and Copy copies the row text; check warns (config_copy_ignored). With a single endpoint and an item, item.copy works.",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "sample.offline_only",
@@ -977,7 +1178,9 @@
       "example_note": "no shipped example sets api.fixture_default true; the recipe is in ENGINE.md",
       "snippet": "\"api\": {\"base_url\": \"https://example.invalid\", \"fixture_default\": true, \"fixture_file\": \"fixtures.json\"}",
       "test": "toolkit/test/cold-run.test.mjs",
-      "limit": "Sample-only by design: fixture_default true, a base_url that cannot resolve, no key_env. ship and doctor print the same start mode. The data is signed with the pack."
+      "limit": "Sample-only by design: fixture_default true, a base_url that cannot resolve, no key_env. ship and doctor print the same start mode. The data is signed with the pack.",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "lookup.text_only",
@@ -987,7 +1190,9 @@
       "example": "kit/examples/lookup-template",
       "snippet": "{\"kind\": \"entity_preview\", \"mode\": \"selected_row\", \"bind\": {\"title\": \"{{row.title}}\", \"subtitle\": \"{{row.subtitle}}\", \"tiles_above\": {\"title\": \"{{row.kpi_label}}\", \"value\": \"{{row.kpi_value}}\"}, \"body\": \"{{row.body}}\", \"actions\": [\"open\", \"copy\"]}}",
       "test": "kit/python/tests/test_cold_run2_engine.py",
-      "limit": "tiles_above draws only for a row with a number, so rows with text only draw no tile. Give every text-only row a body. A tiles grid (cards, bind.layout tiles) over rows with no number is an error in check. From source and sample runs, not seen in a running Bolt."
+      "limit": "tiles_above draws only for a row with a number, so rows with text only draw no tile. Give every text-only row a body. A tiles grid (cards, bind.layout tiles) over rows with no number is an error in check. From source and sample runs, not seen in a running Bolt.",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
     },
     {
       "id": "kit.shared",
@@ -997,7 +1202,9 @@
       "example": "kit/examples/unit-convert",
       "snippet": "WANT_SHARED = False   # in the loader block of the app's script: True runs Bolt's shared kit even when it differs from the app's own copy",
       "test": "toolkit/test/shared-kit.test.mjs",
-      "limit": "Needs Bolt 182; on 181 the app runs its own vendored kit. Bolt offers BOLT_APP_SHARED_DIR only after a hash check against a table compiled into Bolt, and the loader checks the folder again; any doubt means the app's own copy. WANT_SHARED = True trusts whoever controls that variable (Bolt does). Not seen in a running Bolt; the engine is not shared; existing apps keep their own copy until their author reships with the new loader; only unit-convert has the loader so far."
+      "limit": "Needs Bolt 182; on 181 the app runs its own vendored kit. Bolt offers BOLT_APP_SHARED_DIR only after a hash check against a table compiled into Bolt, and the loader checks the folder again; any doubt means the app's own copy. WANT_SHARED = True trusts whoever controls that variable (Bolt does). Not seen in a running Bolt; the engine is not shared; existing apps keep their own copy until their author reships with the new loader; only unit-convert has the loader so far.",
+      "since": "0.1.182",
+      "older_bolt": "An older Bolt runs the app with its own vendored kit; nothing breaks."
     },
     {
       "id": "engine.once",
@@ -1007,7 +1214,284 @@
       "example": "kit/examples/acme-dash",
       "snippet": "./bolt-apps regen ~/my-apps/my-app   # an app made by new holds a short entry, not an engine copy; pack carries the engine once. An older app with its own copy: ./bolt-apps upgrade-kit ~/my-apps/my-app",
       "test": "toolkit/test/upgrade-kit.test.mjs",
-      "limit": "The pack carries the engine (`scripts/<id>__bolt_app_engine.py`), so it runs on every Bolt that runs script apps; the engine is not part of the shared kit, so Bolt 182 does not share it yet. A thin app cannot run its entry by hand outside the toolkit: use regen. upgrade-kit refuses an edited engine. Installing a converted app again asks the person to approve it again, because its command now names one more file."
+      "limit": "The pack carries the engine (`scripts/<id>__bolt_app_engine.py`), so it runs on every Bolt that runs script apps; the engine is not part of the shared kit, so Bolt 182 does not share it yet. A thin app cannot run its entry by hand outside the toolkit: use regen. upgrade-kit refuses an edited engine. Installing a converted app again asks the person to approve it again, because its command now names one more file.",
+      "since": "0.1.181",
+      "older_bolt": "Every Bolt that runs Bolt Apps reads it."
+    },
+    {
+      "id": "pane.row_sets",
+      "group": "panes",
+      "name": "Named row sets: one script run feeds several panes",
+      "status": "supported",
+      "snippet": "{\"kind\": \"cards\", \"bind\": {\"layout\": \"tiles\", \"title\": \"{{row.kpi_label}}\", \"value\": \"{{row.kpi_value}}\", \"unit\": \"{{row.kpi_unit}}\", \"subtitle\": \"{{row.kpi_note}}\", \"from\": {\"set\": \"tiles\"}}}",
+      "test": "toolkit/test/rowsets-formats-184.test.mjs",
+      "limit": "Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). A script row may carry set (^[a-z][a-z0-9_-]{0,23}$, not constructor or prototype); a pane with bind.from draws only that set's rows, narrowed by up to 3 where field-equals-value filters. Needs mode list_data on chart, table, cards, heatmap or image_grid. Tagged rows are not list rows and do not count in the selection. At most 12 sets per run; a row with an unusable set stays a list row. Only a pane that uses from splits rows. A run whose rows are all tagged has an empty list: add one untagged row (a title or a Back row) if the list should show something.",
+      "example": "kit/examples/chart-types",
+      "example_keys": [
+        "from",
+        "set"
+      ],
+      "keys": [
+        "from",
+        "set"
+      ],
+      "since": "0.1.184",
+      "older_bolt": "A Bolt older than 0.1.184 refuses the whole pack that uses it (a new kind, or a key in a schema_version 2 pack); a personal schema_version 1 file warns and ignores the key. Set min_bolt_version 0.1.184."
+    },
+    {
+      "id": "pane.number_formats",
+      "group": "panes",
+      "name": "Number formats: format, digits, locale",
+      "status": "supported",
+      "snippet": "{\"kind\": \"chart\", \"mode\": \"list_data\", \"bind\": {\"type\": \"area\", \"x\": \"label\", \"label\": \"Deploys and failures\", \"series\": [{\"y\": \"value\", \"label\": \"Deploys\"}, {\"y\": \"failed\", \"label\": \"Failed\"}], \"format\": \"compact\", \"digits\": 1, \"locale\": \"de-DE\"}}",
+      "test": "toolkit/test/rowsets-formats-184.test.mjs",
+      "limit": "Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). format is number, percent, compact, bytes (1024 steps) or duration (the value is seconds); percent writes the raw number and adds % (0.42 shows 0.42%, send 42 for 42%); digits 0 to 6; locale is a language tag of at most 35 characters. On chart, cards (tile value) and gauge, and on table columns (which also take compact, bytes and duration in format). bytes and duration carry their own unit, so unit is not added. Heatmap and detail panes take none of them.",
+      "example": "kit/examples/chart-types",
+      "example_keys": [
+        "format",
+        "digits",
+        "locale"
+      ],
+      "keys": [
+        "format",
+        "digits",
+        "locale"
+      ],
+      "since": "0.1.184",
+      "older_bolt": "A Bolt older than 0.1.184 refuses the whole pack that uses it (a new kind, or a key in a schema_version 2 pack); a personal schema_version 1 file warns and ignores the key. Set min_bolt_version 0.1.184."
+    },
+    {
+      "id": "pane.stack",
+      "group": "panes",
+      "name": "Stack: several panes in one view",
+      "status": "supported",
+      "example": "kit/examples/chart-types",
+      "example_keys": [
+        "stack",
+        "children"
+      ],
+      "keys": [
+        "stack",
+        "children"
+      ],
+      "snippet": "{\"kind\": \"stack\", \"mode\": \"list_data\", \"bind\": {\"children\": [{\"kind\": \"cards\", \"bind\": {\"layout\": \"tiles\", \"title\": \"{{row.kpi_label}}\", \"value\": \"{{row.kpi_value}}\", \"unit\": \"{{row.kpi_unit}}\", \"subtitle\": \"{{row.kpi_note}}\", \"from\": {\"set\": \"tiles\"}}}, {\"kind\": \"chart\", \"bind\": {\"type\": \"bar\", \"x\": \"label\", \"y\": \"value\", \"label\": \"Deploys by day\", \"from\": {\"set\": \"trend\"}}}, {\"kind\": \"table\", \"bind\": {\"columns\": [{\"field\": \"name\", \"label\": \"Service\"}, {\"field\": \"state\", \"label\": \"State\"}], \"from\": {\"set\": \"services\"}}}]}}",
+      "test": "toolkit/test/stack-184.test.mjs",
+      "limit": "Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (stack is a new pane kind, so an older Bolt refuses the whole app file for every schema_version; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). kind stack, mode list_data, bind.children: 1 to 6 parts, each {kind, mode, bind}; kind is cards, chart, table, heatmap, gauge, detail or markdown (no stack inside a stack); each bind is that kind's own bind, and bind.from gives a part its own row set. At most 1,000 rows are drawn across the parts. A part that fails to draw shows one plain card and the others stay. A part with a bad kind shows a note naming it. bind.activate (pane-item events) is not supported inside a stack part in this version and lint refuses it.",
+      "kind": "stack",
+      "since": "0.1.184",
+      "older_bolt": "A Bolt older than 0.1.184 refuses the whole pack that uses the stack kind. Set min_bolt_version 0.1.184."
+    },
+    {
+      "id": "pane.item_activate",
+      "group": "panes",
+      "name": "Press a table row or tile to open a view or run an action",
+      "status": "supported",
+      "example": "kit/examples/widget-gallery",
+      "snippet": "\"bind\": {\"sort\": {\"field\": \"commits\", \"dir\": \"desc\"}, \"activate\": {\"nav\": {\"view\": \"detail\", \"arg\": \"{{row.service}}\"}}}",
+      "test": "toolkit/test/activate-184.test.mjs",
+      "limit": "Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). Table and cards panes only. Exactly one of nav (a view of this app; arg is a {{row.x}} template that must give one plain token, else that item is not pressable) or action (a declared url or composer action; a run or utility action cannot take an item's fields). Enter, Space or a click on the item; Tab reaches it. A pressed row no longer copies itself.",
+      "since": "0.1.184",
+      "older_bolt": "A Bolt older than 0.1.184 refuses the whole pack that uses it (a new kind, or a key in a schema_version 2 pack); a personal schema_version 1 file warns and ignores the key. Set min_bolt_version 0.1.184."
+    },
+    {
+      "id": "kit.scaffold",
+      "group": "platform",
+      "name": "Script-app scaffold in the kit (no copied helpers)",
+      "status": "supported",
+      "example": "kit/examples/script-template",
+      "snippet": "load_json = kit.json_loader(HERE, _PFX); words = kit.split_args(argv, FILE_WORDS); kit.run_guarded(main, sys.argv, debug=bool(os.environ.get(\"BOLT_APP_DEBUG\")))   # also kit.Fail, kit.s, kit.fixture_mode, kit.back_to_overview, kit.tile_bind, kit.indent, kit.bridge_head, kit.bridge_yaml",
+      "test": "kit/python/tests/test_scaffold.py",
+      "limit": "Kit 0.3.11 or newer: an app that calls these must vendor that kit (`./bolt-apps kit vendor --flat my-app`). An older app keeps its own copied helpers and runs unchanged; nothing here changes what a pack carries. bridge_head covers the views-app shape (typed words view, arg, arg2, ...; one command per system); an app with another shape writes its own head. Not run in a real Bolt.",
+      "since": "kit 0.3.11",
+      "older_bolt": "Not read by Bolt: the helpers live in the kit the app vendors (kit 0.3.11 or newer). An older app keeps its own copy and runs unchanged."
+    },
+    {
+      "id": "reserved.source_http",
+      "group": "reserved",
+      "name": "Data source kind: http",
+      "status": "reserved",
+      "snippet": "none: reserved, not available",
+      "test": "toolkit/test/contract-evolution.test.mjs",
+      "limit": "Reserved, not available. A data source that Bolt calls itself, without a script. Today the only source is a script (runtime bridge). It will arrive as a new runtime value with its own since-version; nothing that works today changes.",
+      "since": "none",
+      "older_bolt": "Not available in any Bolt: lint refuses it, so no pack can use it yet.",
+      "probe": {
+        "runtime": "http",
+        "kind": "cards",
+        "bind": [
+          "title: \"{{row.a}}\""
+        ]
+      },
+      "example_note": "none: reserved, not available"
+    },
+    {
+      "id": "reserved.source_stream",
+      "group": "reserved",
+      "name": "Data source kind: websocket or stream",
+      "status": "reserved",
+      "snippet": "none: reserved, not available",
+      "test": "toolkit/test/contract-evolution.test.mjs",
+      "limit": "Reserved, not available. A source that pushes rows as they happen. It will arrive as a new runtime value with its own since-version.",
+      "since": "none",
+      "older_bolt": "Not available in any Bolt: lint refuses it, so no pack can use it yet.",
+      "probe": {
+        "runtime": "stream",
+        "kind": "cards",
+        "bind": [
+          "title: \"{{row.a}}\""
+        ]
+      },
+      "example_note": "none: reserved, not available"
+    },
+    {
+      "id": "reserved.source_ts_bridge",
+      "group": "reserved",
+      "name": "Data source kind: TypeScript bridge",
+      "status": "reserved",
+      "snippet": "none: reserved, not available",
+      "test": "toolkit/test/contract-evolution.test.mjs",
+      "limit": "Reserved, not available. A bridge written in TypeScript instead of a script. It will arrive as a new runtime value with its own since-version.",
+      "since": "none",
+      "older_bolt": "Not available in any Bolt: lint refuses it, so no pack can use it yet.",
+      "probe": {
+        "runtime": "ts_bridge",
+        "kind": "cards",
+        "bind": [
+          "title: \"{{row.a}}\""
+        ]
+      },
+      "example_note": "none: reserved, not available"
+    },
+    {
+      "id": "reserved.kind_registry",
+      "group": "reserved",
+      "name": "Widget kind registry: author-defined kinds",
+      "status": "reserved",
+      "snippet": "none: reserved, not available",
+      "test": "toolkit/test/contract-evolution.test.mjs",
+      "limit": "Reserved, not available. Today the kinds are the built-in list in schema/bolt-rules.json, each with a since-version in kind_since. An author cannot add a kind. A future kind is added to that list with a new kind_since entry and never changes an old kind.",
+      "since": "none",
+      "older_bolt": "Not available in any Bolt: lint refuses it, so no pack can use it yet.",
+      "probe": {
+        "runtime": "bridge",
+        "kind": "author_kind",
+        "bind": [
+          "title: \"{{row.a}}\""
+        ]
+      },
+      "example_note": "none: reserved, not available"
+    },
+    {
+      "id": "reserved.renderer_rich",
+      "group": "reserved",
+      "name": "Renderer family: richer than the declarative chart spec",
+      "status": "reserved",
+      "snippet": "none: reserved, not available",
+      "test": "toolkit/test/contract-evolution.test.mjs",
+      "limit": "Reserved, not available. Today charts are the declarative chart pane (line, bar, sparkline, pie, donut, area, series, limit, marker). A richer renderer family would arrive as new bind keys or a new kind with a since-version; no script-supplied drawing code runs.",
+      "since": "none",
+      "older_bolt": "Not available in any Bolt: lint refuses it, so no pack can use it yet.",
+      "probe": {
+        "runtime": "bridge",
+        "kind": "chart",
+        "bind": [
+          "d3: x",
+          "y: v"
+        ]
+      },
+      "example_note": "none: reserved, not available"
+    },
+    {
+      "id": "reserved.layout_wide",
+      "group": "reserved",
+      "name": "Wide layout for cards",
+      "status": "reserved",
+      "snippet": "none: reserved, not available",
+      "test": "toolkit/test/contract-evolution.test.mjs",
+      "limit": "Not in 184. The cards layouts are grid and tiles. Do not use.",
+      "since": "none",
+      "older_bolt": "Not available in any Bolt: lint refuses it, so no pack can use it yet.",
+      "probe": {
+        "runtime": "bridge",
+        "kind": "cards",
+        "bind": [
+          "layout: wide",
+          "title: \"{{row.a}}\""
+        ]
+      },
+      "example_note": "none: reserved, not available"
+    },
+    {
+      "id": "reserved.compose",
+      "group": "reserved",
+      "name": "Compose: a pane built from other panes by reference",
+      "status": "reserved",
+      "snippet": "none: reserved, not available",
+      "test": "toolkit/test/contract-evolution.test.mjs",
+      "limit": "Not in 184. Use the stack kind (Bolt 0.1.184) for several panes in one view. Do not use.",
+      "since": "none",
+      "older_bolt": "Not available in any Bolt: lint refuses it, so no pack can use it yet.",
+      "probe": {
+        "runtime": "bridge",
+        "kind": "cards",
+        "bind": [
+          "compose: x",
+          "title: \"{{row.a}}\""
+        ]
+      },
+      "example_note": "none: reserved, not available"
+    },
+    {
+      "id": "reserved.controls",
+      "group": "reserved",
+      "name": "Controls: inputs inside a pane",
+      "status": "reserved",
+      "snippet": "none: reserved, not available",
+      "test": "toolkit/test/contract-evolution.test.mjs",
+      "limit": "Not in 184. Use the typed word, a form input or a row action. Do not use.",
+      "since": "none",
+      "older_bolt": "Not available in any Bolt: lint refuses it, so no pack can use it yet.",
+      "probe": {
+        "runtime": "bridge",
+        "kind": "cards",
+        "bind": [
+          "controls: x",
+          "title: \"{{row.a}}\""
+        ]
+      },
+      "example_note": "none: reserved, not available"
+    },
+    {
+      "id": "reserved.canvas",
+      "group": "reserved",
+      "name": "Canvas pane",
+      "status": "reserved",
+      "snippet": "none: reserved, not available",
+      "test": "toolkit/test/contract-evolution.test.mjs",
+      "limit": "Not in 184. Do not use.",
+      "since": "none",
+      "older_bolt": "Not available in any Bolt: lint refuses it, so no pack can use it yet.",
+      "probe": {
+        "runtime": "bridge",
+        "kind": "canvas",
+        "bind": [
+          "id: a"
+        ]
+      },
+      "example_note": "none: reserved, not available"
+    },
+    {
+      "id": "pane.graph_184",
+      "group": "panes",
+      "name": "Pane: graph (service map)",
+      "status": "partial",
+      "snippet": "none: no authoring rules in this kit yet",
+      "test": "toolkit/test/contract-evolution.test.mjs",
+      "limit": "Bolt 0.1.184 accepts a graph pane, a service map of up to 60 nodes and 200 links; above that it groups nodes by bind.group, or shows the table with a visible reason when there is no group field, too many groups or the layout overruns. This kit has no authoring rules for it yet: its rules, schema and lint do not know the kind (lint refuses it), and there is no example. The rules and a sample that passes check come with 184.1. Until then do not build on it in a pack you ship from this kit.",
+      "since": "0.1.184",
+      "older_bolt": "A Bolt older than 0.1.184 refuses the whole pack that uses it (the generic message: this pack could not be verified, so it was not installed).",
+      "example_note": "no example yet: authoring rules and a sample come with 184.1",
+      "sample_due": "184.1"
     }
   ]
 }

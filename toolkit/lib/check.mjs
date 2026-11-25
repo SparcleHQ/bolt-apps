@@ -244,7 +244,7 @@ export function presentationOf(appDir) {
 	try {
 		const ud = path.join(appDir, 'utilities'), y = fs.readdirSync(ud).find((f) => /\.ya?ml$/.test(f)); if (!y) return null;
 		const root = parseYaml(fs.readFileSync(path.join(ud, y), 'utf8')), pres = get(root, 'presentation')?.value;
-		const widget = (n) => { const w = get(n, 'right_widget')?.value; if (!w) return null; const bind = get(w, 'bind')?.value, bound = str(get(bind, 'value')?.value), vf = /^\{\{\s*row\.([A-Za-z0-9_]+)\s*\}\}$/.exec(bound || ''); const fields = new Set(); const walk = (n) => { if (!n) return; if (n.t === 's') for (const m of String(n.v).matchAll(/\{\{\s*row\.([A-Za-z0-9_]+)/g)) fields.add(m[1]); else if (n.t === 'm') n.entries.forEach((e) => walk(e.value)); else if (n.t === 'l') n.items.forEach(walk); }; walk(bind); return { kind: str(get(w, 'kind')?.value), mode: str(get(w, 'mode')?.value), layout: str(get(bind, 'layout')?.value), valueField: vf ? vf[1] : 'kpi_value', fields: [...fields] }; };
+		const widget = (n) => { const w = get(n, 'right_widget')?.value; if (!w) return null; const bind = get(w, 'bind')?.value, bound = str(get(bind, 'value')?.value), vf = /^\{\{\s*row\.([A-Za-z0-9_]+)\s*\}\}$/.exec(bound || ''); const fields = new Set(); const walk = (n) => { if (!n) return; if (n.t === 's') for (const m of String(n.v).matchAll(/\{\{\s*row\.([A-Za-z0-9_]+)/g)) fields.add(m[1]); else if (n.t === 'm') n.entries.forEach((e) => walk(e.value)); else if (n.t === 'l') n.items.forEach(walk); }; walk(bind); return { kind: str(get(w, 'kind')?.value), mode: str(get(w, 'mode')?.value), layout: str(get(bind, 'layout')?.value), valueField: vf ? vf[1] : 'kpi_value', fields: [...fields], from: str(get(get(bind, 'from')?.value, 'set')?.value), where: ((n) => (n && n.t === 'm' ? n.entries : []))(get(get(bind, 'from')?.value, 'where')?.value).map((e) => [e.key, str(e.value)]) }; };
 		const views = new Map(); const vs = get(pres, 'views')?.value;
 		for (const e of vs?.entries || []) views.set(e.key, widget(e.value) );
 		return { top: widget(pres), views, viewArg: str(get(pres, 'view_arg')?.value) };
@@ -267,6 +267,8 @@ export function paneProblems(pres, rows, view, opts = {}) {
 	const goodPane = (r) => r && typeof r.pane === 'string' && (r.pane !== shown && pres.views.has(r.pane)) && (() => { const pw = pres.views.get(r.pane); return pw && (pw.mode || 'selected_row') === 'selected_row' && ROW_PANE_KINDS.includes(pw.kind); })();
 	// Bolt applies the 24-tile cap and the "no value" tile only to a tiles layout (bind.layout: tiles). The default grid layout caps at 500 and needs no number.
 	if (w && w.kind === 'cards' && w.mode === 'list_data' && w.layout === 'tiles') {
+		// bind.from (Bolt 0.1.184): only the rows of that set are tiles; untagged rows are list rows and other sets feed other panes
+		const all = rows; rows = w.from ? all.filter((r) => r && r.set === w.from && (w.where || []).every(([k, v]) => Object.hasOwn(r, k) && String(r[k]) === v)) : all;   // set and where, as the launcher reads them
 		if (rows.length > 24) E('tile_cap', `the view "${shown}" draws a tile per row and at most 24 rows: this run printed ${rows.length}. Send 24 or fewer, or give the view a selected_row preview instead of a tiles grid`);
 		const vf = w.valueField, loose = rows.filter((r) => !goodPane(r)), empty = loose.filter((r) => r && widgetNumber(r[vf]) === null).length;
 		// a tiles view draws a tile per row and shows "-" for a row with no number, so a non-data row (a label, a hint, a retry or a Back row) is an empty tile; a run of one row (a lone setup or error state) is allowed
@@ -277,6 +279,7 @@ export function paneProblems(pres, rows, view, opts = {}) {
 		if (bare.length) E('tile_row_without_value', `the view "${shown}" is a tiles view (cards, bind.layout tiles) and ${bare.length} of ${rows.length} rows carry no ${vf}: ${bare.slice(0, 3).map((r) => JSON.stringify(String(r.title).slice(0, 40))).join(', ')}. Each draws as an empty "-" tile (Bolt draws a tile for every row, a refresh or Back row included). Give the row a number (for a refresh row: kpi_label 'Data age', kpi_value seconds since the copy was made, kpi_unit 's'), put the text on a real tile (badge or footer), or move the refresh and Back rows to a view that is not a tiles grid`);
 		// the 8-row floor keeps a lone setup or error row in a tiles view from being refused; a run of 8 or more rows where half have no tile is a grid of empty tiles
 		if (rows.length >= 8 && empty * 2 >= rows.length) E('empty_tile_grid', `the view "${shown}" draws a tile per row (cards, tiles), but ${empty} of ${rows.length} rows carry no ${vf} and no valid pane, so they draw as empty tiles ("no value"). Give those rows a tile, or give the view a selected_row preview (entity_preview) in presentation.views.${shown}.right_widget`);
+		rows = all;
 	}
 	const seen = new Set();
 	for (const r of rows) {

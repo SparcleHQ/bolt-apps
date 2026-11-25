@@ -30,7 +30,7 @@ test('rules: tabs is a kind with its own bind, first read by Bolt 0.1.185', () =
 
 test('lint accepts tabs with min_bolt_version 0.1.185', () => {
 	assert.deepEqual(errs(app(ONE)), []);
-	assert.deepEqual(errs(app(['tabs:', '  - label: Overview', '    widget: { kind: stack, bind: { children: [{ kind: cards }] } }', '  - label: Alerts', '    count_from: { set: alerts }', '    status: critical', '    widget: { kind: table, bind: { from: { set: alerts } } }'])), []);
+	assert.deepEqual(errs(app(['tabs:', '  - label: Overview', '    widget: { kind: stack, bind: { children: [{ kind: cards }] } }', '  - label: Alerts', '    count_from: { set: alerts }', '    status: critical', '    widget: { kind: table }'])), []);
 });
 
 test('lint refuses tabs without min_bolt_version 0.1.185, and with an older one (older Bolt refuses the whole pack)', () => {
@@ -69,6 +69,21 @@ test('labels refuse invisible format characters (Unicode Cf, U+2028, U+2029) the
 	for (const blank of ['\u200D', '\u200C \u200D', '\u180E', '\u061C', '\u{E0001}', '\u200D\u061C']) assert.match(msgs(label(blank)), /must not be empty/, JSON.stringify(blank));
 	for (const mixed of ['a\u200Db', 'a\u200C', '\u180Ea', 'a\u061Cb', 'a\u{E0001}']) assert.match(msgs(label(mixed)), /must not contain control characters or line breaks/, JSON.stringify(mixed));
 	assert.deepEqual(errs(label('Caf\u00E9')), []);
+});
+
+test('a tab widget is checked like the launcher checks a part: stack needs list_data and children, no activate, from needs list_data, own bind keys', () => {
+	const w = (widget) => app(['tabs:', '  - label: A', `    widget: ${widget}`]);
+	const refused = (widget, re) => assert.match(msgs(w(widget)), re, widget);
+	refused('{ kind: stack }', /widget\.bind\.children: is required for a stack/);
+	refused('{ kind: stack, mode: selected_row, bind: { children: [{ kind: cards }] } }', /widget\.mode: a stack needs mode: list_data/);
+	refused('{ kind: table, bind: { activate: { view: x } } }', /activate is not supported inside a tab/);
+	refused('{ kind: table, mode: selected_row, bind: { from: { set: a } } }', /bind\.from: needs mode: list_data/);
+	refused('{ kind: table, bind: { bogus: 1 } }', /bogus/);
+	// accepted, as the launcher accepts them: a stack with no mode (it defaults to list_data in a tab), a table with from and no mode (a table defaults to list_data)
+	assert.deepEqual(errs(w('{ kind: stack, bind: { children: [{ kind: cards }] } }')), []);
+	assert.deepEqual(errs(w('{ kind: stack, mode: list_data, bind: { children: [{ kind: cards }] } }')), []);
+	if (RULES.right_widget.bind.table.from) assert.deepEqual(errs(w('{ kind: table, bind: { from: { set: a } } }')), []);   // bind.from is a table key from Bolt 184 (not in this rules file until then)
+	assert.deepEqual(errs(w('{ kind: gauge, mode: selected_row, bind: { value: "{{row.a}}" } }')), []);
 });
 
 test('a tab status is critical or warning', () => {

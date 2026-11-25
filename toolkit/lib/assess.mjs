@@ -122,6 +122,8 @@ const VIEW_NAME = /^[a-z][a-z0-9_-]{0,23}$/;                  // the launcher na
 export const NAV_ARG_RE = /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}$/; // the launcher NAV_ARG_RE
 export const isNavToken = (s) => typeof s === 'string' && NAV_ARG_RE.test(s) && !s.includes('..'); // the launcher isNavArg
 export const RIGHT_WIDGET_KINDS = ['card', 'map', 'image', 'calc', 'color', 'weather', 'date', 'markdown', 'entity_preview', 'chart', 'table', 'cards', 'detail', 'json_tree', 'diff', 'image_grid', 'heatmap', 'gauge', 'tabs']; // the launcher (heatmap and gauge from Bolt 182)
+// the mode a pane takes in a tab when it names none (the launcher's default for a pane held by another pane)
+const TAB_WIDGET_DEFAULT_MODE = { cards: 'list_data', chart: 'list_data', table: 'list_data', heatmap: 'list_data', gauge: 'selected_row', detail: 'selected_row', markdown: 'selected_row', stack: 'list_data' };
 const RIGHT_WIDGET_MODES = ['selected_row', 'list_data'];     // the launcher
 export const NO_APP_DATA_KINDS = ['image', 'color', 'weather', 'date', 'calc']; // the launcher NO_APP_DATA
 const BIND_NONE = ['map', 'image', 'calc', 'color', 'weather', 'date']; // the launcher BIND_NONE: these panes read nothing from bind
@@ -181,6 +183,29 @@ export function launcherRules(root, opts = {}) {
 		if (!BIND_NONE.includes(kind) && bind && bind.t === 'm') for (const bp of bindProblems(kind, bind, `${p}.bind`, { minBolt: opts.minBolt, minBoltKnown: opts.minBoltKnown })) {
 			if (bp.gate || bp.level === 'warning' || bp.code === 'bind_too_many_refs') (bp.level === 'warning' ? W : E)(bp.code, bp.message);   // a gate on a newer Bolt, or a plain warning, is never softened or hardened by schema_version
 			else (strict || opts.pack ? E : W)('right_widget_bind_unread', bp.message + (strict || opts.pack ? '' : ' (a warning for schema_version 1, an error from schema_version 2 and in every pack)'));
+		}
+	}
+	// each tab of a tabs pane holds one whole pane, checked the way the launcher checks a part: a stack needs mode list_data and its children,
+	// `activate` is not supported inside a tab, `bind.from` needs list_data, and the pane's own bind keys follow the rules table.
+	for (const [p, rw] of rws) {
+		if (!rw || rw.t !== 'm' || str(get(rw, 'kind')?.value) !== 'tabs') continue;
+		const bindNode = get(rw, 'bind')?.value, tabs = bindNode && bindNode.t === 'm' ? get(bindNode, 'tabs')?.value : undefined;
+		for (const [i, tab] of (tabs?.items || []).entries()) {
+			const wn = tab && tab.t === 'm' ? get(tab, 'widget')?.value : undefined;
+			if (!wn || wn.t !== 'm') continue;
+			const w = `${p}.bind.tabs[${i}].widget`, k = str(get(wn, 'kind')?.value), explicit = str(get(wn, 'mode')?.value), b = get(wn, 'bind')?.value;
+			if (!k || k === 'tabs' || !RULES.right_widget.bind.tabs.tabs.keys.widget.keys.kind.values.includes(k)) continue;   // the rules table already refuses these
+			const mode = explicit ?? TAB_WIDGET_DEFAULT_MODE[k];
+			if (k === 'stack' && mode !== 'list_data') E('right_widget_bind_unread', `${w}.mode: a stack needs mode: list_data`);
+			if (k === 'stack' && !(b && b.t === 'm')) E('right_widget_bind_unread', `${w}.bind.children: is required for a stack`);
+			if (b && b.t === 'm') {
+				if (get(b, 'activate')) E('right_widget_bind_unread', `${w}.bind.activate is not supported inside a tab`);
+				if (get(b, 'from') && mode !== 'list_data') E('right_widget_bind_unread', `${w}.bind.from: needs mode: list_data (a selected_row pane reads one list row, never a row set)`);
+				if (!BIND_NONE.includes(k)) for (const bp of bindProblems(k, b, `${w}.bind`, { minBolt: opts.minBolt, minBoltKnown: opts.minBoltKnown })) {
+					if (bp.gate || bp.level === 'warning' || bp.code === 'bind_too_many_refs') (bp.level === 'warning' ? W : E)(bp.code, bp.message);
+					else E('right_widget_bind_unread', bp.message);
+				}
+			}
 		}
 	}
 	// no command for a platform: the app has nothing to run there. A warning, since an app may be single-platform on purpose.

@@ -1033,6 +1033,51 @@
       "expect": [
         "http_header"
       ]
+    },
+    {
+      "name": "tab holding a stack with mode selected_row (Bolt 185)",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "  title_field: title\n",
+            "  title_field: title\n  right_widget:\n    kind: tabs\n    mode: list_data\n    bind:\n      tabs:\n        - label: A\n          widget: { kind: stack, mode: selected_row, bind: { children: [{ kind: cards }] } }\n"
+          ]
+        ]
+      },
+      "expect": [
+        "right_widget_bind_unread"
+      ],
+      "bolt_error_contains": "a stack needs mode: list_data"
+    },
+    {
+      "name": "tab holding a stack with no bind (Bolt 185)",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "  title_field: title\n",
+            "  title_field: title\n  right_widget:\n    kind: tabs\n    mode: list_data\n    bind:\n      tabs:\n        - label: A\n          widget: { kind: stack }\n"
+          ]
+        ]
+      },
+      "expect": [
+        "right_widget_bind_unread"
+      ],
+      "bolt_error_contains": "stack"
+    },
+    {
+      "name": "tab pane with bind.activate (Bolt 185)",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "  title_field: title\n",
+            "  title_field: title\n  right_widget:\n    kind: tabs\n    mode: list_data\n    bind:\n      tabs:\n        - label: A\n          widget: { kind: table, bind: { activate: { view: x } } }\n"
+          ]
+        ]
+      },
+      "expect": [
+        "right_widget_bind_unread"
+      ],
+      "bolt_error_contains": "activate is not supported inside a tab"
     }
   ]
 }

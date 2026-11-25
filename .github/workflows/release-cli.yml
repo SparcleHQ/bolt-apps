@@ -1,6 +1,7 @@
 # Builds the bolt-apps CLI release on a version tag: bolt-apps-<version>.tar.gz plus SHA256SUMS.
 # Runs on tags only. It creates a DRAFT release, so nothing is public until a maintainer publishes it.
 # The installer at https://sparcle.app/install-bolt-apps.sh downloads this tarball and refuses it unless it matches SHA256SUMS.
+# SHA256SUMS is a same-release checksum, not a signature. The installer script itself is not signed either.
 #
 # Provenance: none of this repository's other workflows sign or attest anything, so this one follows
 # the same convention and publishes checksums only. SHA256SUMS comes from the same release as the
@@ -53,5 +54,5 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" --draft --verify-tag \
             --title "bolt-apps CLI ${GITHUB_REF_NAME#v}" \
-            --notes "Author CLI. Install: curl -fsSL https://sparcle.app/install-bolt-apps.sh | sh. Verify with SHA256SUMS." \
+            --notes "Author CLI. Install: curl -fsSL https://sparcle.app/install-bolt-apps.sh | sh. SHA256SUMS is a same-release checksum, not a signature: it catches corruption or a swapped file, not a compromised release. Manual verify: download the tarball and SHA256SUMS here, run shasum -a 256 -c SHA256SUMS (or sha256sum -c), then extract and run." \
             "dist/bolt-apps-${GITHUB_REF_NAME#v}.tar.gz" dist/SHA256SUMS

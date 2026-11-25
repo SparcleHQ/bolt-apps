@@ -37,4 +37,4 @@ So:
 
 ### What the toolkit enforces
 
-Today, on bolt-apps main, `lint`, `check` and `pack` do not fail an app that uses a 184 key without `min_bolt_version` set to 0.1.184. Once the 184 rules batch lands, `check` and `verify` report the error `bind_needs_newer_bolt` for an app that uses a key or kind newer than its declared `min_bolt_version`, and a built pack read without its listing gets a warning. Until then, check the widget's `since` version yourself in the capabilities table.
+`check` and `verify` report the error `bind_needs_newer_bolt` for an app that uses a key or kind newer than its declared `min_bolt_version`, and a built pack read without its listing gets a warning. The capabilities table gives each widget's `since` version.

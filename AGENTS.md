@@ -50,7 +50,7 @@ anything that runs commands, reads files, calls the network (`runs_commands`, `f
 `network`) or gives an AI agent tools (`agent_tools`). Do not create tier 3 content in this
 repository. Tier 3 apps stay personal today (`pack --personal`); a Sparcle-reviewed route for them may follow, but none exists yet, so do not promise one.
 
-**Hand every app over as a `.boltpack`. That is the main route.** A plain `.yaml` saved in the User Apps folder (Settings, Desktop App, User Apps, Open folder, Reload) is the secondary route, for the person's own simple apps. The pack is what Bolt shows a review card for, and it carries the scripts.
+**Hand every app over as a Bolt pack (`.boltpack`). That is the main route.** A plain `.yaml` added to Bolt Apps is the secondary route, for the person's own simple apps. The pack is what Bolt shows a review card for, and it carries the scripts.
 
 **An app for the user's own use may be tier 3.** If the person wants an app that runs a
 program or a script for themselves, do not tell them it is impossible and do not hand them a

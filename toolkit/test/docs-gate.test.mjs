@@ -52,13 +52,15 @@ export function gaps(items, docs) {
 	return res;
 }
 
+// The snippets of the capability rows that say sample_due (the list contract-evolution.test.mjs pins): those keys are excused the example only.
+export const dueSnippets = (c) => c.rows.filter((r) => r.sample_due).map((r) => r.snippet || '');
 const exampleFiles = () => execFileSync('git', ['ls-files', 'kit/examples'], { cwd: REPO, encoding: 'utf8' }).split('\n')
 	.filter((f) => /\.(json|ya?ml|py)$/.test(f) && !f.endsWith('capabilities.json') && !f.endsWith('index.json'));
 const realDocs = () => ({
 	capabilities: read('kit/examples/CAPABILITIES.md') + '\n' + read('kit/examples/capabilities.json'),
 	quickstart: read('kit/examples/QUICKSTART.md'),
 	examples: exampleFiles().map(read),
-	dueSnippets: caps.rows.filter((r) => r.sample_due).map((r) => r.snippet || ''),
+	dueSnippets: dueSnippets(caps),
 });
 const rulesFile = () => JSON.parse(fs.readFileSync(process.env.BOLT_RULES_FILE || path.join(REPO, 'schema/bolt-rules.json'), 'utf8'));
 
@@ -93,4 +95,12 @@ test('docs gate: sample_due excuses only the example, and only for a key its row
 	assert.deepEqual(gaps([item], { ...base, dueSnippets: ['"bind": {"visual": "bullet"}'] }), []);
 	assert.deepEqual(gaps([item], { ...base, capabilities: '', dueSnippets: ['"visual": "x"'] }).map((g) => g.miss), [['CAPABILITIES row']]);
 	assert.equal(gaps([item], { ...base, dueSnippets: ['"other": 1'] }).length, 1);
+});
+
+test('docs gate: dueSnippets takes only rows that say sample_due', () => {
+	const c = { rows: [{ id: 'a', sample_due: '184.1', snippet: '"visual": 1' }, { id: 'b', snippet: '"other": 1' }, { id: 'c', sample_due: '184.1' }] };
+	assert.deepEqual(dueSnippets(c), ['"visual": 1', '']);
+	assert.ok(dueSnippets(caps).length >= 2, 'the real rows still carry sample_due');
+	const real = gaps(collect(rulesFile()), { ...realDocs(), dueSnippets: [] }).filter((g) => /cards\.visual/.test(g.id));
+	assert.equal(real.length, 2, 'without the filter the two sample_due keys show as missing an example');
 });

@@ -1,7 +1,7 @@
 # tabs-gallery
 
 ## What this teaches
-The `tabs` right pane Bolt 0.1.185 added: one pane, several views, each tab one whole existing pane over the same rows. Here a line chart, a pie and a table of the weekly deploys.
+The `tabs` right pane Bolt 0.1.185 added: one pane, several views, each tab one whole existing pane over the same rows. Here a line chart, a pie (a pie needs Bolt 182, and 185 has it) and a table of the weekly deploys.
 
 **Needs Bolt 0.1.185 or newer.** A Bolt 184 or older refuses the whole pack that uses `tabs`, so `bolt-app.json` sets `min_bolt_version` 0.1.185 and `./bolt-apps lint` fails without it.
 

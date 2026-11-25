@@ -29,7 +29,8 @@
   "image_grid",
   "heatmap",
   "gauge",
-  "stack"
+  "stack",
+  "tabs"
  ],
  "no_app_data_kinds": [
   "image",
@@ -798,6 +799,73 @@
      "required": true,
      "items": 6
     }
+   },
+   "tabs": {
+    "tabs": {
+     "t": "list",
+     "required": true,
+     "min": 1,
+     "items": 12,
+     "keys": {
+      "label": {
+       "t": "text",
+       "max": 40,
+       "required": true,
+       "no_control": true
+      },
+      "count_from": {
+       "t": "map",
+       "keys": {
+        "set": {
+         "t": "text",
+         "max": 24,
+         "required": true
+        },
+        "where": {
+         "t": "any_map"
+        }
+       }
+      },
+      "status": {
+       "t": "enum",
+       "values": [
+        "critical",
+        "warning"
+       ],
+       "requires": "count_from"
+      },
+      "widget": {
+       "t": "map",
+       "required": true,
+       "keys": {
+        "kind": {
+         "t": "enum",
+         "values": [
+          "cards",
+          "chart",
+          "table",
+          "heatmap",
+          "gauge",
+          "detail",
+          "markdown",
+          "stack"
+         ],
+         "required": true
+        },
+        "mode": {
+         "t": "enum",
+         "values": [
+          "selected_row",
+          "list_data"
+         ]
+        },
+        "bind": {
+         "t": "any_map"
+        }
+       }
+      }
+     }
+    }
    }
   },
   "strict_from_schema_version": 2,
@@ -1329,7 +1397,8 @@
  "kind_since": {
   "heatmap": "0.1.182",
   "gauge": "0.1.182",
-  "stack": "0.1.184"
+  "stack": "0.1.184",
+  "tabs": "0.1.185"
  },
  "stack": {
   "child_kinds": {

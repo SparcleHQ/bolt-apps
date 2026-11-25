@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { get, str } from './yamlsubset.mjs';
+// Characters that draw nothing: Unicode Cf (zero width, bidi controls, soft hyphen, BOM, tags) and the line and paragraph separators. Same set as the launcher refuses in a tab label.
+const INVISIBLE = /[\p{Cf}\u2028\u2029]/gu;
 
 export const RULES = JSON.parse(fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../schema/bolt-rules.json'), 'utf8'));
 const entries = (n) => (n && n.t === 'm' ? n.entries : []);
@@ -44,14 +46,15 @@ export function structureProblems(root) {
 function bindVal(node, spec, where, out, ctx = {}) {
 	const bad = (m) => out.push({ code: 'bind_invalid', message: `${where}: ${m}` });
 	const t = spec.t;
-	if (t === 'text') { if (!node || node.t !== 's') return bad(`must be text, got ${kindWord(node?.t)}`); if ([...node.v].length > spec.max) bad(`is longer than ${spec.max} characters`); }
+	if (t === 'text') { if (!node || node.t !== 's') return bad(`must be text, got ${kindWord(node?.t)}`); if ([...node.v].length > spec.max) bad(`is longer than ${spec.max} characters`); if (spec.no_control) { const plain = node.v.replace(INVISIBLE, ''); if (/[\u0000-\u001f\u007f-\u009f]/.test(node.v) || (plain !== node.v && plain.trim())) bad('must not contain control characters or line breaks'); if (!plain.trim()) bad('must not be empty'); } }
 	else if (t === 'textOrNumber') { if (!node || node.t !== 's') bad(`must be text or a number, got ${kindWord(node?.t)}`); else if ([...node.v].length > spec.max) bad(`is longer than ${spec.max} characters`); }
 	else if (t === 'enum') { const v = scalar(node); if (v === undefined || !spec.values.includes(v)) bad(`must be one of ${spec.values.join(', ')}, got ${JSON.stringify(v ?? null)}`);
 		else if (spec.since_values && Object.hasOwn(spec.since_values, v)) { const g = gateProblem(where.replace(/\.[^.]+$/, ''), `${where.split('.').pop()} "${v}"`, spec.since_values[v], ctx); if (g) out.push(g); } }
 	else if (t === 'bool') { const v = scalar(node); if (!(v === 'true' || v === 'false') || node.q) bad('must be true or false'); }
 	else if (t === 'int') { const v = num(node); if (!Number.isInteger(v) || v < spec.lo || v > spec.hi) bad(`must be a whole number from ${spec.lo} to ${spec.hi}`); }
 	else if (t === 'textList') { if (!node || node.t !== 'l') bad(`must be a list, got ${kindWord(node?.t)}`); else { if (node.items.length > spec.items) bad(`has more than ${spec.items} entries`); node.items.forEach((x, i) => { if (!x || x.t !== 's' || [...x.v].length > spec.max) bad(`entry ${i} must be text of at most ${spec.max} characters`); }); } }
-	else if (t === 'list') { if (!node || node.t !== 'l') bad(`must be a list, got ${kindWord(node?.t)}`); else { if (node.items.length > spec.items) bad(`has more than ${spec.items} entries`); node.items.forEach((x, i) => bindMap(x, spec.keys, `${where}[${i}]`, out, ctx)); } }
+	else if (t === 'list') { if (!node || node.t !== 'l') bad(`must be a list, got ${kindWord(node?.t)}`); else { if (spec.min && node.items.length < spec.min) bad(`needs at least ${spec.min} ${spec.min === 1 ? 'entry' : 'entries'}`); if (node.items.length > spec.items) bad(`has more than ${spec.items} entries`); node.items.forEach((x, i) => bindMap(x, spec.keys, `${where}[${i}]`, out, ctx)); } }
+	else if (t === 'any_map') { if (!node || node.t !== 'm') bad(`must be a mapping, got ${kindWord(node?.t)}`); }   // a mapping Bolt checks as another pane's own bind at install; this toolkit does not look inside
 	else if (t === 'map') bindMap(node, spec.keys, where, out, ctx);
 	else if (t === 'rowSet') rowSetProblems(node, where, out);
 	else if (t === 'stackChildren') stackChildrenProblems(node, where, out, ctx, spec);
@@ -114,9 +117,11 @@ export function gateProblem(where, key, since, ctx) {
 	const have = parseBoltVersion(ctx.minBolt), need = parseBoltVersion(since);
 	if (have && need && boltAtLeast(have, need)) return null;
 	const ver = since.replace(/^0\.1\./, ''), packed = ctx.minBoltKnown === false;   // packed: a built pack is being read, only a warning (the author may still hand it only to Bolt 182 users)
+	// a pane kind first read by 185 (tabs) is refused as an unknown kind by a 184 or older; the 182 keys are refused by a 181 as an unknown key
+	const refuser = Number(since.split('.')[2]) >= 185 ? '0.1.184 or older' : '0.1.181', refusal = Number(since.split('.')[2]) >= 185 ? 'an unknown right_widget kind' : '"unknown key for a entity_preview pane"';
 	const where2 = packed ? "the pack's listing" : 'bolt-app.json';
 	const why = ctx.minBolt === undefined ? `${where2} declares no min_bolt_version` : `${where2} says min_bolt_version "${ctx.minBolt}"`;
-	return { code: 'bind_needs_newer_bolt', gate: true, level: packed ? 'warning' : 'error', message: `${where}.${key}: needs Bolt ${ver}. A Bolt 0.1.181 REFUSES THE WHOLE PACK when one app uses it ("unknown key for a entity_preview pane"), so no app in the pack would install there. ${why}. Set "min_bolt_version": "${since}" in bolt-app.json to confirm you will give the pack only to people on Bolt ${ver} or newer (Bolt 181 does not read the field and cannot stop the install, it just refuses the pack), or remove ${key}` };
+	return { code: 'bind_needs_newer_bolt', gate: true, level: packed ? 'warning' : 'error', message: `${where}.${key}: needs Bolt ${ver}. A Bolt ${refuser} REFUSES THE WHOLE PACK when one app uses it (${refusal}), so no app in the pack would install there. ${why}. Set "min_bolt_version": "${since}" in bolt-app.json to confirm you will give the pack only to people on Bolt ${ver} or newer (an older Bolt does not read the field and cannot stop the install, it just refuses the pack), or remove ${key}` };
 }
 const REF = /\{\{[^}]*\}\}/g;   // the same count the Bolt pane makes: one reference per {{ ... }}
 function bindMap(node, keysSpec, where, out, ctx = {}) {
@@ -126,6 +131,7 @@ function bindMap(node, keysSpec, where, out, ctx = {}) {
 		else {
 			const sp = keysSpec[e.key];
 			if (sp.since) { const g = gateProblem(where, e.key, sp.since, ctx); if (g) out.push(g); }
+			if (sp.requires && !get(node, sp.requires)) out.push({ code: 'bind_invalid', message: `${where}.${e.key}: needs ${sp.requires} beside it` });
 			bindVal(e.value, sp, `${where}.${e.key}`, out, ctx);
 			if (e.key === 'locale' && e.value && e.value.t === 's' && !/^[A-Za-z0-9-]*$/.test(e.value.v)) out.push({ code: 'bind_locale_chars', level: 'warning', message: `${where}.${e.key}: "${e.value.v.slice(0, 40)}" has characters outside letters, digits and "-" (de-DE, not de_DE). Bolt ignores a locale it cannot read and uses the system one` });
 			if (sp.max_refs && e.value && e.value.t === 's') {

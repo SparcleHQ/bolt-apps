@@ -25,7 +25,9 @@ test('rules: chart types and the two panes carry the version that first reads th
 	assert.deepEqual(t.since_values, { pie: SINCE, donut: SINCE, area: SINCE });
 	assert.equal(RULES.right_widget.bind.chart.series.since, SINCE);
 	assert.equal(RULES.right_widget.bind.chart.series.items, 4);
-	assert.deepEqual(RULES.kind_since, { heatmap: SINCE, gauge: SINCE, stack: '0.1.184' });   // stack: stack-184.test.mjs
+	assert.deepEqual(RULES.kind_since, { heatmap: SINCE, gauge: SINCE, stack: '0.1.184', tabs: '0.1.185' });   // stack: stack-184.test.mjs, tabs: tabs-185.test.mjs
+	assert.equal(RULES.kind_since.heatmap, SINCE);
+	assert.equal(RULES.kind_since.gauge, SINCE);
 	for (const k of ['heatmap', 'gauge']) assert.ok(RULES.widget_kinds.includes(k) && RULES.right_widget.bind[k], k);
 	assert.deepEqual(Object.keys(RULES.right_widget.bind.heatmap), ['x', 'y', 'value', 'rows', 'cols', 'col_labels', 'layout', 'label', 'unit', 'from']);   // from: Bolt 184 (rowsets-formats-184.test.mjs)
 	assert.deepEqual(Object.keys(RULES.right_widget.bind.gauge), ['value', 'min', 'max', 'label', 'unit', 'shape', 'thresholds', 'format', 'digits', 'locale']);   // format, digits, locale: Bolt 184

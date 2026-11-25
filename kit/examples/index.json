@@ -9,6 +9,7 @@
       "lookup-template",
       "chart-template",
       "chart-types",
+      "tabs-gallery",
       "table-template",
       "repo-radar",
       "around",
@@ -237,6 +238,32 @@
         "scripts/chart-types__fixtures.json"
       ],
       "check": "./bolt-apps check kit/examples/chart-types",
+      "verified": "not verified in real Bolt"
+    },
+    {
+      "id": "tabs-gallery",
+      "need": "several views of the same rows in one right pane: a line, a pie and a table (Bolt 185 or newer)",
+      "layout": "one overview row that opens a pane with three tabs",
+      "mode": "views",
+      "widgets": [
+        "cards",
+        "tabs",
+        "chart",
+        "table"
+      ],
+      "techniques": [
+        "tabs pane (Bolt 185)",
+        "min_bolt_version 0.1.185 in bolt-app.json",
+        "field_sum stats"
+      ],
+      "sources": [
+        "any REST API"
+      ],
+      "edit": [
+        "scripts/tabs-gallery__config.json",
+        "scripts/tabs-gallery__fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/tabs-gallery",
       "verified": "not verified in real Bolt"
     },
     {

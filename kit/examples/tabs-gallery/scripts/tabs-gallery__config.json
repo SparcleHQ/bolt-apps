@@ -1,0 +1,137 @@
+{
+  "app": {
+    "id": "tabs-gallery",
+    "chip": "tabs-gallery",
+    "title": "Tabs Gallery",
+    "icon": "list",
+    "description": "One right pane with three tabs over the same rows: a line, a pie and a table. Needs Bolt 0.1.185 or newer. Sample data.",
+    "service": "Tabs Gallery"
+  },
+  "api": {
+    "base_url": "https://api.example.com",
+    "key_env": "TABS_API_KEY",
+    "fixture_default": false,
+    "on_missing_key": "sample",
+    "fixture_file": "fixtures.json",
+    "fixture_banner": false
+  },
+  "cache": {
+    "ttl": 45,
+    "stale_max": 86400
+  },
+  "endpoints": {
+    "weekly": {
+      "path": "/v1/deploys"
+    },
+    "traffic": {
+      "path": "/v1/traffic"
+    },
+    "health": {
+      "path": "/v1/health"
+    }
+  },
+  "stats": {
+    "deploys_total": {
+      "endpoint": "weekly",
+      "field_sum": "count"
+    },
+    "requests_total": {
+      "endpoint": "traffic",
+      "field_sum": "requests"
+    },
+    "score_max": {
+      "endpoint": "health",
+      "field_max": "score"
+    }
+  },
+  "overview": {
+    "widget": {
+      "kind": "cards",
+      "mode": "list_data",
+      "bind": {
+        "layout": "tiles",
+        "title": "{{row.kpi_label}}",
+        "value": "{{row.kpi_value}}",
+        "unit": "{{row.kpi_unit}}",
+        "delta": "{{row.delta}}",
+        "delta_label": "{{row.since}}",
+        "max": "{{row.kpi_max}}",
+        "trend": "{{row.trend}}",
+        "subtitle": "{{row.kpi_note}}",
+        "badge": "{{row.kpi_badge}}",
+        "footer": "{{row.kpi_foot}}"
+      }
+    },
+    "rows": [
+      {
+        "title": "Tabs over rows",
+        "subtitle": "one pane, three tabs",
+        "icon": "line-chart",
+        "view": "tabs_rows",
+        "tile": {
+          "label": "Total",
+          "value": "deploys_total",
+          "note": "deploys"
+        }
+      }
+    ]
+  },
+  "views": [
+    {
+      "id": "tabs_rows",
+      "title": "Tabs (rows)",
+      "icon": "line-chart",
+      "endpoint": "weekly",
+      "item": {
+        "title": "{day} \u00b7 {count}",
+        "subtitle": "deploys per day",
+        "extra": {
+          "label": "{day}",
+          "value": "{count}"
+        }
+      },
+      "widget": {
+        "kind": "tabs",
+        "mode": "list_data",
+        "bind": {
+          "tabs": [
+            {
+              "label": "Trend",
+              "widget": {
+                "kind": "chart",
+                "mode": "list_data",
+                "bind": {
+                  "type": "line",
+                  "x": "label",
+                  "y": "value",
+                  "label": "Deploys by day"
+                }
+              }
+            },
+            {
+              "label": "Share",
+              "widget": {
+                "kind": "chart",
+                "mode": "list_data",
+                "bind": {
+                  "type": "pie",
+                  "x": "label",
+                  "y": "value",
+                  "label": "Deploys by day"
+                }
+              }
+            },
+            {
+              "label": "Rows",
+              "widget": {
+                "kind": "table",
+                "mode": "list_data",
+                "bind": {}
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

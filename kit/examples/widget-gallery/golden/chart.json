@@ -16,8 +16,7 @@
     "copy_text": "- Mon 42 - deploys / day",
     "open_url": "",
     "label": "Mon",
-    "value": 42,
-    "event": 0
+    "value": 42
   },
   {
     "title": "Tue · 58",
@@ -36,8 +35,7 @@
     "copy_text": "- Tue 58 - deploys / day",
     "open_url": "",
     "label": "Tue",
-    "value": 58,
-    "event": 0
+    "value": 58
   },
   {
     "title": "Wed · 51",
@@ -56,8 +54,7 @@
     "copy_text": "- Wed 51 - deploys / day",
     "open_url": "",
     "label": "Wed",
-    "value": 51,
-    "event": 0
+    "value": 51
   },
   {
     "title": "Thu · 73",
@@ -76,8 +73,7 @@
     "copy_text": "- Thu 73 - deploys / day",
     "open_url": "",
     "label": "Thu",
-    "value": 73,
-    "event": "release 2.14"
+    "value": 73
   },
   {
     "title": "Fri · 96",
@@ -96,8 +92,7 @@
     "copy_text": "- Fri 96 - deploys / day",
     "open_url": "",
     "label": "Fri",
-    "value": 96,
-    "event": "hotfix 2.14.1"
+    "value": 96
   },
   {
     "title": "Sat · 61",
@@ -116,8 +111,7 @@
     "copy_text": "- Sat 61 - deploys / day",
     "open_url": "",
     "label": "Sat",
-    "value": 61,
-    "event": 0
+    "value": 61
   },
   {
     "title": "Sun · 47",
@@ -136,7 +130,6 @@
     "copy_text": "- Sun 47 - deploys / day",
     "open_url": "",
     "label": "Sun",
-    "value": 47,
-    "event": 0
+    "value": 47
   }
 ]

@@ -23,8 +23,8 @@ test('sets: image types, no-data kinds, row pane kinds and the list sizes', () =
 	assert.deepEqual(RULES.widgets.images.inline_types, s['widgets.images.inline_types']);
 	assert.deepEqual([...RULES.no_app_data_kinds].sort(), [...s.no_app_data_kinds].sort());
 	assert.deepEqual([...RULES.row_pane_kinds].sort(), [...s.row_pane_kinds].sort());
-	assert.equal(RULES.widget_kinds.length, s.widget_kinds_count + s.widget_kinds_added_182.length + s.widget_kinds_added_184.length);
-	assert.deepEqual(RULES.widget_kinds.slice(s.widget_kinds_count), [...s.widget_kinds_added_182, ...s.widget_kinds_added_184]);
+	assert.equal(RULES.widget_kinds.length, s.widget_kinds_count + s.widget_kinds_added_182.length);
+	assert.deepEqual(RULES.widget_kinds.slice(s.widget_kinds_count), s.widget_kinds_added_182);
 	assert.equal(RULES.actions.icons.length, s['actions.icons_count']);
 	assert.equal(RULES.actions.reserved_label_words.length, s['actions.reserved_label_words_count']);
 	assert.equal(RULES.actions.forbidden_ids.length, s['actions.forbidden_ids_count']);

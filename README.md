@@ -49,6 +49,8 @@ packs). The gallery starts with the three above. See
 
 Every picture is a folder you can copy from [`kit/examples/`](kit/examples/). See which key draws what in [Anatomy of a Bolt App](docs/anatomy.md), and all screens in the [gallery](docs/gallery.md).
 
+What works today and what we are working on: [roadmap](docs/roadmap.md).
+
 ## Safety tiers
 
 Every app has a tier. The checker works it out from the content and refuses an app that

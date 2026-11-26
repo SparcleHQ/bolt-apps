@@ -58,7 +58,7 @@ What works today and what we are working on: [roadmap](docs/roadmap.md).
 ![The =obs Trend tab: a line chart of firing alerts with a limit line and event marks](docs/images/obs-trend-tab.png)
 ![The =obs Alerts tab: a filterable table of firing alerts with a count and open minutes](docs/images/obs-alerts-tab.png)
 
-`=obs` joins alerts and service health from eight public demo monitoring sources into one view: tiles and rings, a trend chart with a limit line and marks, and an alerts table with marks and a filter. These are unedited captures of a real Bolt on public demo data. Tabs need Bolt 0.1.185 or newer, which is not in a public release yet. The [`obs` example](kit/examples/obs/) has the same views without tabs. Some parts are still plain, such as the detail pane for one service; see the [roadmap](docs/roadmap.md) for what we are working on.
+`=obs` joins alerts and service health from eight public demo monitoring sources into one view: tiles and rings, a trend chart with a limit line and marks, and an alerts table with marks and a filter. These are unedited captures of a real Bolt on public demo data. Tabs need Bolt 0.1.185 or newer, which is not in a public release yet. The [`obs` example](kit/examples/obs/) has the same views without tabs. The detail pane for one service is built from text today; richer detail panes are on the [roadmap](docs/roadmap.md).
 
 ## Safety tiers
 

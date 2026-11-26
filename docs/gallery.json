@@ -134,6 +134,56 @@
       "how": "Copy `kit/examples/expense-tracker`; sample data shows until a key is added."
     },
     {
+      "id": "obs-tabs",
+      "title": "Tabs in the right pane",
+      "example": "tabs-gallery",
+      "caps": [
+        "widget.tabs"
+      ],
+      "caption": "=obs with Overview, Trend and Alerts as tabs over one list. Tabs need Bolt 0.1.185 or newer, which is not in a public release yet. The picture is an unedited capture of a real Bolt on public demo data.",
+      "images": [
+        {
+          "src": "obs-overview-tabs.png",
+          "alt": "The =obs overview: a list of views on the left, tabs Overview, Trend and Alerts above tiles with rings and sparklines on the right."
+        }
+      ],
+      "how": "Copy `kit/examples/tabs-gallery` for the tabs."
+    },
+    {
+      "id": "obs-table",
+      "title": "A table with a filter and marks",
+      "example": "widget-gallery",
+      "caps": [
+        "widget.table",
+        "pane.table_bars_mark"
+      ],
+      "caption": "The =obs alerts as a table: a filter box, a mark per row and the open minutes. Public demo data.",
+      "images": [
+        {
+          "src": "obs-alerts-tab.png",
+          "alt": "The =obs Alerts tab: a filter box above a table of firing alerts with a mark, the alert name and open minutes."
+        }
+      ],
+      "how": "Copy `kit/examples/widget-gallery` for a table with bars and marks."
+    },
+    {
+      "id": "obs-trend",
+      "title": "A trend with a limit line and event marks",
+      "example": "widget-gallery",
+      "caps": [
+        "widget.chart",
+        "pane.chart_limit_marker"
+      ],
+      "caption": "Firing alerts over recent runs: a line, a dashed limit and marks where the count went over it. Public demo data.",
+      "images": [
+        {
+          "src": "obs-trend-tab.png",
+          "alt": "The =obs Trend tab: a line chart of firing alerts with a dashed limit line and event marks along the top."
+        }
+      ],
+      "how": "Copy `kit/examples/widget-gallery` for a chart with a limit line and markers."
+    },
+    {
       "id": "before-after",
       "title": "Detail pane with Before, After and What changed",
       "example": "pipeline-board",

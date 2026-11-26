@@ -38,3 +38,12 @@ So:
 ### What the toolkit enforces
 
 `check` and `verify` report the error `bind_needs_newer_bolt` for an app that uses a key or kind newer than its declared `min_bolt_version`, and a built pack read without its listing gets a warning. The capabilities table gives each widget's `since` version.
+
+### A stack or tabs for the selected row (Bolt 0.1.185)
+
+A stack or tabs pane with `mode: selected_row` shows several panes for the row you selected, and a `where` value can be exactly `{{row.field}}` to pick that row's own rows from a row set. Both are first read by Bolt 0.1.185. Lint covers both with the same `bind_needs_newer_bolt` error, and an older Bolt refuses the pack:
+
+- `mode: selected_row` on a stack or tabs: a Bolt 0.1.184 or older refuses the whole pack (a stack says "a stack needs mode: list_data"; tabs is an unknown kind). It installs nowhere, so there is no plainer fallback. Set `min_bolt_version` to `0.1.185`.
+- `{{row.field}}` in a `where`: it only works inside a per-row pane, so it always travels with `mode: selected_row`, which a Bolt 0.1.184 or older refuses wholesale. In any other pane Bolt 0.1.185 and lint refuse it. The remaining gap is that no Bolt reads `min_bolt_version` yet, so nothing stops an older Bolt from being handed the pack: lint holds you to the promise, and the install-time check (not built) will enforce it.
+
+Take both keys out and the app needs no newer Bolt: a single `detail` pane per row (the older row pane) still works on every Bolt that has it. The rule names are `stack.mode.selected_row`, `tabs.mode.selected_row` and `where.row_ref` in `feature_since` of `schema/bolt-rules.json`.

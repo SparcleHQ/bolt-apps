@@ -123,6 +123,32 @@ export function gateProblem(where, key, since, ctx) {
 	const why = ctx.minBolt === undefined ? `${where2} declares no min_bolt_version` : `${where2} says min_bolt_version "${ctx.minBolt}"`;
 	return { code: 'bind_needs_newer_bolt', gate: true, level: packed ? 'warning' : 'error', message: `${where}.${key}: needs Bolt ${ver}. A Bolt ${refuser} REFUSES THE WHOLE PACK when one app uses it (${refusal}), so no app in the pack would install there. ${why}. Set "min_bolt_version": "${since}" in bolt-app.json to confirm you will give the pack only to people on Bolt ${ver} or newer (an older Bolt does not read the field and cannot stop the install, it just refuses the pack), or remove ${key}` };
 }
+// A feature (not a kind) first read by Bolt 0.1.185 (RULES.feature_since): a per-row stack or tabs (mode selected_row) and a `{{row.field}}` where value.
+// A Bolt 0.1.184 or older REFUSES the mode (the whole pack); it ACCEPTS the reference as plain text that matches nothing, so the chart draws empty.
+// Only min_bolt_version can stop that, so it is a lint error here, never left to the pane.
+const FEATURE_EFFECT = {
+	'stack.mode.selected_row': 'A Bolt 0.1.184 or older REFUSES THE WHOLE PACK when one app uses it ("a stack needs mode: list_data"), so no app in the pack would install there.',
+	'tabs.mode.selected_row': 'A Bolt 0.1.184 or older REFUSES THE WHOLE PACK when one app uses it (an unknown right_widget kind), so no app in the pack would install there.',
+	'where.row_ref': 'It only works in a per-row pane (mode: selected_row), which a Bolt 0.1.184 or older refuses as a whole pack; anywhere else Bolt 0.1.185 and lint refuse it. The one open gap is an older Bolt installing the pack at all: no Bolt reads min_bolt_version yet (the install-time check is not built).',
+};
+export function featureGate(where, feature, ctx) {
+	const since = RULES.feature_since?.[feature];
+	if (!since) return null;
+	const have = parseBoltVersion(ctx.minBolt), need = parseBoltVersion(since);
+	if (have && need && boltAtLeast(have, need)) return null;
+	const ver = since.replace(/^0\.1\./, ''), packed = ctx.minBoltKnown === false, where2 = packed ? "the pack's listing" : 'bolt-app.json';
+	const why = ctx.minBolt === undefined ? `${where2} declares no min_bolt_version` : `${where2} says min_bolt_version "${ctx.minBolt}"`;
+	return { code: 'bind_needs_newer_bolt', gate: true, level: packed ? 'warning' : 'error', message: `${where}: needs Bolt ${ver} (${feature}). ${FEATURE_EFFECT[feature]} ${why}. Set "min_bolt_version": "${since}" in bolt-app.json to confirm you will give the pack only to people on Bolt ${ver} or newer (an older Bolt does not read the field and cannot stop the install), or remove it` };
+}
+/** The exact `{{row.field}}` reference of a where value, or null (the launcher's grammar: lower case letters, digits, underscore; not a prototype name). */
+export const exactRowRef = (s) => { const m = /^\{\{row\.([a-z][a-z0-9_]{0,63})\}\}$/.exec(s); return m && !['constructor', 'prototype'].includes(m[1]) ? m[1] : null; };   // the case-sensitive Object.prototype list: only these two can be spelled in the lower case grammar (native and pwa agree)
+/** Every `where` mapping under a node: [{ at, entries }]. */
+export function whereMaps(node, at, out = []) {
+	if (!node) return out;
+	if (node.t === 'm') for (const e of node.entries) { if (e.key === 'where' && e.value && e.value.t === 'm') out.push({ at: `${at}.where`, entries: e.value.entries }); whereMaps(e.value, `${at}.${e.key}`, out); }
+	else if (node.t === 'l') node.items.forEach((x, i) => whereMaps(x, `${at}[${i}]`, out));
+	return out;
+}
 const REF = /\{\{[^}]*\}\}/g;   // the same count the Bolt pane makes: one reference per {{ ... }}
 function bindMap(node, keysSpec, where, out, ctx = {}) {
 	if (!node || node.t !== 'm') { out.push({ code: 'bind_invalid', message: `${where}: must be a mapping, got ${kindWord(node?.t)}` }); return; }

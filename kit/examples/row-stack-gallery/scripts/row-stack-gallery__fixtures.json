@@ -1,0 +1,106 @@
+{
+ "weekly": {
+  "data": [
+   {
+    "day": "Mon",
+    "count": 42,
+    "failed": 3
+   },
+   {
+    "day": "Tue",
+    "count": 58,
+    "failed": 5
+   },
+   {
+    "day": "Wed",
+    "count": 51,
+    "failed": 2
+   },
+   {
+    "day": "Thu",
+    "count": 73,
+    "failed": 9
+   },
+   {
+    "day": "Fri",
+    "count": 96,
+    "failed": 7
+   },
+   {
+    "day": "Sat",
+    "count": 61,
+    "failed": 4
+   },
+   {
+    "day": "Sun",
+    "count": 47,
+    "failed": 1
+   }
+  ]
+ },
+ "traffic": {
+  "data": [
+   {
+    "day": "Mon",
+    "hour": "09",
+    "requests": 10
+   },
+   {
+    "day": "Mon",
+    "hour": "10",
+    "requests": 50
+   },
+   {
+    "day": "Mon",
+    "hour": "11",
+    "requests": 20
+   },
+   {
+    "day": "Tue",
+    "hour": "09",
+    "requests": 0
+   },
+   {
+    "day": "Tue",
+    "hour": "10",
+    "requests": 100
+   },
+   {
+    "day": "Tue",
+    "hour": "11",
+    "requests": 35
+   },
+   {
+    "day": "Wed",
+    "hour": "09",
+    "requests": 70
+   },
+   {
+    "day": "Wed",
+    "hour": "10",
+    "requests": 15
+   },
+   {
+    "day": "Wed",
+    "hour": "11",
+    "requests": 60
+   }
+  ]
+ },
+ "health": {
+  "data": [
+   {
+    "name": "Checkout",
+    "score": 92
+   },
+   {
+    "name": "Search",
+    "score": 71
+   },
+   {
+    "name": "Uploads",
+    "score": 38
+   }
+  ]
+ }
+}

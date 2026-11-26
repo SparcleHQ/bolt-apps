@@ -10,6 +10,7 @@
       "chart-template",
       "chart-types",
       "tabs-gallery",
+      "row-stack-gallery",
       "table-template",
       "repo-radar",
       "around",
@@ -264,6 +265,34 @@
         "scripts/tabs-gallery__fixtures.json"
       ],
       "check": "./bolt-apps check kit/examples/tabs-gallery",
+      "verified": "not verified in real Bolt"
+    },
+    {
+      "id": "row-stack-gallery",
+      "need": "a different set of panes for each row you select: details, history and notes (Bolt 185 or newer)",
+      "layout": "a list of services whose right pane is tabs bound to the selected row",
+      "mode": "views",
+      "widgets": [
+        "tabs",
+        "stack",
+        "detail",
+        "gauge",
+        "chart",
+        "markdown"
+      ],
+      "techniques": [
+        "per-row tabs and stack, mode selected_row (Bolt 185)",
+        "where: {field: \"{{row.field}}\"} row reference",
+        "min_bolt_version 0.1.185 in bolt-app.json"
+      ],
+      "sources": [
+        "any REST API"
+      ],
+      "edit": [
+        "scripts/row-stack-gallery__config.json",
+        "scripts/row-stack-gallery__fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/row-stack-gallery",
       "verified": "not verified in real Bolt"
     },
     {

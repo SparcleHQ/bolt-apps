@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseYaml, Unreadable, get, str } from './yamlsubset.mjs';
-import { RULES, gateProblem, structureProblems, bindProblems, envProblems, timeoutProblems, httpProblems, actionProblems, paneNavProblems, activateProblems } from './boltrules.mjs';
+import { RULES, gateProblem, featureGate, exactRowRef, whereMaps, structureProblems, bindProblems, envProblems, timeoutProblems, httpProblems, actionProblems, paneNavProblems, activateProblems } from './boltrules.mjs';
 export function httpsLiteralHost(t) {
 	const rest = String(t).trim();
 	if (!rest.startsWith('https://')) return null;
@@ -180,7 +180,7 @@ export function launcherRules(root, opts = {}) {
 		const bad = (code, m) => (strict ? E : W)(code, strict ? m : `${m} (a warning for schema_version 1, an error from schema_version 2)`);
 		if (BIND_NONE.includes(kind) && bind && bind.t === 'm' && bind.entries.length) bad('right_widget_bind_unread', `${p}.bind.${bind.entries[0].key}: a ${kind} pane reads nothing from bind; remove the key${kind === 'map' ? ' (the map takes the launcher\'s own state; use an "Open in Maps" url action for a place)' : ''}`);
 		// stack (Bolt 0.1.184) is one pane that draws the whole list and hands each part its rows
-		if (kind === 'stack' && mode !== 'list_data') bad('right_widget_bind_unread', `${p}.mode: a stack needs mode: list_data`);
+		if (kind === 'stack' && mode !== 'list_data' && mode !== 'selected_row') bad('right_widget_bind_unread', `${p}.mode: a stack needs mode: list_data or selected_row`);
 		if (kind === 'stack' && !(bind && bind.t === 'm')) bad('right_widget_bind_unread', `${p}.bind.children: is required for a stack`);
 		// bind.from (a named row set, Bolt 0.1.184) feeds a pane that draws the whole list: the launcher refuses it on a selected_row pane
 		if (bind && bind.t === 'm' && get(bind, 'from') && mode !== 'list_data') bad('right_widget_bind_unread', `${p}.bind.from: needs mode: list_data (a selected_row pane reads one list row, never a row set)`);
@@ -200,8 +200,10 @@ export function launcherRules(root, opts = {}) {
 			if (!wn || wn.t !== 'm') continue;
 			const w = `${p}.bind.tabs[${i}].widget`, k = str(get(wn, 'kind')?.value), explicit = str(get(wn, 'mode')?.value), b = get(wn, 'bind')?.value;
 			if (!k || k === 'tabs' || !RULES.right_widget.bind.tabs.tabs.keys.widget.keys.kind.values.includes(k)) continue;   // the rules table already refuses these
-			const mode = explicit ?? TAB_WIDGET_DEFAULT_MODE[k];
-			if (k === 'stack' && mode !== 'list_data') E('right_widget_bind_unread', `${w}.mode: a stack needs mode: list_data`);
+			const rowTabs = str(get(rw, 'mode')?.value) === 'selected_row';   // a per-row pane (E4): a tab stack is selected_row
+			const mode = explicit ?? (k === 'stack' && rowTabs ? 'selected_row' : TAB_WIDGET_DEFAULT_MODE[k]);
+			if (k === 'stack' && rowTabs && mode !== 'selected_row') E('right_widget_bind_unread', `${w}.mode: a stack inside row tabs needs mode: selected_row`);
+			else if (k === 'stack' && !rowTabs && mode !== 'list_data') E('right_widget_bind_unread', `${w}.mode: a stack needs mode: list_data`);
 			if (k === 'stack' && !(b && b.t === 'm')) E('right_widget_bind_unread', `${w}.bind.children: is required for a stack`);
 			if (b && b.t === 'm') {
 				if (get(b, 'activate')) E('right_widget_bind_unread', `${w}.bind.activate is not supported inside a tab`);
@@ -212,6 +214,33 @@ export function launcherRules(root, opts = {}) {
 				}
 			}
 		}
+	}
+	// per-row stack and tabs (Bolt 0.1.185, E4): mode selected_row binds the pane to the selected row. The launcher's row-pane rules, the version gates and the where reference.
+	const rowFrom = (partNode, at) => {
+		if (!partNode || partNode.t !== 'm') return;
+		const k = str(get(partNode, 'kind')?.value), m = str(get(partNode, 'mode')?.value) ?? TAB_WIDGET_DEFAULT_MODE[k], b = get(partNode, 'bind')?.value;
+		if (k && k !== 'stack' && m === 'list_data' && !(b && b.t === 'm' && get(b, 'from'))) E('right_widget_bind_unread', `${at}.bind.from is required in a row pane: a list_data part draws the whole list; name a row set`);
+		if (k === 'stack' && b && b.t === 'm') for (const [i, c] of (get(b, 'children')?.value?.items || []).entries()) rowFrom(c, `${at}.bind.children[${i}]`);
+	};
+	for (const [p, rw] of rws) {
+		if (!rw || rw.t !== 'm') continue;
+		const kind = str(get(rw, 'kind')?.value), isRow = (kind === 'stack' || kind === 'tabs') && str(get(rw, 'mode')?.value) === 'selected_row', bindNode = get(rw, 'bind')?.value;
+		const gates = new Set();
+		const gate = (where, feature) => { if (gates.has(feature)) return; gates.add(feature); const g = featureGate(where, feature, { minBolt: opts.minBolt, minBoltKnown: opts.minBoltKnown }); if (g) (g.level === 'warning' ? W : E)(g.code, g.message); };
+		if (isRow) gate(`${p}.mode`, `${kind}.mode.selected_row`);
+		const refs = new Set();
+		for (const wm of whereMaps(bindNode, `${p}.bind`)) for (const e of wm.entries) {
+			const v = e.value && e.value.t === 's' ? e.value.v : undefined;
+			if (typeof v !== 'string' || !v.includes('{{')) continue;
+			const ref = exactRowRef(v);
+			if (ref && !isRow) E('right_widget_bind_unread', `${wm.at}.${e.key}: {{row.x}} is only allowed in a pane with mode: selected_row`);
+			else if (ref) { refs.add(ref); gate(`${wm.at}.${e.key}`, 'where.row_ref'); }
+			else if (isRow) E('right_widget_bind_unread', `${wm.at}.${e.key}: a row reference is exactly {{row.field}} (field: lower case letters, digits, underscore), nothing before or after`);
+		}
+		if (refs.size > 6) E('right_widget_bind_unread', `${p}.bind uses ${refs.size} row fields in where; at most 6 distinct row fields are allowed`);
+		if (!isRow || !bindNode || bindNode.t !== 'm') continue;
+		if (kind === 'stack') for (const [i, c] of (get(bindNode, 'children')?.value?.items || []).entries()) rowFrom(c, `${p}.bind.children[${i}]`);
+		else for (const [i, t] of (get(bindNode, 'tabs')?.value?.items || []).entries()) { const wn = t && t.t === 'm' ? get(t, 'widget')?.value : undefined; rowFrom(wn, `${p}.bind.tabs[${i}].widget`); }
 	}
 	// no command for a platform: the app has nothing to run there. A warning, since an app may be single-platform on purpose.
 	if (str(get(root, 'runtime')?.value) === 'bridge') {

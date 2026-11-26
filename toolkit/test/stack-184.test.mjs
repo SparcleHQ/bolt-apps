@@ -79,7 +79,7 @@ test('lint refuses zero, seven and nested parts, unknown kinds and malformed par
 });
 
 test('a stack needs mode list_data and children', () => {
-	assert.ok(errs(app(GOOD, { mode: 'selected_row' })).includes('right_widget_bind_unread') && msg(app(GOOD, { mode: 'selected_row' })).includes('a stack needs mode: list_data'));
+	assert.ok(msg(app(GOOD, { mode: 'overview' })).includes('a stack needs mode: list_data'));   // selected_row is a per-row stack since 185 (row-stack-185.test.mjs)
 	assert.ok(msg(app(GOOD, { mode: null })).includes('a stack needs mode: list_data'));
 	assert.ok(msg(app([], { bind: false })).includes('children'));
 });

@@ -1,0 +1,326 @@
+{
+  "app": {
+    "id": "row-stack-gallery",
+    "chip": "row-stack-gallery",
+    "title": "Row Stack Gallery",
+    "icon": "list",
+    "description": "Pick a service and its right pane has its own tabs: details, history and notes, bound to the row you selected. Needs Bolt 0.1.185 or newer. Sample data.",
+    "service": "Row Stack Gallery"
+  },
+  "api": {
+    "base_url": "https://api.example.com",
+    "key_env": "TABS_API_KEY",
+    "fixture_default": false,
+    "on_missing_key": "sample",
+    "fixture_file": "fixtures.json",
+    "fixture_banner": false
+  },
+  "cache": {
+    "ttl": 45,
+    "stale_max": 86400
+  },
+  "endpoints": {
+    "weekly": {
+      "path": "/v1/deploys"
+    },
+    "traffic": {
+      "path": "/v1/traffic"
+    },
+    "health": {
+      "path": "/v1/health"
+    }
+  },
+  "stats": {
+    "deploys_total": {
+      "endpoint": "weekly",
+      "field_sum": "count"
+    },
+    "requests_total": {
+      "endpoint": "traffic",
+      "field_sum": "requests"
+    },
+    "score_max": {
+      "endpoint": "health",
+      "field_max": "score"
+    }
+  },
+  "overview": {
+    "widget": {
+      "kind": "tabs",
+      "mode": "selected_row",
+      "bind": {
+        "tabs": [
+          {
+            "label": "Details",
+            "widget": {
+              "kind": "stack",
+              "bind": {
+                "children": [
+                  {
+                    "kind": "detail",
+                    "bind": {
+                      "title": "{{row.title}}",
+                      "subtitle": "{{row.subtitle}}",
+                      "fields": [
+                        {
+                          "label": "Level",
+                          "value": "{{row.level}}"
+                        },
+                        {
+                          "label": "Score",
+                          "value": "{{row.score}}"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "kind": "gauge",
+                    "bind": {
+                      "value": "{{row.score}}",
+                      "max": "100",
+                      "label": "Health"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "label": "History",
+            "count_from": {
+              "set": "hist",
+              "where": {
+                "h_src": "{{row.source}}"
+              }
+            },
+            "widget": {
+              "kind": "chart",
+              "bind": {
+                "type": "line",
+                "x": "h_label",
+                "y": "h_value",
+                "label": "Alerts for this service",
+                "from": {
+                  "set": "hist",
+                  "where": {
+                    "h_src": "{{row.source}}"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "label": "Notes",
+            "widget": {
+              "kind": "markdown",
+              "mode": "selected_row",
+              "bind": {
+                "title": "Runbook",
+                "body": "{{row.notes}}"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "rows": [
+      {
+        "title": "API gateway",
+        "subtitle": "critical \u00b7 score 92",
+        "icon": "activity",
+        "extra": {
+          "source": "api",
+          "level": "critical",
+          "score": "92",
+          "notes": "## API gateway\n\nRunbook for API gateway: check the dashboard, then the logs."
+        }
+      },
+      {
+        "title": "Web frontend",
+        "subtitle": "warning \u00b7 score 71",
+        "icon": "activity",
+        "extra": {
+          "source": "web",
+          "level": "warning",
+          "score": "71",
+          "notes": "## Web frontend\n\nRunbook for Web frontend: check the dashboard, then the logs."
+        }
+      },
+      {
+        "title": "Job queue",
+        "subtitle": "ok \u00b7 score 38",
+        "icon": "activity",
+        "extra": {
+          "source": "jobs",
+          "level": "ok",
+          "score": "38",
+          "notes": "## Job queue\n\nRunbook for Job queue: check the dashboard, then the logs."
+        }
+      },
+      {
+        "title": "api history 1",
+        "subtitle": "a row of the set hist",
+        "icon": "line-chart",
+        "extra": {
+          "set": "hist",
+          "h_src": "api",
+          "h_label": "D1",
+          "h_value": 3
+        }
+      },
+      {
+        "title": "api history 2",
+        "subtitle": "a row of the set hist",
+        "icon": "line-chart",
+        "extra": {
+          "set": "hist",
+          "h_src": "api",
+          "h_label": "D2",
+          "h_value": 5
+        }
+      },
+      {
+        "title": "api history 3",
+        "subtitle": "a row of the set hist",
+        "icon": "line-chart",
+        "extra": {
+          "set": "hist",
+          "h_src": "api",
+          "h_label": "D3",
+          "h_value": 9
+        }
+      },
+      {
+        "title": "api history 4",
+        "subtitle": "a row of the set hist",
+        "icon": "line-chart",
+        "extra": {
+          "set": "hist",
+          "h_src": "api",
+          "h_label": "D4",
+          "h_value": 4
+        }
+      },
+      {
+        "title": "web history 1",
+        "subtitle": "a row of the set hist",
+        "icon": "line-chart",
+        "extra": {
+          "set": "hist",
+          "h_src": "web",
+          "h_label": "D1",
+          "h_value": 1
+        }
+      },
+      {
+        "title": "web history 2",
+        "subtitle": "a row of the set hist",
+        "icon": "line-chart",
+        "extra": {
+          "set": "hist",
+          "h_src": "web",
+          "h_label": "D2",
+          "h_value": 2
+        }
+      },
+      {
+        "title": "web history 3",
+        "subtitle": "a row of the set hist",
+        "icon": "line-chart",
+        "extra": {
+          "set": "hist",
+          "h_src": "web",
+          "h_label": "D3",
+          "h_value": 2
+        }
+      },
+      {
+        "title": "web history 4",
+        "subtitle": "a row of the set hist",
+        "icon": "line-chart",
+        "extra": {
+          "set": "hist",
+          "h_src": "web",
+          "h_label": "D4",
+          "h_value": 1
+        }
+      },
+      {
+        "title": "jobs history 1",
+        "subtitle": "a row of the set hist",
+        "icon": "line-chart",
+        "extra": {
+          "set": "hist",
+          "h_src": "jobs",
+          "h_label": "D1",
+          "h_value": 0
+        }
+      },
+      {
+        "title": "jobs history 2",
+        "subtitle": "a row of the set hist",
+        "icon": "line-chart",
+        "extra": {
+          "set": "hist",
+          "h_src": "jobs",
+          "h_label": "D2",
+          "h_value": 0
+        }
+      },
+      {
+        "title": "jobs history 3",
+        "subtitle": "a row of the set hist",
+        "icon": "line-chart",
+        "extra": {
+          "set": "hist",
+          "h_src": "jobs",
+          "h_label": "D3",
+          "h_value": 1
+        }
+      },
+      {
+        "title": "jobs history 4",
+        "subtitle": "a row of the set hist",
+        "icon": "line-chart",
+        "extra": {
+          "set": "hist",
+          "h_src": "jobs",
+          "h_label": "D4",
+          "h_value": 0
+        }
+      },
+      {
+        "title": "Deploys this week",
+        "subtitle": "an ordinary list_data view",
+        "icon": "line-chart",
+        "view": "weekly"
+      }
+    ]
+  },
+  "views": [
+    {
+      "id": "weekly",
+      "title": "Deploys (rows)",
+      "icon": "line-chart",
+      "endpoint": "weekly",
+      "item": {
+        "title": "{day} \u00b7 {count}",
+        "subtitle": "deploys per day",
+        "extra": {
+          "label": "{day}",
+          "value": "{count}"
+        }
+      },
+      "widget": {
+        "kind": "chart",
+        "mode": "list_data",
+        "bind": {
+          "type": "line",
+          "x": "label",
+          "y": "value",
+          "label": "Deploys by day"
+        }
+      }
+    }
+  ]
+}

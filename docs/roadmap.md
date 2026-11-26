@@ -4,7 +4,7 @@ Last updated 2026-11-25. This page says what you can build with Bolt Apps now, a
 
 ## What works today
 
-Each row below has been seen working in a real Bolt, or is covered by this repository's tests. Tabs need Bolt 0.1.185 or newer, which is the current development build; set `min_bolt_version` to match (the checker tells you).
+Each row below is covered by this repository's tests; check the version note on each row. Tabs need Bolt 0.1.185 or newer, which is not in a public release yet; set `min_bolt_version` to match (the checker tells you).
 
 | You want | What you write | Notes |
 |---|---|---|
@@ -23,9 +23,9 @@ See [Anatomy of a Bolt App](anatomy.md) for which key draws what, and the [galle
 
 | Idea | What it would let you do | State |
 |---|---|---|
-| Draw any d3 widget | Write d3 drawing code that runs in a locked sandbox with no network, no files and no accounts. Bolt supplies the data, size, theme, keyboard handling and tooltips. Treemaps, sankeys, maps and your own layouts would use one contract. | Design stage. We have not proven the sandbox on every platform. |
+| Draw any d3 widget | Write d3 drawing code that Bolt would run isolated from the network, files and accounts. Bolt would supply the data, size, theme, keyboard handling and tooltips. Treemaps, sankeys, maps and your own layouts would use one contract. | Design stage. We have not proven the sandbox on every platform. |
 | Colour that means something | Green, amber and red on tile values, rings and list rows, taken from Bolt's theme | Planned |
-| Text in a tile | Show a word such as "Degraded" or a country name in a tile | Written, not released |
+| Text in a tile | Show a word such as "Degraded" or a country name in a tile | Planned |
 | Rich detail panes | A pane for the selected row that holds tiles, a chart and tables | Planned |
 | Chart extensions | Stacked bars and areas, a forecast band, scatter and bubble | Planned |
 | Better loading | Show the last results at once with "updated 2 min ago, refreshing" | Planned |

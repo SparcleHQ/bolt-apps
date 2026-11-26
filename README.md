@@ -60,6 +60,34 @@ What works today and what we are working on: [roadmap](docs/roadmap.md).
 
 `=obs` joins alerts and service health from eight public demo monitoring sources into one view: tiles and rings, a trend chart with a limit line and marks, and an alerts table with marks and a filter. These are unedited captures of a real Bolt on public demo data. Tabs need Bolt 0.1.185 or newer, which is not in a public release yet. The [`obs` example](kit/examples/obs/) has the same views without tabs. The detail pane for one service is built from text today; richer detail panes are on the [roadmap](docs/roadmap.md).
 
+### Coming up: where Bolt Apps are heading
+
+![Prototype: a stacked area chart of monthly spend by service over twelve months, drawn with d3 on sample data.](docs/images/prototype-stacked-area.png)
+
+Prototype, sample data: monthly spend by service.
+
+![Prototype: a treemap of spend by service, drawn with d3 on sample data.](docs/images/prototype-treemap.png)
+
+Prototype, sample data: spend by service as a treemap.
+
+![Prototype: a sankey diagram of sales deals flowing from lead source through stages to won or lost, drawn with d3 on sample data.](docs/images/prototype-sankey.png)
+
+Prototype, sample data: where sales deals go, from lead source to won or lost.
+
+![Prototype: a world map coloured by sales per country, drawn with d3 on sample data.](docs/images/prototype-world-map.png)
+
+Prototype, sample data: sales per country.
+
+![Prototype: a map of the United States with invented shipping routes between hub cities, drawn with d3 on sample data.](docs/images/prototype-route-arcs.png)
+
+Prototype, sample data: invented shipping routes between hub cities.
+
+![Prototype: a waterfall chart from revenue down to net income, drawn with d3 on sample data.](docs/images/prototype-waterfall.png)
+
+Prototype, sample data: from revenue down to net income.
+
+These are not Bolt screens. These six pictures are prototypes: real d3 code drawn by a prototype of a plot widget in a test browser, with Bolt's colours and invented sample data. A Bolt App cannot draw them today, and no Bolt release has them yet. The idea: you write a small d3 script, hand Bolt your data, and Bolt draws it in the pane with its own keyboard handling, theme and tooltips, so a layout built from the d3 modules Bolt bundles could work without a new Bolt widget for each one. We have not yet proven that the drawing stays contained and responsive in Bolt on macOS and Windows. We give no dates. See the [roadmap](docs/roadmap.md) for the rest.
+
 ## Safety tiers
 
 Every app has a tier. The checker works it out from the content and refuses an app that

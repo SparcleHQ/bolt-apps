@@ -1,0 +1,25 @@
+{
+  "script": "scripts/row-stack-gallery__engine.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/row-stack-gallery__bolt_app_kit.py",
+  "fixture": true,
+  "cases": [
+    {
+      "name": "overview",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "golden": "golden/overview.json"
+    },
+    {
+      "name": "weekly view",
+      "os": "macos",
+      "args": [
+        "weekly"
+      ],
+      "golden": "golden/weekly.json"
+    }
+  ]
+}

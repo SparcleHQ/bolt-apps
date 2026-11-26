@@ -45,7 +45,8 @@ test('promise B: each new key is gated on min_bolt_version 0.1.185 and says what
 	// the where reference alone (a stack that stays list_data cannot hold it, so it is tested inside a row pane with a gate on the reference)
 	const e = P(OK_STACK, { minBolt: '0.1.184' }).filter((p) => p.code === 'bind_needs_newer_bolt' && p.message.includes('(where.row_ref)'));
 	assert.equal(e.length, 1);
-	assert.match(e[0].message, /empty|matches nothing|draws nothing/);
+	assert.match(e[0].message, /per-row pane/);
+	assert.match(e[0].message, /install-time check is not built/);
 });
 
 test('a packed read (minBoltKnown false) is a warning, as for every other gate', () => {
@@ -79,6 +80,12 @@ test('a row reference is exactly {{row.field}}, only in a row pane, at most 6 di
 	assert.deepEqual(errs(tabsRow(['a', 'b', 'c', 'd', 'e', 'f'].map(tab))), []);
 	assert.match(msgs(tabsRow(['a', 'b', 'c', 'd', 'e', 'f', 'g'].map(tab))), /at most 6 distinct row fields/);
 	assert.deepEqual(errs(tabsRow(Array.from({ length: 8 }, () => tab('a')))), []);
+});
+
+test('reserved names: only constructor and prototype can be spelled; lower case look-alikes are ordinary fields (native and pwa agree)', () => {
+	const y = (f) => tabsRow([`{ label: A, widget: { kind: chart, bind: { from: { set: hist, where: { h: "{{row.${f}}}" } } } } }`]);
+	for (const ok of ['tostring', 'valueof', 'hasownproperty']) assert.deepEqual(errs(y(ok)), [], ok);
+	for (const bad of ['constructor', 'prototype', '__proto__']) assert.match(msgs(y(bad)), /where\.h/, bad);
 });
 
 test('a plain Overview stack and tabs lint exactly as before', () => {

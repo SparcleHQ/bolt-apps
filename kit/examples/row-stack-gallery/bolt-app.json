@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "row-stack-gallery",
+  "title": "Row stack gallery",
+  "role": "Anyone who wants a different set of panes for each row you select",
+  "saves": "Working out how a per-row stack and tabs and the row reference in where fit together",
+  "summary": "Type =row-stack-gallery, then move between three services: each one has its own details, history and notes tabs. Needs Bolt 0.1.185 or newer. Runs on sample data.",
+  "author": {
+    "name": "Bolt Apps examples",
+    "link": "https://github.com/SparcleHQ/bolt-apps"
+  },
+  "tier": 3,
+  "permissions": [
+    "runs_commands",
+    "network",
+    "files"
+  ],
+  "platforms": [
+    "macos",
+    "linux"
+  ],
+  "min_bolt_version": "0.1.185",
+  "requires": [
+    {
+      "interpreter": "python",
+      "min_version": "3.9"
+    }
+  ],
+  "tests": []
+}

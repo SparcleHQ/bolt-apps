@@ -129,7 +129,7 @@ export function gateProblem(where, key, since, ctx) {
 const FEATURE_EFFECT = {
 	'stack.mode.selected_row': 'A Bolt 0.1.184 or older REFUSES THE WHOLE PACK when one app uses it ("a stack needs mode: list_data"), so no app in the pack would install there.',
 	'tabs.mode.selected_row': 'A Bolt 0.1.184 or older REFUSES THE WHOLE PACK when one app uses it (an unknown right_widget kind), so no app in the pack would install there.',
-	'where.row_ref': 'A Bolt 0.1.184 or older reads it as plain text that matches no row, so the pane draws empty (a chart or count of nothing) with no error.',
+	'where.row_ref': 'It only works in a per-row pane (mode: selected_row), which a Bolt 0.1.184 or older refuses as a whole pack; anywhere else Bolt 0.1.185 and lint refuse it. The one open gap is an older Bolt installing the pack at all: no Bolt reads min_bolt_version yet (the install-time check is not built).',
 };
 export function featureGate(where, feature, ctx) {
 	const since = RULES.feature_since?.[feature];
@@ -141,7 +141,7 @@ export function featureGate(where, feature, ctx) {
 	return { code: 'bind_needs_newer_bolt', gate: true, level: packed ? 'warning' : 'error', message: `${where}: needs Bolt ${ver} (${feature}). ${FEATURE_EFFECT[feature]} ${why}. Set "min_bolt_version": "${since}" in bolt-app.json to confirm you will give the pack only to people on Bolt ${ver} or newer (an older Bolt does not read the field and cannot stop the install), or remove it` };
 }
 /** The exact `{{row.field}}` reference of a where value, or null (the launcher's grammar: lower case letters, digits, underscore; not a prototype name). */
-export const exactRowRef = (s) => { const m = /^\{\{row\.([a-z][a-z0-9_]{0,63})\}\}$/.exec(s); return m && !['constructor', 'prototype', 'hasownproperty', 'tostring', 'valueof'].includes(m[1].toLowerCase()) && !m[1].startsWith('__') ? m[1] : null; };
+export const exactRowRef = (s) => { const m = /^\{\{row\.([a-z][a-z0-9_]{0,63})\}\}$/.exec(s); return m && !['constructor', 'prototype'].includes(m[1]) ? m[1] : null; };   // the case-sensitive Object.prototype list: only these two can be spelled in the lower case grammar (native and pwa agree)
 /** Every `where` mapping under a node: [{ at, entries }]. */
 export function whereMaps(node, at, out = []) {
 	if (!node) return out;

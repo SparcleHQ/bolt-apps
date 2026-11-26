@@ -97,7 +97,9 @@
    "json_tree",
    "chart",
    "table",
-   "card"
+   "card",
+   "stack",
+   "tabs"
   ],
   "widget_kinds_count": 16,
   "actions.icons_count": 37,

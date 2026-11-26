@@ -302,17 +302,16 @@
       "kind": "tabs"
     },
     {
-      "id": "widget.row_pane",
-      "group": "layout",
+      "id": "rows.row_pane",
+      "group": "rows",
       "name": "Per-row pane: stack or tabs for the selected row",
       "status": "supported",
-      "example": "kit/examples/tabs-gallery",
+      "example_note": "no example app yet; copy the snippet",
       "since": "0.1.185",
       "older_bolt": "A Bolt older than 0.1.185 refuses the whole pack that sets mode: selected_row on a stack or tabs, and reads a {{row.field}} where value as plain text that matches nothing (an empty chart, no error); set min_bolt_version 0.1.185.",
       "snippet": "{\"kind\": \"tabs\", \"mode\": \"selected_row\", \"bind\": {\"tabs\": [{\"label\": \"Details\", \"widget\": {\"kind\": \"detail\"}}, {\"label\": \"History\", \"count_from\": {\"set\": \"hist\", \"where\": {\"h_src\": \"{{row.source}}\"}}, \"widget\": {\"kind\": \"chart\", \"bind\": {\"y\": \"v\", \"from\": {\"set\": \"hist\", \"where\": {\"h_src\": \"{{row.source}}\"}}}}}]}}",
       "test": "toolkit/test/row-stack-185.test.mjs",
-      "limit": "Needs Bolt 0.1.185 (min_bolt_version 0.1.185). A stack or tabs with mode: selected_row is the right pane of the row you selected: gauge, detail and markdown parts draw that row, and a table, chart, cards or heatmap part must name a row set (bind.from) that you filter with where: {field: \"{{row.field}}\"}. The reference is exactly one {{row.field}}, only in a row pane, at most 6 distinct fields per pane; a missing field matches nothing. With nothing selected the pane says \"Select an item to see its details.\" and draws no part. A stack inside row tabs is selected_row too. Lint and fixture tested only: no kit example app uses it yet, and no real Bolt in this repo draws it.",
-      "kind": "stack"
+      "limit": "Needs Bolt 0.1.185 (min_bolt_version 0.1.185). A stack or tabs with mode: selected_row is the right pane of the row you selected: gauge, detail and markdown parts draw that row, and a table, chart, cards or heatmap part must name a row set (bind.from) that you filter with where: {field: \"{{row.field}}\"}. The reference is exactly one {{row.field}}, only in a row pane, at most 6 distinct fields per pane; a missing field matches nothing. With nothing selected the pane says \"Select an item to see its details.\" and draws no part. A stack inside row tabs is selected_row too. Lint and fixture tested only: no kit example app uses it yet, and no real Bolt in this repo draws it."
     },
     {
       "id": "layout.list_widget",

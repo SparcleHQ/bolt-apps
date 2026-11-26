@@ -51,6 +51,15 @@ Every picture is a folder you can copy from [`kit/examples/`](kit/examples/). Se
 
 What works today and what we are working on: [roadmap](docs/roadmap.md).
 
+### A real observability app: `=obs`
+
+![Animation: the =obs overview, its Alerts tab, then a search through the services list](docs/images/obs-tabs-walkthrough.gif)
+![The =obs overview: tiles with rings and sparklines on the right, a list of views on the left, tabs Overview, Trend and Alerts above the tiles](docs/images/obs-overview-tabs.png)
+![The =obs Trend tab: a line chart of firing alerts with a limit line and event marks](docs/images/obs-trend-tab.png)
+![The =obs Alerts tab: a filterable table of firing alerts with a count and open minutes](docs/images/obs-alerts-tab.png)
+
+`=obs` joins alerts and service health from eight public demo monitoring sources into one view: tiles and rings, a trend chart with a limit line and marks, and an alerts table with marks and a filter. These are unedited captures of a real Bolt on public demo data. Tabs need Bolt 0.1.185 or newer, which is not in a public release yet. The [`obs` example](kit/examples/obs/) has the same views without tabs. Some parts are still plain, such as the detail pane for one service; see the [roadmap](docs/roadmap.md) for what we are working on.
+
 ## Safety tiers
 
 Every app has a tier. The checker works it out from the content and refuses an app that

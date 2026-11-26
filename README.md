@@ -53,7 +53,7 @@ What works today and what we are working on: [roadmap](docs/roadmap.md).
 
 ### A real observability app: `=obs`
 
-![Animation: the =obs overview, its Alerts tab, then a search through the services list](docs/images/obs-tabs-walkthrough.gif)
+![Animation: the =obs overview, then its Trend tab and its Alerts tab](docs/images/obs-tabs-walkthrough.gif)
 ![The =obs overview: tiles with rings and sparklines on the right, a list of views on the left, tabs Overview, Trend and Alerts above the tiles](docs/images/obs-overview-tabs.png)
 ![The =obs Trend tab: a line chart of firing alerts with a limit line and event marks](docs/images/obs-trend-tab.png)
 ![The =obs Alerts tab: a filterable table of firing alerts with a count and open minutes](docs/images/obs-alerts-tab.png)

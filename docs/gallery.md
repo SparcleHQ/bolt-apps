@@ -80,6 +80,36 @@ Spent this month against the budget, labelled as sample data.
 - Capability row: `pane.tiles`, `sample.mode`
 - How to get this: Copy `kit/examples/expense-tracker`; sample data shows until a key is added.
 
+## Tabs in the right pane
+
+![The =obs overview: a list of views on the left, tabs Overview, Trend and Alerts above tiles with rings and sparklines on the right.](images/obs-overview-tabs.png)
+
+=obs with Overview, Trend and Alerts as tabs over one list. Tabs need Bolt 0.1.185 or newer, which is not in a public release yet. The picture is an unedited capture of a real Bolt on public demo data.
+
+- Example: [`tabs-gallery`](../kit/examples/tabs-gallery)
+- Capability row: `widget.tabs`
+- How to get this: Copy `kit/examples/tabs-gallery` for the tabs.
+
+## A table with a filter and marks
+
+![The =obs Alerts tab: a filter box above a table of firing alerts with a mark, the alert name and open minutes.](images/obs-alerts-tab.png)
+
+The =obs alerts as a table: a filter box, a mark per row and the open minutes. Public demo data.
+
+- Example: [`widget-gallery`](../kit/examples/widget-gallery)
+- Capability row: `widget.table`, `pane.table_bars_mark`
+- How to get this: Copy `kit/examples/widget-gallery` for a table with bars and marks.
+
+## A trend with a limit line and event marks
+
+![The =obs Trend tab: a line chart of firing alerts with a dashed limit line and event marks along the top.](images/obs-trend-tab.png)
+
+Firing alerts over recent runs: a line, a dashed limit and marks where the count went over it. Public demo data.
+
+- Example: [`widget-gallery`](../kit/examples/widget-gallery)
+- Capability row: `widget.chart`, `pane.chart_limit_marker`
+- How to get this: Copy `kit/examples/widget-gallery` for a chart with a limit line and markers.
+
 ## Detail pane with Before, After and What changed
 
 ![Launcher showing =pipeline-board changes: Run 305 selected and a detail pane with Before, After and What changed.](images/pipeline-board-detail-pane.png)

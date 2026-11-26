@@ -12,7 +12,7 @@ Each row below is covered by this repository's tests; check the version note on 
 | A table you can scan | `table` with columns, number formats, bars, tone marks and totals | Sorting and filtering are built in |
 | A trend | `chart` with a line or area, a limit line, and marks for events | A deploy or an alert shows as a marker |
 | Several views in one pane | `tabs` with a count and a status shape per tab | Needs `min_bolt_version` 0.1.185 |
-| A heatmap or a gauge | `heatmap`, `gauge` | See [`kit/examples/CAPABILITIES.md`](../kit/examples/CAPABILITIES.md) |
+| A heatmap or a gauge | `heatmap`, `gauge` | Needs Bolt 182 or newer. See [`kit/examples/CAPABILITIES.md`](../kit/examples/CAPABILITIES.md) |
 | Several widgets in one view | `stack` | Tiles, a chart and a table together |
 | A check before you ship | `bolt-apps lint`, `check`, `pack` | The checker works out the safety tier and refuses a lower claim |
 | A plain-words sheet at install | Bolt lists what a pack can do before it runs | You confirm it |

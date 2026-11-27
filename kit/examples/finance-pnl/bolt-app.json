@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "finance-pnl",
+  "title": "Finance Pnl",
+  "role": "A finance lead or founder",
+  "saves": "Comparing actual with budget by hand",
+  "summary": "Type =finance-pnl for tiles, actual vs budget by month and a variance table with marks. Needs Bolt 0.1.185 or newer. Runs on sample data.",
+  "author": {
+    "name": "Bolt Apps examples",
+    "link": "https://github.com/SparcleHQ/bolt-apps"
+  },
+  "tier": 3,
+  "permissions": [
+    "runs_commands",
+    "network",
+    "files"
+  ],
+  "platforms": [
+    "macos",
+    "linux"
+  ],
+  "requires": [
+    {
+      "interpreter": "python",
+      "min_version": "3.9"
+    }
+  ],
+  "tests": [],
+  "min_bolt_version": "0.1.185"
+}

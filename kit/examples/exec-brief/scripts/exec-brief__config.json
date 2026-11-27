@@ -1,0 +1,405 @@
+{
+  "app": {
+    "id": "exec-brief",
+    "chip": "exec-brief",
+    "title": "Executive brief",
+    "icon": "activity",
+    "description": "Executive brief: four tiles then revenue, cash and customers charts, each titled with its takeaway. Needs Bolt 0.1.184 or newer. Sample data.",
+    "service": "Executive brief"
+  },
+  "api": {
+    "base_url": "https://api.example.com",
+    "key_env": "SHOWCASE_API_KEY",
+    "fixture_default": false,
+    "on_missing_key": "sample",
+    "fixture_file": "fixtures.json",
+    "fixture_banner": false
+  },
+  "cache": {
+    "ttl": 45,
+    "stale_max": 86400
+  },
+  "endpoints": {
+    "summary": {
+      "path": "/v1/summary"
+    }
+  },
+  "stats": {},
+  "overview": {
+    "widget": {
+      "kind": "stack",
+      "mode": "list_data",
+      "bind": {
+        "children": [
+          {
+            "kind": "cards",
+            "bind": {
+              "layout": "tiles",
+              "visual_from": "kpi_visual",
+              "title": "{{row.kpi_label}}",
+              "value": "{{row.kpi_value}}",
+              "unit": "{{row.kpi_unit}}",
+              "max": "{{row.kpi_max}}",
+              "target": "{{row.target}}",
+              "limit": "{{row.limit}}",
+              "trend": "{{row.trend}}",
+              "delta": "{{row.delta}}",
+              "delta_label": "{{row.since}}",
+              "subtitle": "{{row.kpi_note}}",
+              "from": {
+                "set": "tiles"
+              }
+            }
+          },
+          {
+            "kind": "chart",
+            "bind": {
+              "type": "line",
+              "x": "m",
+              "series": [
+                {
+                  "y": "rev",
+                  "label": "Actual"
+                },
+                {
+                  "y": "plan",
+                  "label": "Plan"
+                }
+              ],
+              "unit": "M",
+              "label": "Revenue beat plan in November and December",
+              "marker": {
+                "field": "event"
+              },
+              "from": {
+                "set": "mo"
+              }
+            }
+          },
+          {
+            "kind": "chart",
+            "bind": {
+              "type": "area",
+              "x": "m",
+              "series": [
+                {
+                  "y": "cash",
+                  "label": "Cash"
+                }
+              ],
+              "unit": "M",
+              "label": "Cash is up 22 percent, runway is not a worry",
+              "limit": 20,
+              "limit_label": "floor",
+              "from": {
+                "set": "mo"
+              }
+            }
+          },
+          {
+            "kind": "chart",
+            "bind": {
+              "type": "line",
+              "x": "m",
+              "series": [
+                {
+                  "y": "cust",
+                  "label": "Customers"
+                }
+              ],
+              "unit": "",
+              "label": "Customers up 42 percent in a year, November was the best month",
+              "from": {
+                "set": "mo"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "rows": [
+      {
+        "title": "Executive brief: December",
+        "subtitle": "Sample data, one year of months",
+        "icon": "list",
+        "extra": {}
+      },
+      {
+        "title": "Revenue, Dec",
+        "subtitle": "monthly, M USD",
+        "icon": "activity",
+        "tile": {
+          "label": "Revenue, Dec",
+          "value": 6.2,
+          "unit": "M",
+          "note": "monthly, M USD"
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "spark",
+          "delta": 3.3,
+          "since": "vs plan"
+        },
+        "trend": [
+          4.1,
+          4.2,
+          4.5,
+          4.6,
+          4.8,
+          5.0,
+          5.1,
+          5.3,
+          5.5,
+          5.6,
+          5.9,
+          6.2
+        ]
+      },
+      {
+        "title": "Cash",
+        "subtitle": "M USD in the bank",
+        "icon": "activity",
+        "tile": {
+          "label": "Cash",
+          "value": 21.9,
+          "unit": "M",
+          "note": "M USD in the bank",
+          "max": 30
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "bullet",
+          "target": 20
+        }
+      },
+      {
+        "title": "Customers",
+        "subtitle": "paying accounts",
+        "icon": "activity",
+        "tile": {
+          "label": "Customers",
+          "value": 441,
+          "unit": "",
+          "note": "paying accounts"
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "spark",
+          "delta": 3.5,
+          "since": "vs last month"
+        },
+        "trend": [
+          310,
+          318,
+          325,
+          340,
+          352,
+          361,
+          375,
+          388,
+          398,
+          410,
+          426,
+          441
+        ]
+      },
+      {
+        "title": "Churn",
+        "subtitle": "monthly, lower is better",
+        "icon": "activity",
+        "tile": {
+          "label": "Churn",
+          "value": 1.4,
+          "unit": "%",
+          "note": "monthly, lower is better",
+          "max": 5
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "bullet",
+          "target": 2
+        }
+      },
+      {
+        "title": "Jan brief",
+        "subtitle": "revenue, cash, customers",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Jan",
+          "rev": 4.1,
+          "plan": 4.2,
+          "cash": 18.0,
+          "cust": 310,
+          "set": "mo"
+        }
+      },
+      {
+        "title": "Feb brief",
+        "subtitle": "revenue, cash, customers",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Feb",
+          "rev": 4.2,
+          "plan": 4.3,
+          "cash": 17.6,
+          "cust": 318,
+          "set": "mo"
+        }
+      },
+      {
+        "title": "Mar brief",
+        "subtitle": "revenue, cash, customers",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Mar",
+          "rev": 4.5,
+          "plan": 4.4,
+          "cash": 17.4,
+          "cust": 325,
+          "event": "Price",
+          "set": "mo"
+        }
+      },
+      {
+        "title": "Apr brief",
+        "subtitle": "revenue, cash, customers",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Apr",
+          "rev": 4.6,
+          "plan": 4.6,
+          "cash": 17.9,
+          "cust": 340,
+          "set": "mo"
+        }
+      },
+      {
+        "title": "May brief",
+        "subtitle": "revenue, cash, customers",
+        "icon": "line-chart",
+        "extra": {
+          "m": "May",
+          "rev": 4.8,
+          "plan": 4.7,
+          "cash": 18.3,
+          "cust": 352,
+          "set": "mo"
+        }
+      },
+      {
+        "title": "Jun brief",
+        "subtitle": "revenue, cash, customers",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Jun",
+          "rev": 5.0,
+          "plan": 4.9,
+          "cash": 18.8,
+          "cust": 361,
+          "set": "mo"
+        }
+      },
+      {
+        "title": "Jul brief",
+        "subtitle": "revenue, cash, customers",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Jul",
+          "rev": 5.1,
+          "plan": 5.1,
+          "cash": 19.0,
+          "cust": 375,
+          "set": "mo"
+        }
+      },
+      {
+        "title": "Aug brief",
+        "subtitle": "revenue, cash, customers",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Aug",
+          "rev": 5.3,
+          "plan": 5.3,
+          "cash": 19.6,
+          "cust": 388,
+          "set": "mo"
+        }
+      },
+      {
+        "title": "Sep brief",
+        "subtitle": "revenue, cash, customers",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Sep",
+          "rev": 5.5,
+          "plan": 5.4,
+          "cash": 20.1,
+          "cust": 398,
+          "event": "Launch",
+          "set": "mo"
+        }
+      },
+      {
+        "title": "Oct brief",
+        "subtitle": "revenue, cash, customers",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Oct",
+          "rev": 5.6,
+          "plan": 5.6,
+          "cash": 20.4,
+          "cust": 410,
+          "set": "mo"
+        }
+      },
+      {
+        "title": "Nov brief",
+        "subtitle": "revenue, cash, customers",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Nov",
+          "rev": 5.9,
+          "plan": 5.8,
+          "cash": 21.0,
+          "cust": 426,
+          "set": "mo"
+        }
+      },
+      {
+        "title": "Dec brief",
+        "subtitle": "revenue, cash, customers",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Dec",
+          "rev": 6.2,
+          "plan": 6.0,
+          "cash": 21.9,
+          "cust": 441,
+          "set": "mo"
+        }
+      },
+      {
+        "title": "About this sample",
+        "subtitle": "Sample data, no network",
+        "icon": "list",
+        "view": "about",
+        "extra": {
+          "cover": 71
+        }
+      }
+    ]
+  },
+  "views": [
+    {
+      "id": "about",
+      "title": "About this sample",
+      "icon": "list",
+      "endpoint": "summary",
+      "item": {
+        "title": "About this sample",
+        "subtitle": "Sample data, no network",
+        "body": "Every number here is built-in sample data from the Bolt Apps examples. Nothing is fetched."
+      }
+    }
+  ]
+}

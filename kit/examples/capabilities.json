@@ -1,6 +1,6 @@
 {
   "schema": "capabilities-v1",
-  "about": "One row per thing an app can do. Derived from the code and schema/bolt-rules.json. Nothing here is verified in real Bolt yet. Every row carries since (the first Bolt that reads it, or none), older_bolt (what an older Bolt does) and a sample (example, or example_note with sample_due). A reserved row is a named extension point that is not available: lint refuses it and it is never listed as supported.",
+  "about": "One row per thing an app can do. Derived from the code and schema/bolt-rules.json. Most rows are lint and fixture tested only; the rows that a real Bolt dev build drew on 2026-11-26 say so in their limit. Every row carries since (the first Bolt that reads it, or none), older_bolt (what an older Bolt does) and a sample (example, or example_note with sample_due). A reserved row is a named extension point that is not available: lint refuses it and it is never listed as supported.",
   "status_words": [
     "supported",
     "partial",
@@ -69,7 +69,9 @@
       "also": [
         "chart-template",
         "expense-tracker",
-        "obs"
+        "obs",
+        "exec-brief",
+        "sales-pipeline"
       ],
       "since": "0.1.181",
       "older_bolt": "Every Bolt that runs Bolt Apps reads it."
@@ -87,7 +89,9 @@
       "also": [
         "table-template",
         "coroot",
-        "obs"
+        "obs",
+        "gym",
+        "sales-pipeline"
       ],
       "since": "0.1.181",
       "older_bolt": "Every Bolt that runs Bolt Apps reads it."
@@ -104,7 +108,9 @@
       "kind": "cards",
       "also": [
         "coroot",
-        "obs"
+        "obs",
+        "exec-brief",
+        "sales-pipeline"
       ],
       "since": "0.1.181",
       "older_bolt": "Every Bolt that runs Bolt Apps reads it."
@@ -270,10 +276,13 @@
       "example": "kit/examples/chart-types",
       "snippet": "{\"kind\": \"heatmap\", \"mode\": \"list_data\", \"bind\": {\"x\": \"hour\", \"y\": \"day\", \"value\": \"requests\"}}",
       "test": "kit/examples/chart-types/check.json",
-      "limit": "Needs Bolt 0.1.182 (min_bolt_version 0.1.182). Grid, matrix or calendar data, 24 columns and 24 rows at most. Drawn by no real Bolt in this repo yet: the app is lint and fixture tested only.",
+      "limit": "Needs Bolt 0.1.182 (min_bolt_version 0.1.182). Grid, matrix or calendar data, 24 columns and 24 rows at most. Drawn by a real Bolt dev build (0.1.185 or newer) on 2026-11-26: the bin fill heat map of the =inventory Floor tab, in the gallery pictures.",
       "kind": "heatmap",
       "since": "0.1.182",
-      "older_bolt": "A Bolt older than 0.1.182 refuses the whole pack that uses it; set min_bolt_version 0.1.182."
+      "older_bolt": "A Bolt older than 0.1.182 refuses the whole pack that uses it; set min_bolt_version 0.1.182.",
+      "also": [
+        "inventory"
+      ]
     },
     {
       "id": "widget.gauge",
@@ -283,10 +292,15 @@
       "example": "kit/examples/chart-types",
       "snippet": "{\"kind\": \"gauge\", \"mode\": \"selected_row\", \"bind\": {\"value\": \"{{row.score}}\", \"max\": \"100\", \"shape\": \"half\"}}",
       "test": "kit/examples/chart-types/check.json",
-      "limit": "Needs Bolt 0.1.182 (min_bolt_version 0.1.182). bind.value is required; the selected row is shown. Drawn by no real Bolt in this repo yet: the app is lint and fixture tested only.",
+      "limit": "Needs Bolt 0.1.182 (min_bolt_version 0.1.182). bind.value is required; the selected row is shown. Drawn by a real Bolt dev build (0.1.185 or newer) on 2026-11-26: the operating margin gauge of the =finance-pnl Trend tab and the median days to fix gauge of the =security-posture Posture tab, in the gallery pictures.",
       "kind": "gauge",
       "since": "0.1.182",
-      "older_bolt": "A Bolt older than 0.1.182 refuses the whole pack that uses it; set min_bolt_version 0.1.182."
+      "older_bolt": "A Bolt older than 0.1.182 refuses the whole pack that uses it; set min_bolt_version 0.1.182.",
+      "also": [
+        "finance-pnl",
+        "gym",
+        "security-posture"
+      ]
     },
     {
       "id": "widget.tabs",
@@ -298,8 +312,16 @@
       "older_bolt": "A Bolt older than 0.1.185 refuses the whole pack that uses it; set min_bolt_version 0.1.185.",
       "snippet": "{\"kind\": \"tabs\", \"mode\": \"list_data\", \"bind\": {\"tabs\": [{\"label\": \"Overview\", \"widget\": {\"kind\": \"stack\", \"bind\": {\"children\": [{\"kind\": \"cards\"}]}}}, {\"label\": \"Alerts\", \"count_from\": {\"set\": \"alerts\"}, \"status\": \"critical\", \"widget\": {\"kind\": \"table\", \"bind\": {\"from\": {\"set\": \"alerts\"}}}}]}}",
       "test": "toolkit/test/tabs-185.test.mjs",
-      "limit": "Needs Bolt 0.1.185 (min_bolt_version 0.1.185): a 184 or older refuses the whole pack that uses it. 1 to 12 tabs, each one whole pane (cards, chart, table, heatmap, gauge, detail, markdown or a stack), never tabs; the label is up to 40 characters; count_from is a row set whose size the tab shows; status (critical or warning) needs count_from and shows a shape and a word while the count is above zero. Only the chosen tab is drawn. Count and status are not in the sample. Lint and fixture tested only: the pane is drawn by no real Bolt in this repo yet.",
-      "kind": "tabs"
+      "limit": "Needs Bolt 0.1.185 (min_bolt_version 0.1.185): a 184 or older refuses the whole pack that uses it. 1 to 12 tabs, each one whole pane (cards, chart, table, heatmap, gauge, detail, markdown or a stack), never tabs; the label is up to 40 characters; count_from is a row set whose size the tab shows; status (critical or warning) needs count_from and shows a shape and a word while the count is above zero. Only the chosen tab is drawn. Count and status are not in the sample. Drawn by a real Bolt dev build (0.1.185 or newer) on 2026-11-26: the Floor, Reorder and Movement tabs of the =inventory app and the Overview, Trend and Detail tabs of the =finance-pnl app, in the gallery pictures.",
+      "kind": "tabs",
+      "also": [
+        "cloud-cost",
+        "finance-pnl",
+        "inventory",
+        "marketing-campaigns",
+        "security-posture",
+        "support-desk"
+      ]
     },
     {
       "id": "widget.row_pane",
@@ -500,12 +522,11 @@
       "name": "A grid that mixes tile visuals, one per row",
       "status": "supported",
       "snippet": "\"bind\": {\"layout\": \"tiles\", \"visual_from\": \"kpi_visual\", \"value\": \"{{row.kpi_value}}\", \"max\": \"{{row.kpi_max}}\", \"target\": \"{{row.target}}\", \"trend\": \"{{row.trend}}\", \"limit\": \"{{row.limit}}\"}",
+      "example": "kit/examples/gym",
       "test": "toolkit/test/tiles-184-per-row.test.mjs",
       "limit": "Bolt 0.1.184 or newer, with min_bolt_version 0.1.184. visual_from names a row field (up to 200 characters) whose value is meter, ring, bullet, number, spark, strip or stack. An unknown, missing or non-text value uses visual, then the plain meter; it never fails. Row order and the selected tile are unchanged; target and limit still work per row.",
-      "example_note": "no example yet; copy the snippet",
       "since": "0.1.184",
-      "older_bolt": "A Bolt older than 0.1.184 refuses the whole pack that uses it (a new kind, or a key in a schema_version 2 pack); a personal schema_version 1 file warns and ignores the key. Set min_bolt_version 0.1.184.",
-      "sample_due": "184.1"
+      "older_bolt": "A Bolt older than 0.1.184 refuses the whole pack that uses it (a new kind, or a key in a schema_version 2 pack); a personal schema_version 1 file warns and ignores the key. Set min_bolt_version 0.1.184."
     },
     {
       "id": "actions.footer",
@@ -1001,9 +1022,13 @@
       "example": "kit/examples/widget-gallery",
       "snippet": "\"bind\": {\"type\": \"bar\", \"x\": \"label\", \"y\": \"value\", \"limit\": 80, \"limit_label\": \"capacity\", \"marker\": {\"field\": \"event\"}}",
       "test": "toolkit/test/annotations-184.test.mjs",
-      "limit": "Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). limit is a number or a {{row.x}} reference to the selected row, drawn as a dashed line; limit_label is clipped to 24 characters. marker names a row field: rows where it is set (not empty, 0, false or null) get a labelled vertical mark, at most 8, one row per point only. A limit far outside the data stays off the axis with a triangle. Pie and donut show a note instead. Not verified in real Bolt.",
+      "limit": "Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). limit is a number or a {{row.x}} reference to the selected row, drawn as a dashed line; limit_label is clipped to 24 characters. marker names a row field: rows where it is set (not empty, 0, false or null) get a labelled vertical mark, at most 8, one row per point only. A limit far outside the data stays off the axis with a triangle. Pie and donut show a note instead. Drawn by a real Bolt dev build (0.1.185 or newer) on 2026-11-26: the marked line chart of the =finance-pnl Trend tab and the marked spend chart of the =cloud-cost Overview tab, in the gallery pictures.",
       "since": "0.1.184",
-      "older_bolt": "A Bolt older than 0.1.184 refuses the whole pack that uses it (a new kind, or a key in a schema_version 2 pack); a personal schema_version 1 file warns and ignores the key. Set min_bolt_version 0.1.184."
+      "older_bolt": "A Bolt older than 0.1.184 refuses the whole pack that uses it (a new kind, or a key in a schema_version 2 pack); a personal schema_version 1 file warns and ignores the key. Set min_bolt_version 0.1.184.",
+      "also": [
+        "cloud-cost",
+        "finance-pnl"
+      ]
     },
     {
       "id": "pane.table_bars_mark",
@@ -1013,9 +1038,14 @@
       "example": "kit/examples/widget-gallery",
       "snippet": "\"columns\": [{\"field\": \"commits\", \"label\": \"Commits\", \"bars\": true}, {\"field\": \"health\", \"label\": \"Health\", \"mark\": \"tone\"}]",
       "test": "toolkit/test/annotations-184.test.mjs",
-      "limit": "Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). bars draws an inline bar scaled to the largest shown value of a numeric column (zero, negative and non-numbers draw none). mark tone reads the cell as a tone word (ok, warn, error and so on) and draws a glyph whose shape tells the tone. Not verified in real Bolt.",
+      "limit": "Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (an older Bolt refuses the whole pack, or warns and ignores the key in a personal schema_version 1 file; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). bars draws an inline bar scaled to the largest shown value of a numeric column (zero, negative and non-numbers draw none). mark tone reads the cell as a tone word (ok, warn, error and so on) and draws a glyph whose shape tells the tone. Drawn by a real Bolt dev build (0.1.185 or newer) on 2026-11-26: the variance table of the =finance-pnl Detail tab and the ticket table of the =support-desk Queue tab, in the gallery pictures.",
       "since": "0.1.184",
-      "older_bolt": "A Bolt older than 0.1.184 refuses the whole pack that uses it (a new kind, or a key in a schema_version 2 pack); a personal schema_version 1 file warns and ignores the key. Set min_bolt_version 0.1.184."
+      "older_bolt": "A Bolt older than 0.1.184 refuses the whole pack that uses it (a new kind, or a key in a schema_version 2 pack); a personal schema_version 1 file warns and ignores the key. Set min_bolt_version 0.1.184.",
+      "also": [
+        "cloud-cost",
+        "finance-pnl",
+        "support-desk"
+      ]
     },
     {
       "id": "run.isolation",
@@ -1304,7 +1334,16 @@
       "limit": "Bolt 0.1.184 or newer: set min_bolt_version 0.1.184 in bolt-app.json (stack is a new pane kind, so an older Bolt refuses the whole app file for every schema_version; Bolt does not read min_bolt_version, so this is the author's promise and a lint error). kind stack, mode list_data, bind.children: 1 to 6 parts, each {kind, mode, bind}; kind is cards, chart, table, heatmap, gauge, detail or markdown (no stack inside a stack); each bind is that kind's own bind, and bind.from gives a part its own row set. At most 1,000 rows are drawn across the parts. A part that fails to draw shows one plain card and the others stay. A part with a bad kind shows a note naming it. bind.activate (pane-item events) is not supported inside a stack part in this version and lint refuses it.",
       "kind": "stack",
       "since": "0.1.184",
-      "older_bolt": "A Bolt older than 0.1.184 refuses the whole pack that uses the stack kind. Set min_bolt_version 0.1.184."
+      "older_bolt": "A Bolt older than 0.1.184 refuses the whole pack that uses the stack kind. Set min_bolt_version 0.1.184.",
+      "also": [
+        "cloud-cost",
+        "security-posture",
+        "inventory",
+        "finance-pnl",
+        "gym",
+        "exec-brief",
+        "sales-pipeline"
+      ]
     },
     {
       "id": "pane.item_activate",

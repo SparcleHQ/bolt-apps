@@ -42,12 +42,33 @@ packs). The gallery starts with the three above. See
 
 ## See it in action
 
+Six of the nine example apps were dropped into a real Bolt dev build on 2026-11-26 and
+drawn there. Every picture in this first block is an unedited capture of that run, and each
+app is a folder you can copy from [`kit/examples/`](kit/examples/).
+
+![The inventory app, Floor tab: tabs Floor, Reorder and Movement above six tiles and a bin fill heat map by aisle and shelf](docs/images/inventory-floor.png)
+![Animation: the inventory app, Floor tab with its tiles and heat map, then the Reorder tab with the low stock table, then the Movement tab](docs/images/inventory-tabs.gif)
+![The finance app, Trend tab: an operating margin ring over a line chart of operating margin by month with a plan line and the Price, Freeze and FX marks](docs/images/finance-pnl-trend.png)
+![Animation: the finance app, Overview tab with its tiles, then the Trend tab with the margin ring and the marked line chart, then the Detail tab with the variance table](docs/images/finance-tabs.gif)
+![The support desk app, Queue tab: a filter box above a table of open tickets with the age of each as a bar and a tone mark for the SLA state](docs/images/support-desk-volume.png)
+![The support desk app, SLA tab: a 91 percent SLA ring over a bar chart of SLA met per day against a 95 percent target line](docs/images/support-desk-sla.png)
+![The marketing campaigns app, Overview tab: six tiles over a spend by channel chart](docs/images/marketing-campaigns-overview.png)
+![The cloud cost app, Overview tab: tiles over a savings plan coverage ring and an area chart of the monthly spend by service with a limit line and event marks](docs/images/cloud-cost-overview.png)
+![The cloud cost app, Teams tab: tiles over a table of the spend of each team as a bar with a tone mark per team](docs/images/cloud-cost-teams.png)
+![The security posture app, Posture tab: six tiles over a 20 day median days to fix ring against a 14 day target](docs/images/security-posture.png)
+
+The tiles, rings, charts, heat maps, tables and tabs in these pictures need Bolt 0.1.182, 0.1.184
+or 0.1.185, which are not in a public release yet. See which key draws what in
+[Anatomy of a Bolt App](docs/anatomy.md), and all screens in the [gallery](docs/gallery.md).
+
+### The first examples
+
+These are older captures of the first examples, taken before the tabs work.
+
 ![Bolt launcher with =acme-dash: compliance areas on the left, tiles with numbers, meters and badges on the right](docs/images/acme-dash-overview.png)
 ![Animation: =acme-dash drills into a control, shows its detail pane, then goes Back](docs/images/acme-dash-drill-and-back.gif)
 ![Launcher showing =pulse-feed with a pane for the selected story and Open post and Copy quote buttons](docs/images/pulse-feed-story-pane.png)
 ![Launcher showing =unit-convert as a form with Amount, From, To and a Convert button](docs/images/unit-convert-form.png)
-
-Every picture is a folder you can copy from [`kit/examples/`](kit/examples/). See which key draws what in [Anatomy of a Bolt App](docs/anatomy.md), and all screens in the [gallery](docs/gallery.md).
 
 What works today and what we are working on: [roadmap](docs/roadmap.md).
 

@@ -1,0 +1,603 @@
+{
+  "app": {
+    "id": "sales-pipeline",
+    "chip": "sales-pipeline",
+    "title": "Sales pipeline",
+    "icon": "trending-up",
+    "description": "Sales pipeline: a wide area chart first, tiles, a stage funnel table with bars and a top deals list. Needs Bolt 0.1.184 or newer. Sample data.",
+    "service": "Sales pipeline"
+  },
+  "api": {
+    "base_url": "https://api.example.com",
+    "key_env": "SHOWCASE_API_KEY",
+    "fixture_default": false,
+    "on_missing_key": "sample",
+    "fixture_file": "fixtures.json",
+    "fixture_banner": false
+  },
+  "cache": {
+    "ttl": 45,
+    "stale_max": 86400
+  },
+  "endpoints": {
+    "summary": {
+      "path": "/v1/summary"
+    }
+  },
+  "stats": {},
+  "overview": {
+    "widget": {
+      "kind": "stack",
+      "mode": "list_data",
+      "bind": {
+        "children": [
+          {
+            "kind": "chart",
+            "bind": {
+              "type": "area",
+              "x": "w",
+              "series": [
+                {
+                  "y": "open",
+                  "label": "Open"
+                },
+                {
+                  "y": "commit",
+                  "label": "Commit"
+                }
+              ],
+              "unit": "M",
+              "label": "Open pipeline grew 41% in 12 weeks, commit kept pace (M USD)",
+              "limit": 5.2,
+              "limit_label": "quota x3",
+              "marker": {
+                "field": "event"
+              },
+              "from": {
+                "set": "wk"
+              }
+            }
+          },
+          {
+            "kind": "cards",
+            "bind": {
+              "layout": "tiles",
+              "visual_from": "kpi_visual",
+              "title": "{{row.kpi_label}}",
+              "value": "{{row.kpi_value}}",
+              "unit": "{{row.kpi_unit}}",
+              "max": "{{row.kpi_max}}",
+              "target": "{{row.target}}",
+              "limit": "{{row.limit}}",
+              "trend": "{{row.trend}}",
+              "delta": "{{row.delta}}",
+              "delta_label": "{{row.since}}",
+              "subtitle": "{{row.kpi_note}}",
+              "from": {
+                "set": "tiles"
+              }
+            }
+          },
+          {
+            "kind": "table",
+            "bind": {
+              "columns": [
+                {
+                  "field": "stage",
+                  "label": "Stage",
+                  "total": "count"
+                },
+                {
+                  "field": "deals",
+                  "label": "Deals",
+                  "align": "right",
+                  "format": "number",
+                  "bars": true,
+                  "total": "none"
+                },
+                {
+                  "field": "value",
+                  "label": "M USD",
+                  "align": "right",
+                  "format": "number",
+                  "digits": 1,
+                  "total": "none"
+                },
+                {
+                  "field": "flag",
+                  "label": "Flag",
+                  "mark": "tone"
+                }
+              ],
+              "from": {
+                "set": "stages"
+              },
+              "totals_label": "Funnel"
+            }
+          },
+          {
+            "kind": "table",
+            "bind": {
+              "columns": [
+                {
+                  "field": "deal",
+                  "label": "Top deals"
+                },
+                {
+                  "field": "amount",
+                  "label": "k USD",
+                  "align": "right",
+                  "format": "number",
+                  "bars": true,
+                  "total": "sum"
+                },
+                {
+                  "field": "idle",
+                  "label": "Idle d",
+                  "align": "right",
+                  "format": "number",
+                  "total": "none"
+                },
+                {
+                  "field": "flag",
+                  "label": "Flag",
+                  "mark": "tone"
+                }
+              ],
+              "from": {
+                "set": "deals"
+              },
+              "totals_label": "Top 10"
+            }
+          }
+        ]
+      }
+    },
+    "rows": [
+      {
+        "title": "Sales pipeline: this quarter",
+        "subtitle": "Sample data, invented accounts, 78 open deals",
+        "icon": "list",
+        "extra": {}
+      },
+      {
+        "title": "Open pipeline",
+        "subtitle": "across 78 deals",
+        "icon": "activity",
+        "tile": {
+          "label": "Open pipeline",
+          "value": 5.5,
+          "unit": "M",
+          "note": "across 78 deals"
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "spark",
+          "delta": 7.8,
+          "since": "vs last month"
+        },
+        "trend": [
+          4.6,
+          4.5,
+          4.9,
+          5.2,
+          5.0,
+          5.4,
+          5.1,
+          5.5
+        ]
+      },
+      {
+        "title": "Coverage",
+        "subtitle": "pipeline over quota",
+        "icon": "activity",
+        "tile": {
+          "label": "Coverage",
+          "value": 3.2,
+          "unit": "x",
+          "note": "pipeline over quota",
+          "max": 5
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "bullet",
+          "target": 3
+        }
+      },
+      {
+        "title": "Win rate",
+        "subtitle": "last 90 days",
+        "icon": "activity",
+        "tile": {
+          "label": "Win rate",
+          "value": 27,
+          "unit": "%",
+          "note": "last 90 days",
+          "max": 100
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "ring"
+        }
+      },
+      {
+        "title": "Sales cycle",
+        "subtitle": "median days to close",
+        "icon": "activity",
+        "tile": {
+          "label": "Sales cycle",
+          "value": 46,
+          "unit": "d",
+          "note": "median days to close"
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "spark",
+          "limit": 45,
+          "delta": -6,
+          "since": "vs last quarter"
+        },
+        "trend": [
+          52,
+          51,
+          50,
+          49,
+          48,
+          47,
+          46
+        ]
+      },
+      {
+        "title": "W1 pipeline",
+        "subtitle": "open and commit, M USD",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W1",
+          "open": 3.9,
+          "commit": 3.0,
+          "set": "wk"
+        }
+      },
+      {
+        "title": "W2 pipeline",
+        "subtitle": "open and commit, M USD",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W2",
+          "open": 4.1,
+          "commit": 3.1,
+          "set": "wk"
+        }
+      },
+      {
+        "title": "W3 pipeline",
+        "subtitle": "open and commit, M USD",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W3",
+          "open": 4.0,
+          "commit": 3.1,
+          "set": "wk"
+        }
+      },
+      {
+        "title": "W4 pipeline",
+        "subtitle": "open and commit, M USD",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W4",
+          "open": 4.3,
+          "commit": 3.3,
+          "set": "wk"
+        }
+      },
+      {
+        "title": "W5 pipeline",
+        "subtitle": "open and commit, M USD",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W5",
+          "open": 4.6,
+          "commit": 3.4,
+          "event": "Webinar",
+          "set": "wk"
+        }
+      },
+      {
+        "title": "W6 pipeline",
+        "subtitle": "open and commit, M USD",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W6",
+          "open": 4.5,
+          "commit": 3.4,
+          "set": "wk"
+        }
+      },
+      {
+        "title": "W7 pipeline",
+        "subtitle": "open and commit, M USD",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W7",
+          "open": 4.9,
+          "commit": 3.6,
+          "set": "wk"
+        }
+      },
+      {
+        "title": "W8 pipeline",
+        "subtitle": "open and commit, M USD",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W8",
+          "open": 5.2,
+          "commit": 3.8,
+          "set": "wk"
+        }
+      },
+      {
+        "title": "W9 pipeline",
+        "subtitle": "open and commit, M USD",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W9",
+          "open": 5.0,
+          "commit": 3.9,
+          "event": "Launch",
+          "set": "wk"
+        }
+      },
+      {
+        "title": "W10 pipeline",
+        "subtitle": "open and commit, M USD",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W10",
+          "open": 5.4,
+          "commit": 4.1,
+          "set": "wk"
+        }
+      },
+      {
+        "title": "W11 pipeline",
+        "subtitle": "open and commit, M USD",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W11",
+          "open": 5.1,
+          "commit": 4.2,
+          "set": "wk"
+        }
+      },
+      {
+        "title": "W12 pipeline",
+        "subtitle": "open and commit, M USD",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W12",
+          "open": 5.5,
+          "commit": 4.4,
+          "set": "wk"
+        }
+      },
+      {
+        "title": "Qualify",
+        "subtitle": "34 deals",
+        "icon": "Layers",
+        "extra": {
+          "stage": "Qualify",
+          "deals": 34,
+          "value": 2.1,
+          "win": 52,
+          "flag": "warn",
+          "set": "stages"
+        }
+      },
+      {
+        "title": "Discover",
+        "subtitle": "22 deals",
+        "icon": "Layers",
+        "extra": {
+          "stage": "Discover",
+          "deals": 22,
+          "value": 1.7,
+          "win": 61,
+          "flag": "ok",
+          "set": "stages"
+        }
+      },
+      {
+        "title": "Propose",
+        "subtitle": "14 deals",
+        "icon": "Layers",
+        "extra": {
+          "stage": "Propose",
+          "deals": 14,
+          "value": 1.0,
+          "win": 68,
+          "flag": "ok",
+          "set": "stages"
+        }
+      },
+      {
+        "title": "Negotiate",
+        "subtitle": "8 deals",
+        "icon": "Layers",
+        "extra": {
+          "stage": "Negotiate",
+          "deals": 8,
+          "value": 0.7,
+          "win": 79,
+          "flag": "ok",
+          "set": "stages"
+        }
+      },
+      {
+        "title": "Closed won",
+        "subtitle": "5 deals",
+        "icon": "Layers",
+        "extra": {
+          "stage": "Closed won",
+          "deals": 5,
+          "value": 1.4,
+          "win": 100,
+          "flag": "ok",
+          "set": "stages"
+        }
+      },
+      {
+        "title": "Alder Logistics",
+        "subtitle": "Negotiate, 640k USD",
+        "icon": "trending-up",
+        "extra": {
+          "deal": "Alder Logistics",
+          "stage": "Negotiate",
+          "amount": 640,
+          "idle": 12,
+          "flag": "ok",
+          "set": "deals"
+        }
+      },
+      {
+        "title": "Brightwave Health",
+        "subtitle": "Negotiate, 520k USD",
+        "icon": "trending-up",
+        "extra": {
+          "deal": "Brightwave Health",
+          "stage": "Negotiate",
+          "amount": 520,
+          "idle": 21,
+          "flag": "warn",
+          "set": "deals"
+        }
+      },
+      {
+        "title": "Cobalt Foods",
+        "subtitle": "Propose, 480k USD",
+        "icon": "trending-up",
+        "extra": {
+          "deal": "Cobalt Foods",
+          "stage": "Propose",
+          "amount": 480,
+          "idle": 9,
+          "flag": "ok",
+          "set": "deals"
+        }
+      },
+      {
+        "title": "Delta Ridge Energy",
+        "subtitle": "Propose, 450k USD",
+        "icon": "trending-up",
+        "extra": {
+          "deal": "Delta Ridge Energy",
+          "stage": "Propose",
+          "amount": 450,
+          "idle": 34,
+          "flag": "error",
+          "set": "deals"
+        }
+      },
+      {
+        "title": "Evergreen Retail",
+        "subtitle": "Discover, 410k USD",
+        "icon": "trending-up",
+        "extra": {
+          "deal": "Evergreen Retail",
+          "stage": "Discover",
+          "amount": 410,
+          "idle": 15,
+          "flag": "ok",
+          "set": "deals"
+        }
+      },
+      {
+        "title": "Fjord Marine",
+        "subtitle": "Negotiate, 390k USD",
+        "icon": "trending-up",
+        "extra": {
+          "deal": "Fjord Marine",
+          "stage": "Negotiate",
+          "amount": 390,
+          "idle": 28,
+          "flag": "warn",
+          "set": "deals"
+        }
+      },
+      {
+        "title": "Granite Works",
+        "subtitle": "Propose, 360k USD",
+        "icon": "trending-up",
+        "extra": {
+          "deal": "Granite Works",
+          "stage": "Propose",
+          "amount": 360,
+          "idle": 11,
+          "flag": "ok",
+          "set": "deals"
+        }
+      },
+      {
+        "title": "Helix Telecom",
+        "subtitle": "Discover, 340k USD",
+        "icon": "trending-up",
+        "extra": {
+          "deal": "Helix Telecom",
+          "stage": "Discover",
+          "amount": 340,
+          "idle": 41,
+          "flag": "error",
+          "set": "deals"
+        }
+      },
+      {
+        "title": "Ironbark Foods",
+        "subtitle": "Qualify, 310k USD",
+        "icon": "trending-up",
+        "extra": {
+          "deal": "Ironbark Foods",
+          "stage": "Qualify",
+          "amount": 310,
+          "idle": 6,
+          "flag": "ok",
+          "set": "deals"
+        }
+      },
+      {
+        "title": "Juniper Bank",
+        "subtitle": "Propose, 290k USD",
+        "icon": "trending-up",
+        "extra": {
+          "deal": "Juniper Bank",
+          "stage": "Propose",
+          "amount": 290,
+          "idle": 19,
+          "flag": "warn",
+          "set": "deals"
+        }
+      },
+      {
+        "title": "About this sample",
+        "subtitle": "Sample data, no network",
+        "icon": "list",
+        "view": "about",
+        "extra": {
+          "cover": 71
+        }
+      }
+    ]
+  },
+  "views": [
+    {
+      "id": "about",
+      "title": "About this sample",
+      "icon": "list",
+      "endpoint": "summary",
+      "item": {
+        "title": "About this sample",
+        "subtitle": "Sample data, no network",
+        "body": "Every number here is built-in sample data from the Bolt Apps examples. Nothing is fetched."
+      }
+    }
+  ]
+}

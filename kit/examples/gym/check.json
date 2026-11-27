@@ -1,0 +1,22 @@
+{
+  "script": "scripts/gym__engine.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/gym__bolt_app_kit.py",
+  "fixture": true,
+  "cases": [
+    {
+      "name": "overview: every pane draws from the labelled sample rows",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "golden": "golden/overview.json",
+      "expect": {
+        "text_present": [
+          "Sample data"
+        ]
+      }
+    }
+  ]
+}

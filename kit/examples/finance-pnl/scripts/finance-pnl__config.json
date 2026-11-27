@@ -1,0 +1,1018 @@
+{
+  "app": {
+    "id": "finance-pnl",
+    "chip": "finance-pnl",
+    "title": "Finance P&L",
+    "icon": "line-chart",
+    "description": "Profit and loss: tiles, an actual vs budget line chart with marks, and a variance table with up and down marks and words. Needs Bolt 0.1.185 or newer. Sample data.",
+    "service": "Finance P&L"
+  },
+  "api": {
+    "base_url": "https://api.example.com",
+    "key_env": "SHOWCASE_API_KEY",
+    "fixture_default": false,
+    "on_missing_key": "sample",
+    "fixture_file": "fixtures.json",
+    "fixture_banner": false
+  },
+  "cache": {
+    "ttl": 45,
+    "stale_max": 86400
+  },
+  "endpoints": {
+    "summary": {
+      "path": "/v1/summary"
+    }
+  },
+  "stats": {},
+  "overview": {
+    "widget": {
+      "kind": "tabs",
+      "mode": "list_data",
+      "bind": {
+        "tabs": [
+          {
+            "label": "Overview",
+            "widget": {
+              "kind": "stack",
+              "mode": "list_data",
+              "bind": {
+                "children": [
+                  {
+                    "kind": "cards",
+                    "bind": {
+                      "layout": "tiles",
+                      "visual_from": "kpi_visual",
+                      "title": "{{row.kpi_label}}",
+                      "value": "{{row.kpi_value}}",
+                      "unit": "{{row.kpi_unit}}",
+                      "max": "{{row.kpi_max}}",
+                      "target": "{{row.target}}",
+                      "limit": "{{row.limit}}",
+                      "trend": "{{row.trend}}",
+                      "delta": "{{row.delta}}",
+                      "delta_label": "{{row.since}}",
+                      "subtitle": "{{row.kpi_note}}",
+                      "from": {
+                        "set": "tiles"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "chart",
+                    "bind": {
+                      "type": "line",
+                      "x": "m",
+                      "series": [
+                        {
+                          "y": "act",
+                          "label": "Actual"
+                        },
+                        {
+                          "y": "bud",
+                          "label": "Budget"
+                        }
+                      ],
+                      "unit": "M",
+                      "label": "Monthly revenue, actual vs budget, M USD",
+                      "limit": 24.4,
+                      "limit_label": "plan ceiling",
+                      "marker": {
+                        "field": "event"
+                      },
+                      "from": {
+                        "set": "rev"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "table",
+                    "bind": {
+                      "columns": [
+                        {
+                          "field": "line",
+                          "label": "Line",
+                          "total": "count"
+                        },
+                        {
+                          "field": "actual",
+                          "label": "Actual",
+                          "align": "right",
+                          "format": "compact",
+                          "total": "none",
+                          "digits": 1
+                        },
+                        {
+                          "field": "variance",
+                          "label": "Var",
+                          "align": "right",
+                          "format": "compact",
+                          "total": "none",
+                          "bars": true,
+                          "digits": 1
+                        },
+                        {
+                          "field": "result",
+                          "label": "Flag",
+                          "mark": "tone"
+                        }
+                      ],
+                      "from": {
+                        "set": "pl"
+                      },
+                      "totals_label": "Lines, year to date"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "label": "Trend",
+            "widget": {
+              "kind": "stack",
+              "mode": "list_data",
+              "bind": {
+                "children": [
+                  {
+                    "kind": "gauge",
+                    "mode": "selected_row",
+                    "bind": {
+                      "value": "{{row.gmargin}}",
+                      "min": 0,
+                      "max": 40,
+                      "label": "Operating margin",
+                      "unit": "%",
+                      "shape": "half",
+                      "thresholds": [
+                        {
+                          "at": 18,
+                          "label": "floor 18%",
+                          "tone": "warn"
+                        },
+                        {
+                          "at": 22.1,
+                          "label": "plan 22.1%",
+                          "tone": "ok"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "kind": "chart",
+                    "bind": {
+                      "type": "line",
+                      "x": "m",
+                      "y": "margin",
+                      "unit": "%",
+                      "label": "Operating margin by month, %",
+                      "limit": 22.1,
+                      "limit_label": "plan 22.1%",
+                      "marker": {
+                        "field": "event"
+                      },
+                      "from": {
+                        "set": "mar"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "chart",
+                    "bind": {
+                      "type": "area",
+                      "x": "m",
+                      "series": [
+                        {
+                          "y": "act",
+                          "label": "Actual"
+                        },
+                        {
+                          "y": "bud",
+                          "label": "Budget"
+                        }
+                      ],
+                      "unit": "M",
+                      "label": "Revenue run rate, $M",
+                      "from": {
+                        "set": "rev"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "label": "Detail",
+            "widget": {
+              "kind": "stack",
+              "mode": "list_data",
+              "bind": {
+                "children": [
+                  {
+                    "kind": "table",
+                    "bind": {
+                      "columns": [
+                        {
+                          "field": "unit",
+                          "label": "Unit"
+                        },
+                        {
+                          "field": "actual",
+                          "label": "Revenue",
+                          "align": "right",
+                          "format": "compact",
+                          "total": "sum",
+                          "bars": true,
+                          "digits": 1
+                        },
+                        {
+                          "field": "variance",
+                          "label": "Var",
+                          "align": "right",
+                          "format": "compact",
+                          "total": "sum",
+                          "digits": 1
+                        },
+                        {
+                          "field": "result",
+                          "label": "Flag",
+                          "mark": "tone"
+                        }
+                      ],
+                      "from": {
+                        "set": "bu"
+                      },
+                      "totals_label": "Units"
+                    }
+                  }
+                ]
+              }
+            },
+            "count_from": {
+              "set": "bu"
+            }
+          }
+        ]
+      }
+    },
+    "rows": [
+      {
+        "title": "Finance P&L: consolidated",
+        "subtitle": "Sample data, 12 months, 12 business units",
+        "icon": "activity",
+        "extra": {
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Revenue, Dec, USD",
+        "subtitle": "year to date 264.9M, on plan",
+        "icon": "activity",
+        "tile": {
+          "label": "Revenue, Dec, USD",
+          "value": 23.59,
+          "unit": "M",
+          "note": "year to date 264.9M, on plan"
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "spark",
+          "delta": 1.3,
+          "since": "vs budget",
+          "gmargin": 20.8
+        },
+        "trend": [
+          20.55,
+          20.82,
+          21.25,
+          21.77,
+          21.61,
+          21.9,
+          22.0,
+          22.8,
+          22.84,
+          22.63,
+          23.14,
+          23.59
+        ]
+      },
+      {
+        "title": "Operating margin",
+        "subtitle": "budget 22.1%",
+        "icon": "activity",
+        "tile": {
+          "label": "Operating margin",
+          "value": 20.8,
+          "unit": "%",
+          "note": "budget 22.1%",
+          "max": 40
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "bullet",
+          "target": 22.1,
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Net income, YTD, USD",
+        "subtitle": "unfavorable 8.8% vs budget",
+        "icon": "activity",
+        "tile": {
+          "label": "Net income, YTD, USD",
+          "value": 41.1,
+          "unit": "M",
+          "note": "unfavorable 8.8% vs budget"
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "number",
+          "delta": -8.8,
+          "since": "vs budget",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Gross margin",
+        "subtitle": "budget 58.6%",
+        "icon": "activity",
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "ring",
+          "gmargin": 20.8
+        },
+        "tile": {
+          "label": "Gross margin",
+          "value": 58.0,
+          "unit": "%",
+          "note": "budget 58.6%",
+          "max": 100
+        }
+      },
+      {
+        "title": "Cash runway",
+        "subtitle": "at current burn",
+        "icon": "activity",
+        "tile": {
+          "label": "Cash runway",
+          "value": 19,
+          "unit": "mo",
+          "note": "at current burn",
+          "max": 24
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "meter",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Days sales out",
+        "subtitle": "collection speed",
+        "icon": "activity",
+        "tile": {
+          "label": "Days sales out",
+          "value": 47,
+          "unit": "d",
+          "note": "collection speed"
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "spark",
+          "limit": 45,
+          "delta": -5,
+          "since": "vs last quarter",
+          "gmargin": 20.8
+        },
+        "trend": [
+          52,
+          51,
+          50,
+          49,
+          50,
+          48,
+          47
+        ]
+      },
+      {
+        "title": "Jan revenue",
+        "subtitle": "actual vs budget, $M",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Jan",
+          "act": 20.55,
+          "bud": 20.85,
+          "set": "rev",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Feb revenue",
+        "subtitle": "actual vs budget, $M",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Feb",
+          "act": 20.82,
+          "bud": 21.07,
+          "set": "rev",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Mar revenue",
+        "subtitle": "actual vs budget, $M",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Mar",
+          "act": 21.25,
+          "bud": 21.29,
+          "event": "Price",
+          "set": "rev",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Apr revenue",
+        "subtitle": "actual vs budget, $M",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Apr",
+          "act": 21.77,
+          "bud": 21.52,
+          "set": "rev",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "May revenue",
+        "subtitle": "actual vs budget, $M",
+        "icon": "line-chart",
+        "extra": {
+          "m": "May",
+          "act": 21.61,
+          "bud": 21.74,
+          "set": "rev",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Jun revenue",
+        "subtitle": "actual vs budget, $M",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Jun",
+          "act": 21.9,
+          "bud": 21.96,
+          "set": "rev",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Jul revenue",
+        "subtitle": "actual vs budget, $M",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Jul",
+          "act": 22.0,
+          "bud": 22.17,
+          "set": "rev",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Aug revenue",
+        "subtitle": "actual vs budget, $M",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Aug",
+          "act": 22.8,
+          "bud": 22.4,
+          "event": "Freeze",
+          "set": "rev",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Sep revenue",
+        "subtitle": "actual vs budget, $M",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Sep",
+          "act": 22.84,
+          "bud": 22.62,
+          "set": "rev",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Oct revenue",
+        "subtitle": "actual vs budget, $M",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Oct",
+          "act": 22.63,
+          "bud": 22.84,
+          "set": "rev",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Nov revenue",
+        "subtitle": "actual vs budget, $M",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Nov",
+          "act": 23.14,
+          "bud": 23.06,
+          "set": "rev",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Dec revenue",
+        "subtitle": "actual vs budget, $M",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Dec",
+          "act": 23.59,
+          "bud": 23.28,
+          "set": "rev",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Revenue",
+        "subtitle": "Favorable 0.0%",
+        "icon": "list",
+        "extra": {
+          "line": "Revenue",
+          "actual": 264900000,
+          "budget": 264800000,
+          "variance": 100000,
+          "result": "ok",
+          "note": "Favorable 0.0%",
+          "set": "pl",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Cost of revenue",
+        "subtitle": "Unfavorable 1.5%",
+        "icon": "list",
+        "extra": {
+          "line": "Cost of rev",
+          "actual": 111200000,
+          "budget": 109600000,
+          "variance": 1600000,
+          "result": "error",
+          "note": "Unfavorable 1.5%",
+          "set": "pl",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Gross profit",
+        "subtitle": "Unfavorable 1.0%",
+        "icon": "list",
+        "extra": {
+          "line": "Gross profit",
+          "actual": 153700000,
+          "budget": 155300000,
+          "variance": -1500000,
+          "result": "error",
+          "note": "Unfavorable 1.0%",
+          "set": "pl",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Research and development",
+        "subtitle": "Favorable 3.1%",
+        "icon": "list",
+        "extra": {
+          "line": "R&D",
+          "actual": 32700000,
+          "budget": 33800000,
+          "variance": -1000000,
+          "result": "ok",
+          "note": "Favorable 3.1%",
+          "set": "pl",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Sales and marketing",
+        "subtitle": "Unfavorable 4.9%",
+        "icon": "list",
+        "extra": {
+          "line": "Sales & mktg",
+          "actual": 45500000,
+          "budget": 43300000,
+          "variance": 2100000,
+          "result": "error",
+          "note": "Unfavorable 4.9%",
+          "set": "pl",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "General and admin",
+        "subtitle": "Unfavorable 4.1%",
+        "icon": "list",
+        "extra": {
+          "line": "G&A",
+          "actual": 20300000,
+          "budget": 19500000,
+          "variance": 800000,
+          "result": "error",
+          "note": "Unfavorable 4.1%",
+          "set": "pl",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Operating income",
+        "subtitle": "Unfavorable 5.8%",
+        "icon": "list",
+        "extra": {
+          "line": "Op income",
+          "actual": 55200000,
+          "budget": 58700000,
+          "variance": -3400000,
+          "result": "error",
+          "note": "Unfavorable 5.8%",
+          "set": "pl",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Interest and tax",
+        "subtitle": "Unfavorable 3.9%",
+        "icon": "list",
+        "extra": {
+          "line": "Int & tax",
+          "actual": 14100000,
+          "budget": 13600000,
+          "variance": 500000,
+          "result": "error",
+          "note": "Unfavorable 3.9%",
+          "set": "pl",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Net income",
+        "subtitle": "Unfavorable 8.8%",
+        "icon": "list",
+        "extra": {
+          "line": "Net income",
+          "actual": 41100000,
+          "budget": 45100000,
+          "variance": -4000000,
+          "result": "error",
+          "note": "Unfavorable 8.8%",
+          "set": "pl",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Jan margin",
+        "subtitle": "operating margin, %",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Jan",
+          "margin": 18.9,
+          "set": "mar",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Feb margin",
+        "subtitle": "operating margin, %",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Feb",
+          "margin": 19.4,
+          "set": "mar",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Mar margin",
+        "subtitle": "operating margin, %",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Mar",
+          "margin": 19.1,
+          "event": "Price",
+          "set": "mar",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Apr margin",
+        "subtitle": "operating margin, %",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Apr",
+          "margin": 19.8,
+          "set": "mar",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "May margin",
+        "subtitle": "operating margin, %",
+        "icon": "line-chart",
+        "extra": {
+          "m": "May",
+          "margin": 20.2,
+          "set": "mar",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Jun margin",
+        "subtitle": "operating margin, %",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Jun",
+          "margin": 20.0,
+          "set": "mar",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Jul margin",
+        "subtitle": "operating margin, %",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Jul",
+          "margin": 20.6,
+          "set": "mar",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Aug margin",
+        "subtitle": "operating margin, %",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Aug",
+          "margin": 21.3,
+          "event": "Freeze",
+          "set": "mar",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Sep margin",
+        "subtitle": "operating margin, %",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Sep",
+          "margin": 21.9,
+          "set": "mar",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Oct margin",
+        "subtitle": "operating margin, %",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Oct",
+          "margin": 20.7,
+          "event": "FX",
+          "set": "mar",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Nov margin",
+        "subtitle": "operating margin, %",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Nov",
+          "margin": 20.5,
+          "set": "mar",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Dec margin",
+        "subtitle": "operating margin, %",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Dec",
+          "margin": 20.8,
+          "set": "mar",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Core subscriptions",
+        "subtitle": "margin 31.2%",
+        "icon": "list",
+        "extra": {
+          "unit": "Core subs",
+          "actual": 98400000,
+          "budget": 96800000,
+          "variance": 1600000,
+          "margin": 31.2,
+          "result": "ok",
+          "set": "bu",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Usage billing",
+        "subtitle": "margin 27.9%",
+        "icon": "list",
+        "extra": {
+          "unit": "Usage",
+          "actual": 41700000,
+          "budget": 40200000,
+          "variance": 1500000,
+          "margin": 27.9,
+          "result": "ok",
+          "set": "bu",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Professional services",
+        "subtitle": "margin 9.4%",
+        "icon": "list",
+        "extra": {
+          "unit": "Services",
+          "actual": 27300000,
+          "budget": 29100000,
+          "variance": -1800000,
+          "margin": 9.4,
+          "result": "warn",
+          "set": "bu",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Marketplace",
+        "subtitle": "margin 24.6%",
+        "icon": "list",
+        "extra": {
+          "unit": "Market",
+          "actual": 22800000,
+          "budget": 20500000,
+          "variance": 2300000,
+          "margin": 24.6,
+          "result": "ok",
+          "set": "bu",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Support plans",
+        "subtitle": "margin 33.1%",
+        "icon": "list",
+        "extra": {
+          "unit": "Support",
+          "actual": 19600000,
+          "budget": 19900000,
+          "variance": -300000,
+          "margin": 33.1,
+          "result": "warn",
+          "set": "bu",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Partner channel",
+        "subtitle": "margin 12.7%",
+        "icon": "list",
+        "extra": {
+          "unit": "Partners",
+          "actual": 14200000,
+          "budget": 15800000,
+          "variance": -1600000,
+          "margin": 12.7,
+          "result": "error",
+          "set": "bu",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Training",
+        "subtitle": "margin 18.8%",
+        "icon": "list",
+        "extra": {
+          "unit": "Training",
+          "actual": 9100000,
+          "budget": 8400000,
+          "variance": 700000,
+          "margin": 18.8,
+          "result": "ok",
+          "set": "bu",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Licensing",
+        "subtitle": "margin 41.0%",
+        "icon": "list",
+        "extra": {
+          "unit": "Licensing",
+          "actual": 8600000,
+          "budget": 8600000,
+          "variance": 0,
+          "margin": 41.0,
+          "result": "ok",
+          "set": "bu",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Add-ons",
+        "subtitle": "margin 29.5%",
+        "icon": "list",
+        "extra": {
+          "unit": "Add-ons",
+          "actual": 7900000,
+          "budget": 6900000,
+          "variance": 1000000,
+          "margin": 29.5,
+          "result": "ok",
+          "set": "bu",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Hardware",
+        "subtitle": "margin 3.9%",
+        "icon": "list",
+        "extra": {
+          "unit": "Hardware",
+          "actual": 6800000,
+          "budget": 8200000,
+          "variance": -1400000,
+          "margin": 3.9,
+          "result": "error",
+          "set": "bu",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Pilot programs",
+        "subtitle": "margin -2.4%",
+        "icon": "list",
+        "extra": {
+          "unit": "Pilots",
+          "actual": 4600000,
+          "budget": 3800000,
+          "variance": 800000,
+          "margin": -2.4,
+          "result": "ok",
+          "set": "bu",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "Other",
+        "subtitle": "margin 7.2%",
+        "icon": "list",
+        "extra": {
+          "unit": "Other",
+          "actual": 3900000,
+          "budget": 4100000,
+          "variance": -200000,
+          "margin": 7.2,
+          "result": "warn",
+          "set": "bu",
+          "gmargin": 20.8
+        }
+      },
+      {
+        "title": "About this sample",
+        "subtitle": "Sample data, no network",
+        "icon": "list",
+        "view": "about",
+        "extra": {
+          "gmargin": 20.8
+        }
+      }
+    ]
+  },
+  "views": [
+    {
+      "id": "about",
+      "title": "About this sample",
+      "icon": "list",
+      "endpoint": "summary",
+      "item": {
+        "title": "About this sample",
+        "subtitle": "Sample data, no network",
+        "body": "Every number here is built-in sample data from the Bolt Apps examples. Nothing is fetched."
+      }
+    }
+  ]
+}

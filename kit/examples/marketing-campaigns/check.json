@@ -1,0 +1,22 @@
+{
+  "script": "scripts/marketing-campaigns__engine.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/marketing-campaigns__bolt_app_kit.py",
+  "fixture": true,
+  "cases": [
+    {
+      "name": "overview: every pane draws from the labelled sample rows",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "golden": "golden/overview.json",
+      "expect": {
+        "text_present": [
+          "Sample data"
+        ]
+      }
+    }
+  ]
+}

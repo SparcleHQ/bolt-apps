@@ -1,0 +1,497 @@
+{
+  "app": {
+    "id": "gym",
+    "chip": "gym",
+    "title": "Gym and wellness",
+    "icon": "activity",
+    "description": "Wellness benefit: a ring hero, four tiles, claimed vs an even pace and a claims list. Needs Bolt 0.1.184 or newer. Sample data.",
+    "service": "Gym and wellness"
+  },
+  "api": {
+    "base_url": "https://api.example.com",
+    "key_env": "SHOWCASE_API_KEY",
+    "fixture_default": false,
+    "on_missing_key": "sample",
+    "fixture_file": "fixtures.json",
+    "fixture_banner": false
+  },
+  "cache": {
+    "ttl": 45,
+    "stale_max": 86400
+  },
+  "endpoints": {
+    "summary": {
+      "path": "/v1/summary"
+    }
+  },
+  "stats": {},
+  "overview": {
+    "widget": {
+      "kind": "stack",
+      "mode": "list_data",
+      "bind": {
+        "children": [
+          {
+            "kind": "gauge",
+            "mode": "selected_row",
+            "bind": {
+              "value": "{{row.gused}}",
+              "min": 0,
+              "max": 100,
+              "label": "Wellness benefit used",
+              "unit": "%",
+              "shape": "ring",
+              "thresholds": [
+                {
+                  "at": 80,
+                  "label": "watch 80%",
+                  "tone": "warn"
+                }
+              ]
+            }
+          },
+          {
+            "kind": "cards",
+            "bind": {
+              "layout": "tiles",
+              "visual_from": "kpi_visual",
+              "title": "{{row.kpi_label}}",
+              "value": "{{row.kpi_value}}",
+              "unit": "{{row.kpi_unit}}",
+              "max": "{{row.kpi_max}}",
+              "target": "{{row.target}}",
+              "limit": "{{row.limit}}",
+              "trend": "{{row.trend}}",
+              "delta": "{{row.delta}}",
+              "delta_label": "{{row.since}}",
+              "subtitle": "{{row.kpi_note}}",
+              "from": {
+                "set": "tiles"
+              }
+            }
+          },
+          {
+            "kind": "chart",
+            "bind": {
+              "type": "area",
+              "x": "m",
+              "series": [
+                {
+                  "y": "spent",
+                  "label": "Claimed"
+                },
+                {
+                  "y": "pace",
+                  "label": "Even pace"
+                }
+              ],
+              "unit": "",
+              "label": "Claims ran ahead of an even pace from May, USD",
+              "limit": 600,
+              "limit_label": "cap",
+              "marker": {
+                "field": "event"
+              },
+              "from": {
+                "set": "mon"
+              }
+            }
+          },
+          {
+            "kind": "table",
+            "bind": {
+              "columns": [
+                {
+                  "field": "claim",
+                  "label": "Claim",
+                  "total": "count"
+                },
+                {
+                  "field": "amount",
+                  "label": "USD",
+                  "align": "right",
+                  "format": "number",
+                  "total": "none",
+                  "bars": true
+                },
+                {
+                  "field": "status",
+                  "label": "Flag",
+                  "mark": "tone"
+                }
+              ],
+              "from": {
+                "set": "claims"
+              },
+              "totals_label": "Claims"
+            }
+          }
+        ]
+      }
+    },
+    "rows": [
+      {
+        "title": "Wellness benefit: this year",
+        "subtitle": "Sample data, 600 USD per year, 12 claims",
+        "icon": "list",
+        "extra": {
+          "gused": 94
+        }
+      },
+      {
+        "title": "Left this year",
+        "subtitle": "of 600 USD benefit",
+        "icon": "activity",
+        "tile": {
+          "label": "Left this year",
+          "value": 38,
+          "unit": "USD",
+          "note": "of 600 USD benefit",
+          "max": 600
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "bullet",
+          "gused": 94
+        }
+      },
+      {
+        "title": "Approved",
+        "subtitle": "paid out so far",
+        "icon": "activity",
+        "tile": {
+          "label": "Approved",
+          "value": 453,
+          "unit": "USD",
+          "note": "paid out so far"
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "number",
+          "gused": 94
+        }
+      },
+      {
+        "title": "Pending",
+        "subtitle": "waiting for approval",
+        "icon": "activity",
+        "tile": {
+          "label": "Pending",
+          "value": 109,
+          "unit": "USD",
+          "note": "waiting for approval",
+          "max": 600
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "ring",
+          "gused": 94
+        }
+      },
+      {
+        "title": "Per month",
+        "subtitle": "claimed, Jan to Sep",
+        "icon": "activity",
+        "tile": {
+          "label": "Per month",
+          "value": 62,
+          "unit": "USD",
+          "note": "claimed, Jan to Sep"
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "spark",
+          "limit": 50,
+          "gused": 94
+        },
+        "trend": [
+          49,
+          49,
+          49,
+          49,
+          124,
+          84,
+          49,
+          109,
+          0
+        ]
+      },
+      {
+        "title": "Jan claims",
+        "subtitle": "cumulative vs even pace",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Jan",
+          "spent": 49,
+          "pace": 50,
+          "set": "mon",
+          "gused": 94
+        }
+      },
+      {
+        "title": "Feb claims",
+        "subtitle": "cumulative vs even pace",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Feb",
+          "spent": 98,
+          "pace": 100,
+          "set": "mon",
+          "gused": 94
+        }
+      },
+      {
+        "title": "Mar claims",
+        "subtitle": "cumulative vs even pace",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Mar",
+          "spent": 147,
+          "pace": 150,
+          "set": "mon",
+          "gused": 94
+        }
+      },
+      {
+        "title": "Apr claims",
+        "subtitle": "cumulative vs even pace",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Apr",
+          "spent": 196,
+          "pace": 200,
+          "set": "mon",
+          "gused": 94
+        }
+      },
+      {
+        "title": "May claims",
+        "subtitle": "cumulative vs even pace",
+        "icon": "line-chart",
+        "extra": {
+          "m": "May",
+          "spent": 320,
+          "pace": 250,
+          "event": "Yoga",
+          "set": "mon",
+          "gused": 94
+        }
+      },
+      {
+        "title": "Jun claims",
+        "subtitle": "cumulative vs even pace",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Jun",
+          "spent": 404,
+          "pace": 300,
+          "set": "mon",
+          "gused": 94
+        }
+      },
+      {
+        "title": "Jul claims",
+        "subtitle": "cumulative vs even pace",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Jul",
+          "spent": 453,
+          "pace": 350,
+          "set": "mon",
+          "gused": 94
+        }
+      },
+      {
+        "title": "Aug claims",
+        "subtitle": "cumulative vs even pace",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Aug",
+          "spent": 562,
+          "pace": 400,
+          "set": "mon",
+          "gused": 94
+        }
+      },
+      {
+        "title": "Sep claims",
+        "subtitle": "cumulative vs even pace",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Sep",
+          "spent": 562,
+          "pace": 450,
+          "set": "mon",
+          "gused": 94
+        }
+      },
+      {
+        "title": "FitLife Gym Jan",
+        "subtitle": "49 USD, approved",
+        "icon": "list",
+        "extra": {
+          "claim": "FitLife Gym, Jan",
+          "amount": 49,
+          "status": "ok",
+          "set": "claims",
+          "gused": 94
+        }
+      },
+      {
+        "title": "FitLife Gym Feb",
+        "subtitle": "49 USD, approved",
+        "icon": "list",
+        "extra": {
+          "claim": "FitLife Gym, Feb",
+          "amount": 49,
+          "status": "ok",
+          "set": "claims",
+          "gused": 94
+        }
+      },
+      {
+        "title": "FitLife Gym Mar",
+        "subtitle": "49 USD, approved",
+        "icon": "list",
+        "extra": {
+          "claim": "FitLife Gym, Mar",
+          "amount": 49,
+          "status": "ok",
+          "set": "claims",
+          "gused": 94
+        }
+      },
+      {
+        "title": "FitLife Gym Apr",
+        "subtitle": "49 USD, approved",
+        "icon": "list",
+        "extra": {
+          "claim": "FitLife Gym, Apr",
+          "amount": 49,
+          "status": "ok",
+          "set": "claims",
+          "gused": 94
+        }
+      },
+      {
+        "title": "Flow Yoga May",
+        "subtitle": "75 USD, approved",
+        "icon": "list",
+        "extra": {
+          "claim": "Flow Yoga, May",
+          "amount": 75,
+          "status": "ok",
+          "set": "claims",
+          "gused": 94
+        }
+      },
+      {
+        "title": "FitLife Gym May",
+        "subtitle": "49 USD, approved",
+        "icon": "list",
+        "extra": {
+          "claim": "FitLife Gym, May",
+          "amount": 49,
+          "status": "ok",
+          "set": "claims",
+          "gused": 94
+        }
+      },
+      {
+        "title": "FitLife Gym Jun",
+        "subtitle": "49 USD, approved",
+        "icon": "list",
+        "extra": {
+          "claim": "FitLife Gym, Jun",
+          "amount": 49,
+          "status": "ok",
+          "set": "claims",
+          "gused": 94
+        }
+      },
+      {
+        "title": "Trail Run Club Jun",
+        "subtitle": "35 USD, approved",
+        "icon": "list",
+        "extra": {
+          "claim": "Trail Run Club, Jun",
+          "amount": 35,
+          "status": "ok",
+          "set": "claims",
+          "gused": 94
+        }
+      },
+      {
+        "title": "FitLife Gym Jul",
+        "subtitle": "49 USD, approved",
+        "icon": "list",
+        "extra": {
+          "claim": "FitLife Gym, Jul",
+          "amount": 49,
+          "status": "ok",
+          "set": "claims",
+          "gused": 94
+        }
+      },
+      {
+        "title": "Pulse Cycling Aug",
+        "subtitle": "60 USD, pending",
+        "icon": "list",
+        "extra": {
+          "claim": "Pulse Cycling, Aug",
+          "amount": 60,
+          "status": "warn",
+          "set": "claims",
+          "gused": 94
+        }
+      },
+      {
+        "title": "FitLife Gym Aug",
+        "subtitle": "49 USD, pending",
+        "icon": "list",
+        "extra": {
+          "claim": "FitLife Gym, Aug",
+          "amount": 49,
+          "status": "warn",
+          "set": "claims",
+          "gused": 94
+        }
+      },
+      {
+        "title": "Home gym kit Sep",
+        "subtitle": "89 USD, not eligible",
+        "icon": "list",
+        "extra": {
+          "claim": "Home gym kit, Sep",
+          "amount": 89,
+          "status": "error",
+          "set": "claims",
+          "gused": 94
+        }
+      },
+      {
+        "title": "About this sample",
+        "subtitle": "Sample data, no network",
+        "icon": "list",
+        "view": "about",
+        "extra": {
+          "cover": 71,
+          "gused": 94
+        }
+      }
+    ]
+  },
+  "views": [
+    {
+      "id": "about",
+      "title": "About this sample",
+      "icon": "list",
+      "endpoint": "summary",
+      "item": {
+        "title": "About this sample",
+        "subtitle": "Sample data, no network",
+        "body": "Every number here is built-in sample data from the Bolt Apps examples. Nothing is fetched."
+      }
+    }
+  ]
+}

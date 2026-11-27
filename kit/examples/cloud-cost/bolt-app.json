@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "cloud-cost",
+  "title": "Cloud Cost",
+  "role": "Anyone watching a cloud bill",
+  "saves": "Building a cost dashboard by hand",
+  "summary": "Type =cloud-cost for spend tiles, a coverage gauge, an area chart with a limit line and a service table with bars. Needs Bolt 0.1.185 or newer. Runs on sample data.",
+  "author": {
+    "name": "Bolt Apps examples",
+    "link": "https://github.com/SparcleHQ/bolt-apps"
+  },
+  "tier": 3,
+  "permissions": [
+    "runs_commands",
+    "network",
+    "files"
+  ],
+  "platforms": [
+    "macos",
+    "linux"
+  ],
+  "requires": [
+    {
+      "interpreter": "python",
+      "min_version": "3.9"
+    }
+  ],
+  "tests": [],
+  "min_bolt_version": "0.1.185"
+}

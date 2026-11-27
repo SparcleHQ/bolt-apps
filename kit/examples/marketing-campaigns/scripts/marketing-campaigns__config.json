@@ -1,0 +1,1066 @@
+{
+  "app": {
+    "id": "marketing-campaigns",
+    "chip": "marketing-campaigns",
+    "title": "Marketing Campaigns",
+    "icon": "list",
+    "description": "Campaigns in four tabs with counts and a watch list status: a channel donut, tiles and tables with bars. Needs Bolt 0.1.185 or newer. Sample data.",
+    "service": "Marketing Campaigns"
+  },
+  "api": {
+    "base_url": "https://api.example.com",
+    "key_env": "SHOWCASE_API_KEY",
+    "fixture_default": false,
+    "on_missing_key": "sample",
+    "fixture_file": "fixtures.json",
+    "fixture_banner": false
+  },
+  "cache": {
+    "ttl": 45,
+    "stale_max": 86400
+  },
+  "endpoints": {
+    "summary": {
+      "path": "/v1/summary"
+    }
+  },
+  "stats": {},
+  "overview": {
+    "widget": {
+      "kind": "tabs",
+      "mode": "list_data",
+      "bind": {
+        "tabs": [
+          {
+            "label": "Overview",
+            "widget": {
+              "kind": "stack",
+              "mode": "list_data",
+              "bind": {
+                "children": [
+                  {
+                    "kind": "cards",
+                    "bind": {
+                      "layout": "tiles",
+                      "visual_from": "kpi_visual",
+                      "title": "{{row.kpi_label}}",
+                      "value": "{{row.kpi_value}}",
+                      "unit": "{{row.kpi_unit}}",
+                      "max": "{{row.kpi_max}}",
+                      "target": "{{row.target}}",
+                      "limit": "{{row.limit}}",
+                      "trend": "{{row.trend}}",
+                      "delta": "{{row.delta}}",
+                      "delta_label": "{{row.since}}",
+                      "subtitle": "{{row.kpi_note}}",
+                      "from": {
+                        "set": "tiles"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "chart",
+                    "bind": {
+                      "type": "donut",
+                      "x": "ch",
+                      "y": "spend",
+                      "unit": "",
+                      "label": "Spend by channel, USD",
+                      "from": {
+                        "set": "chan"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "chart",
+                    "bind": {
+                      "type": "line",
+                      "x": "w",
+                      "label": "Weekly spend (k USD) and conversions",
+                      "limit": 66.9,
+                      "limit_label": "cap",
+                      "marker": {
+                        "field": "event"
+                      },
+                      "from": {
+                        "set": "wk"
+                      },
+                      "series": [
+                        {
+                          "y": "spend",
+                          "label": "Spend k"
+                        },
+                        {
+                          "y": "conv",
+                          "label": "Conv per 100"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "label": "Campaigns",
+            "widget": {
+              "kind": "stack",
+              "mode": "list_data",
+              "bind": {
+                "children": [
+                  {
+                    "kind": "table",
+                    "bind": {
+                      "columns": [
+                        {
+                          "field": "nm",
+                          "label": "Campaign"
+                        },
+                        {
+                          "field": "spend",
+                          "label": "Spend",
+                          "align": "right",
+                          "format": "compact",
+                          "bars": true,
+                          "total": "sum",
+                          "digits": 1
+                        },
+                        {
+                          "field": "rev",
+                          "label": "Revenue",
+                          "align": "right",
+                          "format": "compact",
+                          "total": "sum",
+                          "digits": 1
+                        },
+                        {
+                          "field": "roi",
+                          "label": "ROI",
+                          "align": "right",
+                          "format": "number",
+                          "digits": 0,
+                          "unit": "%",
+                          "total": "none"
+                        }
+                      ],
+                      "from": {
+                        "set": "camps"
+                      },
+                      "totals_label": "Campaigns"
+                    }
+                  }
+                ]
+              }
+            },
+            "count_from": {
+              "set": "camps"
+            }
+          },
+          {
+            "label": "Creatives",
+            "widget": {
+              "kind": "stack",
+              "mode": "list_data",
+              "bind": {
+                "children": [
+                  {
+                    "kind": "table",
+                    "bind": {
+                      "columns": [
+                        {
+                          "field": "creative",
+                          "label": "Creative"
+                        },
+                        {
+                          "field": "impressions",
+                          "label": "Views",
+                          "align": "right",
+                          "format": "compact",
+                          "bars": true,
+                          "total": "sum",
+                          "digits": 0
+                        },
+                        {
+                          "field": "ctr",
+                          "label": "CTR",
+                          "align": "right",
+                          "format": "number",
+                          "unit": "%",
+                          "digits": 1,
+                          "total": "none"
+                        },
+                        {
+                          "field": "spend",
+                          "label": "Spend",
+                          "align": "right",
+                          "format": "compact",
+                          "total": "sum",
+                          "digits": 1
+                        }
+                      ],
+                      "from": {
+                        "set": "creatives"
+                      },
+                      "totals_label": "Creatives"
+                    }
+                  }
+                ]
+              }
+            },
+            "count_from": {
+              "set": "creatives"
+            }
+          },
+          {
+            "label": "Watch",
+            "widget": {
+              "kind": "stack",
+              "mode": "list_data",
+              "bind": {
+                "children": [
+                  {
+                    "kind": "table",
+                    "bind": {
+                      "columns": [
+                        {
+                          "field": "nm",
+                          "label": "Campaign"
+                        },
+                        {
+                          "field": "spend",
+                          "label": "Spend",
+                          "align": "right",
+                          "format": "compact",
+                          "bars": true,
+                          "total": "sum",
+                          "digits": 1
+                        },
+                        {
+                          "field": "roi",
+                          "label": "ROI",
+                          "align": "right",
+                          "format": "number",
+                          "digits": 0,
+                          "unit": "%",
+                          "total": "none"
+                        },
+                        {
+                          "field": "flag",
+                          "label": "Flag",
+                          "mark": "tone"
+                        }
+                      ],
+                      "from": {
+                        "set": "watch"
+                      },
+                      "totals_label": "Watch list"
+                    }
+                  }
+                ]
+              }
+            },
+            "count_from": {
+              "set": "watch"
+            },
+            "status": "warning"
+          }
+        ]
+      }
+    },
+    "rows": [
+      {
+        "title": "Marketing: campaigns",
+        "subtitle": "Sample data, 18 campaigns, 6 channels",
+        "icon": "activity",
+        "extra": {}
+      },
+      {
+        "title": "Spend, quarter, USD",
+        "subtitle": "all campaigns, weekly trend",
+        "icon": "activity",
+        "tile": {
+          "label": "Spend, quarter, USD",
+          "value": 555.1,
+          "unit": "k",
+          "note": "all campaigns, weekly trend"
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "spark"
+        },
+        "trend": [
+          40.4,
+          44.5,
+          47.5,
+          52.6,
+          49.5,
+          58.6,
+          63.7,
+          61.7
+        ]
+      },
+      {
+        "title": "ROI",
+        "subtitle": "revenue 1634k USD",
+        "icon": "activity",
+        "tile": {
+          "label": "ROI",
+          "value": 194,
+          "unit": "%",
+          "note": "revenue 1634k USD",
+          "max": 500
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "bullet",
+          "target": 250
+        }
+      },
+      {
+        "title": "Conversions",
+        "subtitle": "all campaigns",
+        "icon": "activity",
+        "tile": {
+          "label": "Conversions",
+          "value": 19808,
+          "unit": "",
+          "note": "all campaigns"
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "number",
+          "delta": 6.2,
+          "since": "vs last week"
+        }
+      },
+      {
+        "title": "Budget used",
+        "subtitle": "of the quarter plan",
+        "icon": "activity",
+        "tile": {
+          "label": "Budget used",
+          "value": 72,
+          "unit": "%",
+          "note": "of the quarter plan",
+          "max": 100
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "ring"
+        }
+      },
+      {
+        "title": "Click rate",
+        "subtitle": "all channels",
+        "icon": "activity",
+        "tile": {
+          "label": "Click rate",
+          "value": 2.9,
+          "unit": "%",
+          "note": "all channels"
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "spark",
+          "delta": 0.3,
+          "since": "vs last week"
+        },
+        "trend": [
+          2.4,
+          2.5,
+          2.6,
+          2.6,
+          2.8,
+          2.8,
+          2.9
+        ]
+      },
+      {
+        "title": "Cost per sale",
+        "subtitle": "blended",
+        "icon": "activity",
+        "tile": {
+          "label": "Cost per sale",
+          "value": 28.0,
+          "unit": "USD",
+          "note": "blended",
+          "max": 40
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "bullet",
+          "target": 18
+        }
+      },
+      {
+        "title": "Soc",
+        "subtitle": "spend by channel",
+        "icon": "list",
+        "extra": {
+          "ch": "Soc",
+          "spend": 179000,
+          "set": "chan"
+        }
+      },
+      {
+        "title": "Vid",
+        "subtitle": "spend by channel",
+        "icon": "list",
+        "extra": {
+          "ch": "Vid",
+          "spend": 105200,
+          "set": "chan"
+        }
+      },
+      {
+        "title": "Paid",
+        "subtitle": "spend by channel",
+        "icon": "list",
+        "extra": {
+          "ch": "Paid",
+          "spend": 76000,
+          "set": "chan"
+        }
+      },
+      {
+        "title": "Disp",
+        "subtitle": "spend by channel",
+        "icon": "list",
+        "extra": {
+          "ch": "Disp",
+          "spend": 65800,
+          "set": "chan"
+        }
+      },
+      {
+        "title": "Misc",
+        "subtitle": "spend by channel",
+        "icon": "list",
+        "extra": {
+          "ch": "Misc",
+          "spend": 56100,
+          "set": "chan"
+        }
+      },
+      {
+        "title": "Aff",
+        "subtitle": "spend by channel",
+        "icon": "list",
+        "extra": {
+          "ch": "Aff",
+          "spend": 52000,
+          "set": "chan"
+        }
+      },
+      {
+        "title": "Mail",
+        "subtitle": "spend by channel",
+        "icon": "list",
+        "extra": {
+          "ch": "Mail",
+          "spend": 21000,
+          "set": "chan"
+        }
+      },
+      {
+        "title": "Brand search",
+        "subtitle": "Search, 311% ROI",
+        "icon": "trending-up",
+        "extra": {
+          "name": "Brand Search Always-on",
+          "ch": "Search",
+          "spend": 48200,
+          "rev": 198000,
+          "roi": 311,
+          "conv": 3194,
+          "cac": 15.09,
+          "set": "camps",
+          "nm": "Brand search",
+          "chs": "Paid"
+        }
+      },
+      {
+        "title": "Winback",
+        "subtitle": "Email, 853% ROI",
+        "icon": "trending-up",
+        "extra": {
+          "name": "Spring Winback",
+          "ch": "Email",
+          "spend": 6400,
+          "rev": 61000,
+          "roi": 853,
+          "conv": 859,
+          "cac": 7.45,
+          "set": "camps",
+          "nm": "Winback",
+          "chs": "Mail"
+        }
+      },
+      {
+        "title": "Gift guide",
+        "subtitle": "Social, 195% ROI",
+        "icon": "trending-up",
+        "extra": {
+          "name": "Holiday Gift Guide",
+          "ch": "Social",
+          "spend": 72500,
+          "rev": 214000,
+          "roi": 195,
+          "conv": 2675,
+          "cac": 27.1,
+          "set": "camps",
+          "nm": "Gift guide",
+          "chs": "Soc"
+        }
+      },
+      {
+        "title": "Lookalike",
+        "subtitle": "Social, 121% ROI",
+        "icon": "trending-up",
+        "extra": {
+          "name": "Lookalike Q4",
+          "ch": "Social",
+          "spend": 39800,
+          "rev": 88000,
+          "roi": 121,
+          "conv": 989,
+          "cac": 40.24,
+          "set": "camps",
+          "nm": "Lookalike",
+          "chs": "Soc"
+        }
+      },
+      {
+        "title": "Mail webinar",
+        "subtitle": "Email, 467% ROI",
+        "icon": "trending-up",
+        "extra": {
+          "name": "Webinar Series",
+          "ch": "Email",
+          "spend": 5200,
+          "rev": 29500,
+          "roi": 467,
+          "conv": 301,
+          "cac": 17.28,
+          "set": "camps",
+          "nm": "Mail webinar",
+          "chs": "Mail"
+        }
+      },
+      {
+        "title": "Retarget cart",
+        "subtitle": "Display, 331% ROI",
+        "icon": "trending-up",
+        "extra": {
+          "name": "Retargeting Cart",
+          "ch": "Display",
+          "spend": 27600,
+          "rev": 119000,
+          "roi": 331,
+          "conv": 1112,
+          "cac": 24.82,
+          "set": "camps",
+          "nm": "Retarget cart",
+          "chs": "Disp"
+        }
+      },
+      {
+        "title": "Creators",
+        "subtitle": "Video, 65% ROI",
+        "icon": "trending-up",
+        "extra": {
+          "name": "Creator Collab",
+          "ch": "Video",
+          "spend": 58300,
+          "rev": 96000,
+          "roi": 65,
+          "conv": 828,
+          "cac": 70.41,
+          "set": "camps",
+          "nm": "Creators",
+          "chs": "Vid"
+        }
+      },
+      {
+        "title": "Partners",
+        "subtitle": "Affiliate, 344% ROI",
+        "icon": "trending-up",
+        "extra": {
+          "name": "Partner Referral",
+          "ch": "Affiliate",
+          "spend": 18900,
+          "rev": 84000,
+          "roi": 344,
+          "conv": 672,
+          "cac": 28.13,
+          "set": "camps",
+          "nm": "Partners",
+          "chs": "Aff"
+        }
+      },
+      {
+        "title": "Retarget Q4",
+        "subtitle": "Display, 298% ROI",
+        "icon": "trending-up",
+        "extra": {
+          "name": "Retargeting Cart",
+          "ch": "Display",
+          "spend": 38200,
+          "rev": 152000,
+          "roi": 298,
+          "conv": 1924,
+          "cac": 19.85,
+          "set": "camps",
+          "nm": "Retarget Q4",
+          "chs": "Disp"
+        }
+      },
+      {
+        "title": "Newsletter",
+        "subtitle": "Email, 549% ROI",
+        "icon": "trending-up",
+        "extra": {
+          "name": "Newsletter Q4",
+          "ch": "Email",
+          "spend": 9400,
+          "rev": 61000,
+          "roi": 549,
+          "conv": 897,
+          "cac": 10.48,
+          "set": "camps",
+          "nm": "Newsletter",
+          "chs": "Mail"
+        }
+      },
+      {
+        "title": "Influencers",
+        "subtitle": "Social, 117% ROI",
+        "icon": "trending-up",
+        "extra": {
+          "name": "Influencer Autumn",
+          "ch": "Social",
+          "spend": 54300,
+          "rev": 118000,
+          "roi": 117,
+          "conv": 1421,
+          "cac": 38.21,
+          "set": "camps",
+          "nm": "Influencers",
+          "chs": "Soc"
+        }
+      },
+      {
+        "title": "Podcasts",
+        "subtitle": "Audio, 35% ROI",
+        "icon": "trending-up",
+        "extra": {
+          "name": "Podcast Sponsorship",
+          "ch": "Audio",
+          "spend": 21800,
+          "rev": 29400,
+          "roi": 35,
+          "conv": 414,
+          "cac": 52.66,
+          "set": "camps",
+          "nm": "Podcasts",
+          "chs": "Misc"
+        }
+      },
+      {
+        "title": "Affiliate",
+        "subtitle": "Affiliate, 275% ROI",
+        "icon": "trending-up",
+        "extra": {
+          "name": "Affiliate Always-on",
+          "ch": "Affiliate",
+          "spend": 33100,
+          "rev": 124000,
+          "roi": 275,
+          "conv": 1458,
+          "cac": 22.7,
+          "set": "camps",
+          "nm": "Affiliate",
+          "chs": "Aff"
+        }
+      },
+      {
+        "title": "Pre-roll",
+        "subtitle": "Video, 38% ROI",
+        "icon": "trending-up",
+        "extra": {
+          "name": "Video Pre-roll",
+          "ch": "Video",
+          "spend": 46900,
+          "rev": 64800,
+          "roi": 38,
+          "conv": 790,
+          "cac": 59.37,
+          "set": "camps",
+          "nm": "Pre-roll",
+          "chs": "Vid"
+        }
+      },
+      {
+        "title": "Competitors",
+        "subtitle": "Search, 150% ROI",
+        "icon": "trending-up",
+        "extra": {
+          "name": "Search Competitors",
+          "ch": "Search",
+          "spend": 27800,
+          "rev": 69500,
+          "roi": 150,
+          "conv": 772,
+          "cac": 36.01,
+          "set": "camps",
+          "nm": "Competitors",
+          "chs": "Paid"
+        }
+      },
+      {
+        "title": "Webinars",
+        "subtitle": "Events, 174% ROI",
+        "icon": "trending-up",
+        "extra": {
+          "name": "Webinar Series",
+          "ch": "Events",
+          "spend": 18700,
+          "rev": 51200,
+          "roi": 174,
+          "conv": 595,
+          "cac": 31.43,
+          "set": "camps",
+          "nm": "Webinars",
+          "chs": "Misc"
+        }
+      },
+      {
+        "title": "Referrals",
+        "subtitle": "Social, 358% ROI",
+        "icon": "trending-up",
+        "extra": {
+          "name": "Referral Push",
+          "ch": "Social",
+          "spend": 12400,
+          "rev": 56800,
+          "roi": 358,
+          "conv": 684,
+          "cac": 18.13,
+          "set": "camps",
+          "nm": "Referrals",
+          "chs": "Soc"
+        }
+      },
+      {
+        "title": "Radio",
+        "subtitle": "Audio, 15% ROI",
+        "icon": "trending-up",
+        "extra": {
+          "name": "Local Radio",
+          "ch": "Audio",
+          "spend": 15600,
+          "rev": 17900,
+          "roi": 15,
+          "conv": 223,
+          "cac": 69.96,
+          "set": "camps",
+          "nm": "Radio",
+          "chs": "Misc"
+        }
+      },
+      {
+        "title": "Creators",
+        "subtitle": "ROI under 100%",
+        "icon": "shield-alert",
+        "extra": {
+          "nm": "Creators",
+          "spend": 58300,
+          "roi": 65,
+          "flag": "warn",
+          "set": "watch"
+        }
+      },
+      {
+        "title": "Podcasts",
+        "subtitle": "ROI under 100%",
+        "icon": "shield-alert",
+        "extra": {
+          "nm": "Podcasts",
+          "spend": 21800,
+          "roi": 35,
+          "flag": "error",
+          "set": "watch"
+        }
+      },
+      {
+        "title": "Pre-roll",
+        "subtitle": "ROI under 100%",
+        "icon": "shield-alert",
+        "extra": {
+          "nm": "Pre-roll",
+          "spend": 46900,
+          "roi": 38,
+          "flag": "error",
+          "set": "watch"
+        }
+      },
+      {
+        "title": "Radio",
+        "subtitle": "ROI under 100%",
+        "icon": "shield-alert",
+        "extra": {
+          "nm": "Radio",
+          "spend": 15600,
+          "roi": 15,
+          "flag": "error",
+          "set": "watch"
+        }
+      },
+      {
+        "title": "Hero video",
+        "subtitle": "creative",
+        "icon": "file",
+        "extra": {
+          "creative": "Hero video",
+          "impressions": 404887,
+          "ctr": 3.1,
+          "spend": 5011,
+          "conv": 434,
+          "set": "creatives"
+        }
+      },
+      {
+        "title": "Carousel",
+        "subtitle": "creative",
+        "icon": "file",
+        "extra": {
+          "creative": "Carousel",
+          "impressions": 437649,
+          "ctr": 3.0,
+          "spend": 5336,
+          "conv": 511,
+          "set": "creatives"
+        }
+      },
+      {
+        "title": "Testimonial",
+        "subtitle": "creative",
+        "icon": "file",
+        "extra": {
+          "creative": "Testimonial",
+          "impressions": 168629,
+          "ctr": 3.4,
+          "spend": 9856,
+          "conv": 366,
+          "set": "creatives"
+        }
+      },
+      {
+        "title": "Banner A",
+        "subtitle": "creative",
+        "icon": "file",
+        "extra": {
+          "creative": "Banner A",
+          "impressions": 184598,
+          "ctr": 1.3,
+          "spend": 10929,
+          "conv": 139,
+          "set": "creatives"
+        }
+      },
+      {
+        "title": "Banner B",
+        "subtitle": "creative",
+        "icon": "file",
+        "extra": {
+          "creative": "Banner B",
+          "impressions": 536937,
+          "ctr": 1.7,
+          "spend": 8032,
+          "conv": 323,
+          "set": "creatives"
+        }
+      },
+      {
+        "title": "Founder",
+        "subtitle": "creative",
+        "icon": "file",
+        "extra": {
+          "creative": "Founder",
+          "impressions": 462811,
+          "ctr": 2.7,
+          "spend": 6869,
+          "conv": 519,
+          "set": "creatives"
+        }
+      },
+      {
+        "title": "Demo GIF",
+        "subtitle": "creative",
+        "icon": "file",
+        "extra": {
+          "creative": "Demo GIF",
+          "impressions": 518902,
+          "ctr": 1.7,
+          "spend": 10284,
+          "conv": 623,
+          "set": "creatives"
+        }
+      },
+      {
+        "title": "Week 1",
+        "subtitle": "spend $k and conversions",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W1",
+          "spend": 31.3,
+          "set": "wk",
+          "conv": 10.9
+        }
+      },
+      {
+        "title": "Week 2",
+        "subtitle": "spend $k and conversions",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W2",
+          "spend": 33.4,
+          "set": "wk",
+          "conv": 12.1
+        }
+      },
+      {
+        "title": "Week 3",
+        "subtitle": "spend $k and conversions",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W3",
+          "spend": 36.4,
+          "set": "wk",
+          "conv": 12.3
+        }
+      },
+      {
+        "title": "Week 4",
+        "subtitle": "spend $k and conversions",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W4",
+          "spend": 35.4,
+          "set": "wk",
+          "conv": 12.6
+        }
+      },
+      {
+        "title": "Week 5",
+        "subtitle": "spend $k and conversions",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W5",
+          "spend": 40.4,
+          "set": "wk",
+          "conv": 14.9
+        }
+      },
+      {
+        "title": "Week 6",
+        "subtitle": "spend $k and conversions",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W6",
+          "spend": 44.5,
+          "event": "Creative",
+          "set": "wk",
+          "conv": 15.3
+        }
+      },
+      {
+        "title": "Week 7",
+        "subtitle": "spend $k and conversions",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W7",
+          "spend": 47.5,
+          "set": "wk",
+          "conv": 17.0
+        }
+      },
+      {
+        "title": "Week 8",
+        "subtitle": "spend $k and conversions",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W8",
+          "spend": 52.6,
+          "set": "wk",
+          "conv": 19.8
+        }
+      },
+      {
+        "title": "Week 9",
+        "subtitle": "spend $k and conversions",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W9",
+          "spend": 49.5,
+          "event": "Promo",
+          "set": "wk",
+          "conv": 16.4
+        }
+      },
+      {
+        "title": "Week 10",
+        "subtitle": "spend $k and conversions",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W10",
+          "spend": 58.6,
+          "set": "wk",
+          "conv": 21.4
+        }
+      },
+      {
+        "title": "Week 11",
+        "subtitle": "spend $k and conversions",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W11",
+          "spend": 63.7,
+          "event": "Cyber",
+          "set": "wk",
+          "conv": 24.4
+        }
+      },
+      {
+        "title": "Week 12",
+        "subtitle": "spend $k and conversions",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W12",
+          "spend": 61.7,
+          "set": "wk",
+          "conv": 21.0
+        }
+      },
+      {
+        "title": "About this sample",
+        "subtitle": "Sample data, no network",
+        "icon": "list",
+        "view": "about"
+      }
+    ]
+  },
+  "views": [
+    {
+      "id": "about",
+      "title": "About this sample",
+      "icon": "list",
+      "endpoint": "summary",
+      "item": {
+        "title": "About this sample",
+        "subtitle": "Sample data, no network",
+        "body": "Every number here is built-in sample data from the Bolt Apps examples. Nothing is fetched."
+      }
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "security-posture",
+  "title": "Security Posture",
+  "role": "A security or platform lead",
+  "saves": "Pulling findings into one posture view",
+  "summary": "Type =security-posture for a fix-time gauge, a team by severity heatmap and a findings table with age bars. Needs Bolt 0.1.185 or newer. Runs on sample data.",
+  "author": {
+    "name": "Bolt Apps examples",
+    "link": "https://github.com/SparcleHQ/bolt-apps"
+  },
+  "tier": 3,
+  "permissions": [
+    "runs_commands",
+    "network",
+    "files"
+  ],
+  "platforms": [
+    "macos",
+    "linux"
+  ],
+  "requires": [
+    {
+      "interpreter": "python",
+      "min_version": "3.9"
+    }
+  ],
+  "tests": [],
+  "min_bolt_version": "0.1.185"
+}

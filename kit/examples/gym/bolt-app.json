@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "gym",
+  "title": "Gym and wellness",
+  "role": "Any employee with a wellness benefit",
+  "saves": "Asking HR how much of the benefit is left",
+  "summary": "Type =gym for the benefit ring, what is left, claims against an even pace and a claims list. Needs Bolt 0.1.184 or newer. Runs on sample data.",
+  "author": {
+    "name": "Bolt Apps examples",
+    "link": "https://github.com/SparcleHQ/bolt-apps"
+  },
+  "tier": 3,
+  "permissions": [
+    "runs_commands",
+    "network",
+    "files"
+  ],
+  "platforms": [
+    "macos",
+    "linux"
+  ],
+  "requires": [
+    {
+      "interpreter": "python",
+      "min_version": "3.9"
+    }
+  ],
+  "tests": [],
+  "min_bolt_version": "0.1.184"
+}

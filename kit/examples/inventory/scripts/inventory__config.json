@@ -1,0 +1,1375 @@
+{
+  "app": {
+    "id": "inventory",
+    "chip": "inventory",
+    "title": "Inventory",
+    "icon": "list",
+    "description": "A warehouse: bin fill heatmap by aisle and shelf, a low-stock table with bars and marks, and tiles. Needs Bolt 0.1.185 or newer. Sample data.",
+    "service": "Inventory"
+  },
+  "api": {
+    "base_url": "https://api.example.com",
+    "key_env": "SHOWCASE_API_KEY",
+    "fixture_default": false,
+    "on_missing_key": "sample",
+    "fixture_file": "fixtures.json",
+    "fixture_banner": false
+  },
+  "cache": {
+    "ttl": 45,
+    "stale_max": 86400
+  },
+  "endpoints": {
+    "summary": {
+      "path": "/v1/summary"
+    }
+  },
+  "stats": {},
+  "overview": {
+    "widget": {
+      "kind": "tabs",
+      "mode": "list_data",
+      "bind": {
+        "tabs": [
+          {
+            "label": "Floor",
+            "widget": {
+              "kind": "stack",
+              "mode": "list_data",
+              "bind": {
+                "children": [
+                  {
+                    "kind": "cards",
+                    "bind": {
+                      "layout": "tiles",
+                      "visual_from": "kpi_visual",
+                      "title": "{{row.kpi_label}}",
+                      "value": "{{row.kpi_value}}",
+                      "unit": "{{row.kpi_unit}}",
+                      "max": "{{row.kpi_max}}",
+                      "target": "{{row.target}}",
+                      "limit": "{{row.limit}}",
+                      "trend": "{{row.trend}}",
+                      "delta": "{{row.delta}}",
+                      "delta_label": "{{row.since}}",
+                      "subtitle": "{{row.kpi_note}}",
+                      "from": {
+                        "set": "tiles"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "heatmap",
+                    "bind": {
+                      "x": "shelf",
+                      "y": "aisle",
+                      "value": "fill",
+                      "label": "Bin fill by aisle and shelf, %",
+                      "from": {
+                        "set": "heat"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "label": "Reorder",
+            "widget": {
+              "kind": "stack",
+              "mode": "list_data",
+              "bind": {
+                "children": [
+                  {
+                    "kind": "table",
+                    "bind": {
+                      "columns": [
+                        {
+                          "field": "nm",
+                          "label": "Item"
+                        },
+                        {
+                          "field": "on_hand",
+                          "label": "On hand",
+                          "align": "right",
+                          "format": "number",
+                          "bars": true,
+                          "total": "sum"
+                        },
+                        {
+                          "field": "cover",
+                          "label": "Cover",
+                          "align": "right",
+                          "format": "number",
+                          "digits": 1,
+                          "unit": "d",
+                          "total": "none"
+                        },
+                        {
+                          "field": "status",
+                          "label": "Flag",
+                          "mark": "tone"
+                        }
+                      ],
+                      "from": {
+                        "set": "low"
+                      },
+                      "totals_label": "Low stock"
+                    }
+                  }
+                ]
+              }
+            },
+            "count_from": {
+              "set": "low"
+            },
+            "status": "warning"
+          },
+          {
+            "label": "Movement",
+            "widget": {
+              "kind": "stack",
+              "mode": "list_data",
+              "bind": {
+                "children": [
+                  {
+                    "kind": "chart",
+                    "bind": {
+                      "type": "line",
+                      "x": "w",
+                      "series": [
+                        {
+                          "y": "inb",
+                          "label": "Received"
+                        },
+                        {
+                          "y": "out",
+                          "label": "Shipped"
+                        }
+                      ],
+                      "unit": "",
+                      "label": "Units received and shipped per week",
+                      "limit": 1500,
+                      "limit_label": "dock capacity",
+                      "marker": {
+                        "field": "event"
+                      },
+                      "from": {
+                        "set": "move"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "table",
+                    "bind": {
+                      "columns": [
+                        {
+                          "field": "cat",
+                          "label": "Category"
+                        },
+                        {
+                          "field": "skus",
+                          "label": "SKUs",
+                          "align": "right",
+                          "format": "number",
+                          "total": "sum"
+                        },
+                        {
+                          "field": "value",
+                          "label": "Value",
+                          "align": "right",
+                          "format": "compact",
+                          "bars": true,
+                          "total": "sum",
+                          "digits": 1
+                        },
+                        {
+                          "field": "status",
+                          "label": "Cover",
+                          "mark": "tone"
+                        }
+                      ],
+                      "from": {
+                        "set": "cat"
+                      },
+                      "totals_label": "Categories"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    "rows": [
+      {
+        "title": "Inventory: Reno DC",
+        "subtitle": "Sample data, 24 active SKUs",
+        "icon": "activity",
+        "extra": {}
+      },
+      {
+        "title": "Bin fill",
+        "subtitle": "8640 bins",
+        "icon": "activity",
+        "tile": {
+          "label": "Bin fill",
+          "value": 70,
+          "unit": "%",
+          "note": "8640 bins",
+          "max": 100
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "ring"
+        }
+      },
+      {
+        "title": "Stock value, USD",
+        "subtitle": "24 active SKUs",
+        "icon": "activity",
+        "tile": {
+          "label": "Stock value, USD",
+          "value": 85,
+          "unit": "k",
+          "note": "24 active SKUs"
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "spark",
+          "delta": 4.1,
+          "since": "vs last month"
+        },
+        "trend": [
+          71,
+          74,
+          78,
+          77,
+          81,
+          83,
+          85
+        ]
+      },
+      {
+        "title": "Below reorder",
+        "subtitle": "of 24 SKUs",
+        "icon": "activity",
+        "tile": {
+          "label": "Below reorder",
+          "value": 16,
+          "unit": "",
+          "note": "of 24 SKUs",
+          "max": 24
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "bullet",
+          "target": 5
+        }
+      },
+      {
+        "title": "Avg cover",
+        "subtitle": "days of stock",
+        "icon": "activity",
+        "tile": {
+          "label": "Avg cover",
+          "value": 21,
+          "unit": "d",
+          "note": "days of stock"
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "number"
+        }
+      },
+      {
+        "title": "Fill rate",
+        "subtitle": "orders shipped complete",
+        "icon": "activity",
+        "tile": {
+          "label": "Fill rate",
+          "value": 97.4,
+          "unit": "%",
+          "note": "orders shipped complete",
+          "max": 100
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "bullet",
+          "target": 98
+        }
+      },
+      {
+        "title": "Dock to stock",
+        "subtitle": "receipt to shelf",
+        "icon": "activity",
+        "tile": {
+          "label": "Dock to stock",
+          "value": 6.2,
+          "unit": "h",
+          "note": "receipt to shelf"
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "spark",
+          "limit": 8,
+          "delta": -3.1,
+          "since": "vs last week"
+        },
+        "trend": [
+          7.8,
+          7.5,
+          7.1,
+          6.9,
+          6.6,
+          6.4,
+          6.2
+        ]
+      },
+      {
+        "title": "Aisle 1 Shelf 1",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 1",
+          "shelf": "Shelf 1",
+          "fill": 41,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 1 Shelf 2",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 1",
+          "shelf": "Shelf 2",
+          "fill": 29,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 1 Shelf 3",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 1",
+          "shelf": "Shelf 3",
+          "fill": 49,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 1 Shelf 4",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 1",
+          "shelf": "Shelf 4",
+          "fill": 42,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 1 Shelf 5",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 1",
+          "shelf": "Shelf 5",
+          "fill": 21,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 1 Shelf 6",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 1",
+          "shelf": "Shelf 6",
+          "fill": 43,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 2 Shelf 1",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 2",
+          "shelf": "Shelf 1",
+          "fill": 62,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 2 Shelf 2",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 2",
+          "shelf": "Shelf 2",
+          "fill": 59,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 2 Shelf 3",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 2",
+          "shelf": "Shelf 3",
+          "fill": 37,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 2 Shelf 4",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 2",
+          "shelf": "Shelf 4",
+          "fill": 41,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 2 Shelf 5",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 2",
+          "shelf": "Shelf 5",
+          "fill": 53,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 2 Shelf 6",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 2",
+          "shelf": "Shelf 6",
+          "fill": 43,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 3 Shelf 1",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 3",
+          "shelf": "Shelf 1",
+          "fill": 62,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 3 Shelf 2",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 3",
+          "shelf": "Shelf 2",
+          "fill": 68,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 3 Shelf 3",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 3",
+          "shelf": "Shelf 3",
+          "fill": 60,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 3 Shelf 4",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 3",
+          "shelf": "Shelf 4",
+          "fill": 49,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 3 Shelf 5",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 3",
+          "shelf": "Shelf 5",
+          "fill": 41,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 3 Shelf 6",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 3",
+          "shelf": "Shelf 6",
+          "fill": 39,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 4 Shelf 1",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 4",
+          "shelf": "Shelf 1",
+          "fill": 73,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 4 Shelf 2",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 4",
+          "shelf": "Shelf 2",
+          "fill": 75,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 4 Shelf 3",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 4",
+          "shelf": "Shelf 3",
+          "fill": 89,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 4 Shelf 4",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 4",
+          "shelf": "Shelf 4",
+          "fill": 62,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 4 Shelf 5",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 4",
+          "shelf": "Shelf 5",
+          "fill": 59,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 4 Shelf 6",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 4",
+          "shelf": "Shelf 6",
+          "fill": 58,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 5 Shelf 1",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 5",
+          "shelf": "Shelf 1",
+          "fill": 76,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 5 Shelf 2",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 5",
+          "shelf": "Shelf 2",
+          "fill": 78,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 5 Shelf 3",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 5",
+          "shelf": "Shelf 3",
+          "fill": 79,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 5 Shelf 4",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 5",
+          "shelf": "Shelf 4",
+          "fill": 72,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 5 Shelf 5",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 5",
+          "shelf": "Shelf 5",
+          "fill": 87,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 5 Shelf 6",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 5",
+          "shelf": "Shelf 6",
+          "fill": 78,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 6 Shelf 1",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 6",
+          "shelf": "Shelf 1",
+          "fill": 95,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 6 Shelf 2",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 6",
+          "shelf": "Shelf 2",
+          "fill": 99,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 6 Shelf 3",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 6",
+          "shelf": "Shelf 3",
+          "fill": 90,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 6 Shelf 4",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 6",
+          "shelf": "Shelf 4",
+          "fill": 89,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 6 Shelf 5",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 6",
+          "shelf": "Shelf 5",
+          "fill": 89,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 6 Shelf 6",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 6",
+          "shelf": "Shelf 6",
+          "fill": 79,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 7 Shelf 1",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 7",
+          "shelf": "Shelf 1",
+          "fill": 99,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 7 Shelf 2",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 7",
+          "shelf": "Shelf 2",
+          "fill": 98,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 7 Shelf 3",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 7",
+          "shelf": "Shelf 3",
+          "fill": 99,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 7 Shelf 4",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 7",
+          "shelf": "Shelf 4",
+          "fill": 99,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 7 Shelf 5",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 7",
+          "shelf": "Shelf 5",
+          "fill": 87,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 7 Shelf 6",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 7",
+          "shelf": "Shelf 6",
+          "fill": 78,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 8 Shelf 1",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 8",
+          "shelf": "Shelf 1",
+          "fill": 92,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 8 Shelf 2",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 8",
+          "shelf": "Shelf 2",
+          "fill": 99,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 8 Shelf 3",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 8",
+          "shelf": "Shelf 3",
+          "fill": 83,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 8 Shelf 4",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 8",
+          "shelf": "Shelf 4",
+          "fill": 99,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 8 Shelf 5",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 8",
+          "shelf": "Shelf 5",
+          "fill": 77,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "Aisle 8 Shelf 6",
+        "subtitle": "bin fill %",
+        "icon": "Layers",
+        "extra": {
+          "aisle": "Aisle 8",
+          "shelf": "Shelf 6",
+          "fill": 99,
+          "set": "heat"
+        }
+      },
+      {
+        "title": "SKU-1259 Conduit 20mm x 3m",
+        "subtitle": "82 on hand, reorder at 120",
+        "icon": "package",
+        "extra": {
+          "sku": "SKU-1259",
+          "item": "Conduit 20mm x 3m",
+          "on_hand": 82,
+          "reorder": 120,
+          "cover": 6,
+          "value": 631,
+          "status": "warn",
+          "set": "low",
+          "nm": "Conduit 20mm x"
+        }
+      },
+      {
+        "title": "SKU-1814 Hydraulic oil 20 L",
+        "subtitle": "32 on hand, reorder at 45",
+        "icon": "package",
+        "extra": {
+          "sku": "SKU-1814",
+          "item": "Hydraulic oil 20 L",
+          "on_hand": 32,
+          "reorder": 45,
+          "cover": 7.5,
+          "value": 3072,
+          "status": "warn",
+          "set": "low",
+          "nm": "Hydraulic oil"
+        }
+      },
+      {
+        "title": "SKU-1592 Torque wrench 40 to 200 Nm",
+        "subtitle": "29 on hand, reorder at 40",
+        "icon": "package",
+        "extra": {
+          "sku": "SKU-1592",
+          "item": "Torque wrench 40 to 200 Nm",
+          "on_hand": 29,
+          "reorder": 40,
+          "cover": 8.5,
+          "value": 5481,
+          "status": "warn",
+          "set": "low",
+          "nm": "Torque wrench"
+        }
+      },
+      {
+        "title": "SKU-1629 Cordless drill 18V",
+        "subtitle": "46 on hand, reorder at 60",
+        "icon": "package",
+        "extra": {
+          "sku": "SKU-1629",
+          "item": "Cordless drill 18V",
+          "on_hand": 46,
+          "reorder": 60,
+          "cover": 8.9,
+          "value": 6532,
+          "status": "warn",
+          "set": "low",
+          "nm": "Cordless drill"
+        }
+      },
+      {
+        "title": "SKU-1666 Cutter blade pack 10",
+        "subtitle": "309 on hand, reorder at 400",
+        "icon": "package",
+        "extra": {
+          "sku": "SKU-1666",
+          "item": "Cutter blade pack 10",
+          "on_hand": 309,
+          "reorder": 400,
+          "cover": 12,
+          "value": 1700,
+          "status": "warn",
+          "set": "low",
+          "nm": "Cutter blade"
+        }
+      },
+      {
+        "title": "SKU-1902 Pallet wrap 500 mm",
+        "subtitle": "14 on hand, reorder at 30",
+        "icon": "package",
+        "extra": {
+          "sku": "SKU-1902",
+          "item": "Pallet wrap 500 mm",
+          "on_hand": 14,
+          "reorder": 30,
+          "cover": 4.7,
+          "value": 322,
+          "status": "error",
+          "set": "low",
+          "nm": "Pallet wrap 500"
+        }
+      },
+      {
+        "title": "SKU-1871 Safety gloves L (12 pr)",
+        "subtitle": "18 on hand, reorder at 40",
+        "icon": "package",
+        "extra": {
+          "sku": "SKU-1871",
+          "item": "Safety gloves L (12 pr)",
+          "on_hand": 18,
+          "reorder": 40,
+          "cover": 5.4,
+          "value": 306,
+          "status": "error",
+          "set": "low",
+          "nm": "Safety gloves L"
+        }
+      },
+      {
+        "title": "SKU-1733 Zip ties 300 mm (100)",
+        "subtitle": "60 on hand, reorder at 120",
+        "icon": "package",
+        "extra": {
+          "sku": "SKU-1733",
+          "item": "Zip ties 300 mm (100)",
+          "on_hand": 60,
+          "reorder": 120,
+          "cover": 9.8,
+          "value": 276,
+          "status": "warn",
+          "set": "low",
+          "nm": "Zip ties 300 mm"
+        }
+      },
+      {
+        "title": "SKU-1450 Label roll 100 x 150",
+        "subtitle": "25 on hand, reorder at 50",
+        "icon": "package",
+        "extra": {
+          "sku": "SKU-1450",
+          "item": "Label roll 100 x 150",
+          "on_hand": 25,
+          "reorder": 50,
+          "cover": 10.4,
+          "value": 475,
+          "status": "warn",
+          "set": "low",
+          "nm": "Label roll 100"
+        }
+      },
+      {
+        "title": "SKU-1388 Forklift battery 24V",
+        "subtitle": "3 on hand, reorder at 4",
+        "icon": "package",
+        "extra": {
+          "sku": "SKU-1388",
+          "item": "Forklift battery 24V",
+          "on_hand": 3,
+          "reorder": 4,
+          "cover": 11.0,
+          "value": 5760,
+          "status": "warn",
+          "set": "low",
+          "nm": "Forklift"
+        }
+      },
+      {
+        "title": "SKU-1120 Pallet jack parts kit",
+        "subtitle": "6 on hand, reorder at 8",
+        "icon": "package",
+        "extra": {
+          "sku": "SKU-1120",
+          "item": "Pallet jack parts kit",
+          "on_hand": 6,
+          "reorder": 8,
+          "cover": 12.9,
+          "value": 1140,
+          "status": "warn",
+          "set": "low",
+          "nm": "Pallet jack"
+        }
+      },
+      {
+        "title": "SKU-1077 Bubble mailer 250 x 350",
+        "subtitle": "410 on hand, reorder at 500",
+        "icon": "package",
+        "extra": {
+          "sku": "SKU-1077",
+          "item": "Bubble mailer 250 x 350",
+          "on_hand": 410,
+          "reorder": 500,
+          "cover": 13.1,
+          "value": 984,
+          "status": "warn",
+          "set": "low",
+          "nm": "Bubble mailer"
+        }
+      },
+      {
+        "title": "SKU-1011 Strapping band 12 mm",
+        "subtitle": "22 on hand, reorder at 25",
+        "icon": "package",
+        "extra": {
+          "sku": "SKU-1011",
+          "item": "Strapping band 12 mm",
+          "on_hand": 22,
+          "reorder": 25,
+          "cover": 13.6,
+          "value": 506,
+          "status": "warn",
+          "set": "low",
+          "nm": "Strapping band"
+        }
+      },
+      {
+        "title": "SKU-1966 Shelf bracket 600",
+        "subtitle": "90 on hand, reorder at 100",
+        "icon": "package",
+        "extra": {
+          "sku": "SKU-1966",
+          "item": "Shelf bracket 600",
+          "on_hand": 90,
+          "reorder": 100,
+          "cover": 14.2,
+          "value": 810,
+          "status": "warn",
+          "set": "low",
+          "nm": "Shelf bracket"
+        }
+      },
+      {
+        "title": "SKU-1204 LED panel 60 x 60",
+        "subtitle": "17 on hand, reorder at 18",
+        "icon": "package",
+        "extra": {
+          "sku": "SKU-1204",
+          "item": "LED panel 60 x 60",
+          "on_hand": 17,
+          "reorder": 18,
+          "cover": 15.0,
+          "value": 1530,
+          "status": "warn",
+          "set": "low",
+          "nm": "LED panel 60 x"
+        }
+      },
+      {
+        "title": "SKU-1349 Cable tray 3 m",
+        "subtitle": "33 on hand, reorder at 35",
+        "icon": "package",
+        "extra": {
+          "sku": "SKU-1349",
+          "item": "Cable tray 3 m",
+          "on_hand": 33,
+          "reorder": 35,
+          "cover": 15.8,
+          "value": 1650,
+          "status": "warn",
+          "set": "low",
+          "nm": "Cable tray 3 m"
+        }
+      },
+      {
+        "title": "W1 movement",
+        "subtitle": "units in and out",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W1",
+          "inb": 1180,
+          "out": 1090,
+          "set": "move"
+        }
+      },
+      {
+        "title": "W2 movement",
+        "subtitle": "units in and out",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W2",
+          "inb": 1240,
+          "out": 1130,
+          "set": "move"
+        }
+      },
+      {
+        "title": "W3 movement",
+        "subtitle": "units in and out",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W3",
+          "inb": 1210,
+          "out": 1280,
+          "set": "move"
+        }
+      },
+      {
+        "title": "W4 movement",
+        "subtitle": "units in and out",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W4",
+          "inb": 1330,
+          "out": 1210,
+          "set": "move"
+        }
+      },
+      {
+        "title": "W5 movement",
+        "subtitle": "units in and out",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W5",
+          "inb": 1290,
+          "out": 1370,
+          "event": "Count",
+          "set": "move"
+        }
+      },
+      {
+        "title": "W6 movement",
+        "subtitle": "units in and out",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W6",
+          "inb": 1400,
+          "out": 1260,
+          "set": "move"
+        }
+      },
+      {
+        "title": "W7 movement",
+        "subtitle": "units in and out",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W7",
+          "inb": 1380,
+          "out": 1440,
+          "set": "move"
+        }
+      },
+      {
+        "title": "W8 movement",
+        "subtitle": "units in and out",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W8",
+          "inb": 1520,
+          "out": 1390,
+          "set": "move"
+        }
+      },
+      {
+        "title": "W9 movement",
+        "subtitle": "units in and out",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W9",
+          "inb": 1470,
+          "out": 1590,
+          "event": "Delay",
+          "set": "move"
+        }
+      },
+      {
+        "title": "W10 movement",
+        "subtitle": "units in and out",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W10",
+          "inb": 1610,
+          "out": 1450,
+          "set": "move"
+        }
+      },
+      {
+        "title": "W11 movement",
+        "subtitle": "units in and out",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W11",
+          "inb": 1750,
+          "out": 1530,
+          "event": "Prep",
+          "set": "move"
+        }
+      },
+      {
+        "title": "W12 movement",
+        "subtitle": "units in and out",
+        "icon": "line-chart",
+        "extra": {
+          "w": "W12",
+          "inb": 1690,
+          "out": 1720,
+          "set": "move"
+        }
+      },
+      {
+        "title": "Fasteners",
+        "subtitle": "94 SKUs",
+        "icon": "Layers",
+        "extra": {
+          "cat": "Fasteners",
+          "value": 18400,
+          "skus": 94,
+          "cover": 6.1,
+          "status": "error",
+          "set": "cat"
+        }
+      },
+      {
+        "title": "Packaging",
+        "subtitle": "72 SKUs",
+        "icon": "Layers",
+        "extra": {
+          "cat": "Packaging",
+          "value": 14900,
+          "skus": 72,
+          "cover": 11.2,
+          "status": "warn",
+          "set": "cat"
+        }
+      },
+      {
+        "title": "Safety",
+        "subtitle": "41 SKUs",
+        "icon": "Layers",
+        "extra": {
+          "cat": "Safety",
+          "value": 12600,
+          "skus": 41,
+          "cover": 7.9,
+          "status": "error",
+          "set": "cat"
+        }
+      },
+      {
+        "title": "Tools",
+        "subtitle": "33 SKUs",
+        "icon": "Layers",
+        "extra": {
+          "cat": "Tools",
+          "value": 11800,
+          "skus": 33,
+          "cover": 18.4,
+          "status": "ok",
+          "set": "cat"
+        }
+      },
+      {
+        "title": "Electrical",
+        "subtitle": "52 SKUs",
+        "icon": "Layers",
+        "extra": {
+          "cat": "Electrical",
+          "value": 9800,
+          "skus": 52,
+          "cover": 22.7,
+          "status": "ok",
+          "set": "cat"
+        }
+      },
+      {
+        "title": "Lubricants",
+        "subtitle": "24 SKUs",
+        "icon": "Layers",
+        "extra": {
+          "cat": "Lubricants",
+          "value": 8400,
+          "skus": 24,
+          "cover": 9.4,
+          "status": "warn",
+          "set": "cat"
+        }
+      },
+      {
+        "title": "Equipment parts",
+        "subtitle": "15 SKUs",
+        "icon": "Layers",
+        "extra": {
+          "cat": "Equip parts",
+          "value": 6500,
+          "skus": 15,
+          "cover": 31.0,
+          "status": "ok",
+          "set": "cat"
+        }
+      },
+      {
+        "title": "Janitorial",
+        "subtitle": "38 SKUs",
+        "icon": "Layers",
+        "extra": {
+          "cat": "Janitorial",
+          "value": 2300,
+          "skus": 38,
+          "cover": 24.8,
+          "status": "ok",
+          "set": "cat"
+        }
+      },
+      {
+        "title": "About this sample",
+        "subtitle": "Sample data, no network",
+        "icon": "list",
+        "view": "about"
+      }
+    ]
+  },
+  "views": [
+    {
+      "id": "about",
+      "title": "About this sample",
+      "icon": "list",
+      "endpoint": "summary",
+      "item": {
+        "title": "About this sample",
+        "subtitle": "Sample data, no network",
+        "body": "Every number here is built-in sample data from the Bolt Apps examples. Nothing is fetched."
+      }
+    }
+  ]
+}

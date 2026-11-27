@@ -1,0 +1,1616 @@
+{
+  "app": {
+    "id": "support-desk",
+    "chip": "support-desk",
+    "title": "Support Desk",
+    "icon": "list",
+    "description": "A support queue in four tabs: Queue, SLA, Volume and Agents, with counts and a status on the SLA tab. Needs Bolt 0.1.185 or newer. Sample data.",
+    "service": "Support Desk"
+  },
+  "api": {
+    "base_url": "https://api.example.com",
+    "key_env": "SHOWCASE_API_KEY",
+    "fixture_default": false,
+    "on_missing_key": "sample",
+    "fixture_file": "fixtures.json",
+    "fixture_banner": false
+  },
+  "cache": {
+    "ttl": 45,
+    "stale_max": 86400
+  },
+  "endpoints": {
+    "summary": {
+      "path": "/v1/summary"
+    }
+  },
+  "stats": {},
+  "overview": {
+    "widget": {
+      "kind": "tabs",
+      "mode": "list_data",
+      "bind": {
+        "tabs": [
+          {
+            "label": "Queue",
+            "widget": {
+              "kind": "stack",
+              "mode": "list_data",
+              "bind": {
+                "children": [
+                  {
+                    "kind": "cards",
+                    "bind": {
+                      "layout": "tiles",
+                      "visual_from": "kpi_visual",
+                      "title": "{{row.kpi_label}}",
+                      "value": "{{row.kpi_value}}",
+                      "unit": "{{row.kpi_unit}}",
+                      "max": "{{row.kpi_max}}",
+                      "target": "{{row.target}}",
+                      "limit": "{{row.limit}}",
+                      "trend": "{{row.trend}}",
+                      "delta": "{{row.delta}}",
+                      "delta_label": "{{row.since}}",
+                      "subtitle": "{{row.kpi_note}}",
+                      "from": {
+                        "set": "tiles"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "table",
+                    "bind": {
+                      "columns": [
+                        {
+                          "field": "tsubj",
+                          "label": "Ticket",
+                          "total": "count"
+                        },
+                        {
+                          "field": "age",
+                          "label": "Age",
+                          "align": "right",
+                          "format": "number",
+                          "unit": "h",
+                          "bars": true,
+                          "total": "none"
+                        },
+                        {
+                          "field": "sla",
+                          "label": "SLA",
+                          "mark": "tone"
+                        }
+                      ],
+                      "from": {
+                        "set": "tickets"
+                      },
+                      "totals_label": "Tickets"
+                    }
+                  }
+                ]
+              }
+            },
+            "count_from": {
+              "set": "tickets"
+            }
+          },
+          {
+            "label": "SLA",
+            "widget": {
+              "kind": "stack",
+              "mode": "list_data",
+              "bind": {
+                "children": [
+                  {
+                    "kind": "gauge",
+                    "mode": "selected_row",
+                    "bind": {
+                      "value": "{{row.slag}}",
+                      "min": 0,
+                      "max": 100,
+                      "label": "SLA met, this week",
+                      "unit": "%",
+                      "shape": "half",
+                      "thresholds": [
+                        {
+                          "at": 85,
+                          "label": "floor 85%",
+                          "tone": "warn"
+                        },
+                        {
+                          "at": 95,
+                          "label": "target 95%",
+                          "tone": "ok"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "kind": "chart",
+                    "bind": {
+                      "type": "bar",
+                      "x": "d",
+                      "y": "met",
+                      "label": "SLA met per day, Mon to Sun, %",
+                      "limit": 95,
+                      "limit_label": "target 95%",
+                      "marker": {
+                        "field": "event"
+                      },
+                      "from": {
+                        "set": "sladay"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "table",
+                    "bind": {
+                      "columns": [
+                        {
+                          "field": "tsubj",
+                          "label": "Ticket",
+                          "total": "count"
+                        },
+                        {
+                          "field": "left_h",
+                          "label": "Left",
+                          "align": "right",
+                          "format": "number",
+                          "digits": 1,
+                          "unit": "h",
+                          "total": "none"
+                        },
+                        {
+                          "field": "sla",
+                          "label": "SLA",
+                          "mark": "tone"
+                        }
+                      ],
+                      "from": {
+                        "set": "risk"
+                      },
+                      "totals_label": "At risk"
+                    }
+                  }
+                ]
+              }
+            },
+            "count_from": {
+              "set": "risk"
+            },
+            "status": "critical"
+          },
+          {
+            "label": "Volume",
+            "widget": {
+              "kind": "stack",
+              "mode": "list_data",
+              "bind": {
+                "children": [
+                  {
+                    "kind": "chart",
+                    "bind": {
+                      "type": "line",
+                      "x": "d",
+                      "y": "n",
+                      "label": "New tickets per day, last 14 days",
+                      "limit": 50,
+                      "limit_label": "staffed capacity",
+                      "marker": {
+                        "field": "event"
+                      },
+                      "from": {
+                        "set": "vol"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "table",
+                    "bind": {
+                      "columns": [
+                        {
+                          "field": "ch",
+                          "label": "Channel"
+                        },
+                        {
+                          "field": "tickets",
+                          "label": "Tickets",
+                          "align": "right",
+                          "format": "number",
+                          "bars": true,
+                          "total": "sum"
+                        },
+                        {
+                          "field": "reply",
+                          "label": "Reply",
+                          "align": "right",
+                          "format": "number",
+                          "digits": 1,
+                          "unit": "h",
+                          "total": "none"
+                        },
+                        {
+                          "field": "speed",
+                          "label": "Speed",
+                          "mark": "tone"
+                        }
+                      ],
+                      "from": {
+                        "set": "chan"
+                      },
+                      "totals_label": "Channels"
+                    }
+                  }
+                ]
+              }
+            },
+            "count_from": {
+              "set": "chan"
+            }
+          },
+          {
+            "label": "Agents",
+            "widget": {
+              "kind": "stack",
+              "mode": "list_data",
+              "bind": {
+                "children": [
+                  {
+                    "kind": "cards",
+                    "bind": {
+                      "layout": "tiles",
+                      "visual_from": "kpi_visual",
+                      "title": "{{row.kpi_label}}",
+                      "value": "{{row.kpi_value}}",
+                      "unit": "{{row.kpi_unit}}",
+                      "max": "{{row.kpi_max}}",
+                      "target": "{{row.target}}",
+                      "limit": "{{row.limit}}",
+                      "trend": "{{row.trend}}",
+                      "delta": "{{row.delta}}",
+                      "delta_label": "{{row.since}}",
+                      "subtitle": "{{row.kpi_note}}",
+                      "from": {
+                        "set": "agents"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "table",
+                    "bind": {
+                      "columns": [
+                        {
+                          "field": "agent",
+                          "label": "Agent"
+                        },
+                        {
+                          "field": "open",
+                          "label": "Open",
+                          "align": "right",
+                          "format": "number",
+                          "bars": true,
+                          "total": "sum"
+                        },
+                        {
+                          "field": "avg",
+                          "label": "Avg h",
+                          "align": "right",
+                          "format": "number",
+                          "digits": 1,
+                          "total": "none"
+                        },
+                        {
+                          "field": "load",
+                          "label": "Load",
+                          "mark": "tone"
+                        }
+                      ],
+                      "from": {
+                        "set": "agents"
+                      },
+                      "totals_label": "Agents"
+                    }
+                  }
+                ]
+              }
+            },
+            "count_from": {
+              "set": "agents"
+            }
+          }
+        ]
+      }
+    },
+    "rows": [
+      {
+        "title": "Support desk: open tickets",
+        "subtitle": "Sample data, 26 open tickets",
+        "icon": "activity",
+        "extra": {
+          "slag": 91
+        }
+      },
+      {
+        "title": "Open",
+        "subtitle": "all open tickets",
+        "icon": "activity",
+        "tile": {
+          "label": "Open",
+          "value": 26,
+          "unit": "",
+          "note": "all open tickets"
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "number",
+          "slag": 91
+        },
+        "trend": [
+          18,
+          21,
+          19,
+          24,
+          22,
+          25,
+          26
+        ]
+      },
+      {
+        "title": "Breached",
+        "subtitle": "past their SLA",
+        "icon": "activity",
+        "tile": {
+          "label": "Breached",
+          "value": 3,
+          "unit": "",
+          "note": "past their SLA",
+          "max": 10
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "bullet",
+          "target": 2,
+          "slag": 91
+        }
+      },
+      {
+        "title": "Urgent P1",
+        "subtitle": "oldest 3 h",
+        "icon": "activity",
+        "tile": {
+          "label": "Urgent P1",
+          "value": 2,
+          "unit": "",
+          "note": "oldest 3 h",
+          "max": 10
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "ring",
+          "slag": 91
+        }
+      },
+      {
+        "title": "First reply",
+        "subtitle": "median, today",
+        "icon": "activity",
+        "tile": {
+          "label": "First reply",
+          "value": 14,
+          "unit": "min",
+          "note": "median, today"
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "spark",
+          "limit": 20,
+          "slag": 91
+        },
+        "trend": [
+          22,
+          19,
+          18,
+          16,
+          17,
+          15,
+          14
+        ]
+      },
+      {
+        "title": "CSAT",
+        "subtitle": "last 7 days, of 5",
+        "icon": "activity",
+        "tile": {
+          "label": "CSAT",
+          "value": 4.6,
+          "unit": "",
+          "note": "last 7 days, of 5",
+          "max": 5
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "bullet",
+          "target": 4.5,
+          "slag": 91
+        }
+      },
+      {
+        "title": "Backlog age",
+        "subtitle": "oldest open ticket",
+        "icon": "activity",
+        "tile": {
+          "label": "Backlog age",
+          "value": 18,
+          "unit": "h",
+          "note": "oldest open ticket",
+          "max": 48
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "meter",
+          "slag": 91
+        }
+      },
+      {
+        "title": "T-4837 Remove a former employee",
+        "subtitle": "P1, Dev P.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4837",
+          "subject": "Remove a former employee",
+          "level": "P1",
+          "priority": "error",
+          "agent": "Dev P.",
+          "age": 3,
+          "sla": "ok",
+          "left": "3.1 h left",
+          "set": "tickets",
+          "tid": "4837",
+          "subj": "Offboard user",
+          "left_h": 3.1,
+          "slag": 91,
+          "tsubj": "4837 Offboard user"
+        }
+      },
+      {
+        "title": "T-4855 Refund for duplicate charge",
+        "subtitle": "P1, Chloe M.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4855",
+          "subject": "Refund for duplicate charge",
+          "level": "P1",
+          "priority": "error",
+          "agent": "Chloe M.",
+          "age": 1,
+          "sla": "ok",
+          "left": "3.7 h left",
+          "set": "tickets",
+          "tid": "4855",
+          "subj": "Duplicate refund",
+          "left_h": 3.7,
+          "slag": 91,
+          "tsubj": "4855 Duplicate refund"
+        }
+      },
+      {
+        "title": "T-4840 Invoice shows wrong seat count",
+        "subtitle": "P2, Ben T.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4840",
+          "subject": "Invoice shows wrong seat count",
+          "level": "P2",
+          "priority": "warn",
+          "agent": "Ben T.",
+          "age": 20,
+          "sla": "error",
+          "left": "2.0 h over",
+          "set": "tickets",
+          "tid": "4840",
+          "subj": "Wrong seat count",
+          "left_h": -2.0,
+          "slag": 91,
+          "tsubj": "4840 Wrong seat count"
+        }
+      },
+      {
+        "title": "T-4870 Refund for duplicate charge",
+        "subtitle": "P2, Elif S.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4870",
+          "subject": "Refund for duplicate charge",
+          "level": "P2",
+          "priority": "warn",
+          "agent": "Elif S.",
+          "age": 19,
+          "sla": "error",
+          "left": "1.5 h over",
+          "set": "tickets",
+          "tid": "4870",
+          "subj": "Duplicate refund",
+          "left_h": -1.5,
+          "slag": 91,
+          "tsubj": "4870 Duplicate refund"
+        }
+      },
+      {
+        "title": "T-4813 Sync stalls at 92 percent",
+        "subtitle": "P2, Dev P.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4813",
+          "subject": "Sync stalls at 92 percent",
+          "level": "P2",
+          "priority": "warn",
+          "agent": "Dev P.",
+          "age": 17,
+          "sla": "error",
+          "left": "0.5 h over",
+          "set": "tickets",
+          "tid": "4813",
+          "subj": "Sync stalls 92%",
+          "left_h": -0.5,
+          "slag": 91,
+          "tsubj": "4813 Sync stalls 92%"
+        }
+      },
+      {
+        "title": "T-4873 API returns 502 intermittently",
+        "subtitle": "P2, Elif S.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4873",
+          "subject": "API returns 502 intermittently",
+          "level": "P2",
+          "priority": "warn",
+          "agent": "Elif S.",
+          "age": 14,
+          "sla": "warn",
+          "left": "1.0 h left",
+          "set": "tickets",
+          "tid": "4873",
+          "subj": "API 502 errors",
+          "left_h": 1.0,
+          "slag": 91,
+          "tsubj": "4873 API 502 errors"
+        }
+      },
+      {
+        "title": "T-4846 Need SSO setup walkthrough",
+        "subtitle": "P2, Dev P.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4846",
+          "subject": "Need SSO setup walkthrough",
+          "level": "P2",
+          "priority": "warn",
+          "agent": "Dev P.",
+          "age": 10,
+          "sla": "ok",
+          "left": "3.0 h left",
+          "set": "tickets",
+          "tid": "4846",
+          "subj": "SSO setup help",
+          "left_h": 3.0,
+          "slag": 91,
+          "tsubj": "4846 SSO setup help"
+        }
+      },
+      {
+        "title": "T-4879 Rotate service token",
+        "subtitle": "P2, Ben T.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4879",
+          "subject": "Rotate service token",
+          "level": "P2",
+          "priority": "warn",
+          "agent": "Ben T.",
+          "age": 4,
+          "sla": "ok",
+          "left": "6.0 h left",
+          "set": "tickets",
+          "tid": "4879",
+          "subj": "Rotate token",
+          "left_h": 6.0,
+          "slag": 91,
+          "tsubj": "4879 Rotate token"
+        }
+      },
+      {
+        "title": "T-4828 Export times out on large files",
+        "subtitle": "P2, Elif S.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4828",
+          "subject": "Export times out on large files",
+          "level": "P2",
+          "priority": "warn",
+          "agent": "Elif S.",
+          "age": 3,
+          "sla": "ok",
+          "left": "6.5 h left",
+          "set": "tickets",
+          "tid": "4828",
+          "subj": "Export timeouts",
+          "left_h": 6.5,
+          "slag": 91,
+          "tsubj": "4828 Export timeouts"
+        }
+      },
+      {
+        "title": "T-4858 Export times out on large files",
+        "subtitle": "P3, Elif S.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4858",
+          "subject": "Export times out on large files",
+          "level": "P3",
+          "priority": "ok",
+          "agent": "Elif S.",
+          "age": 28,
+          "sla": "warn",
+          "left": "1.6 h left",
+          "set": "tickets",
+          "tid": "4858",
+          "subj": "Export timeouts",
+          "left_h": 1.6,
+          "slag": 91,
+          "tsubj": "4858 Export timeouts"
+        }
+      },
+      {
+        "title": "T-4867 Add a contractor seat",
+        "subtitle": "P3, Dev P.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4867",
+          "subject": "Add a contractor seat",
+          "level": "P3",
+          "priority": "ok",
+          "agent": "Dev P.",
+          "age": 28,
+          "sla": "warn",
+          "left": "1.6 h left",
+          "set": "tickets",
+          "tid": "4867",
+          "subj": "Add contractor",
+          "left_h": 1.6,
+          "slag": 91,
+          "tsubj": "4867 Add contractor"
+        }
+      },
+      {
+        "title": "T-4882 Locked out after password reset",
+        "subtitle": "P3, Chloe M.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4882",
+          "subject": "Locked out after password reset",
+          "level": "P3",
+          "priority": "ok",
+          "agent": "Chloe M.",
+          "age": 28,
+          "sla": "warn",
+          "left": "1.6 h left",
+          "set": "tickets",
+          "tid": "4882",
+          "subj": "Reset lockout",
+          "left_h": 1.6,
+          "slag": 91,
+          "tsubj": "4882 Reset lockout"
+        }
+      },
+      {
+        "title": "T-4843 Dashboard blank after update",
+        "subtitle": "P3, Ben T.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4843",
+          "subject": "Dashboard blank after update",
+          "level": "P3",
+          "priority": "ok",
+          "agent": "Ben T.",
+          "age": 27,
+          "sla": "ok",
+          "left": "2.4 h left",
+          "set": "tickets",
+          "tid": "4843",
+          "subj": "Blank dashboard",
+          "left_h": 2.4,
+          "slag": 91,
+          "tsubj": "4843 Blank dashboard"
+        }
+      },
+      {
+        "title": "T-4864 Suspicious sign in alert",
+        "subtitle": "P3, Farid L.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4864",
+          "subject": "Suspicious sign in alert",
+          "level": "P3",
+          "priority": "ok",
+          "agent": "Farid L.",
+          "age": 26,
+          "sla": "ok",
+          "left": "3.2 h left",
+          "set": "tickets",
+          "tid": "4864",
+          "subj": "Sign-in alert",
+          "left_h": 3.2,
+          "slag": 91,
+          "tsubj": "4864 Sign-in alert"
+        }
+      },
+      {
+        "title": "T-4834 Request audit log export",
+        "subtitle": "P3, Chloe M.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4834",
+          "subject": "Request audit log export",
+          "level": "P3",
+          "priority": "ok",
+          "agent": "Chloe M.",
+          "age": 25,
+          "sla": "ok",
+          "left": "4.0 h left",
+          "set": "tickets",
+          "tid": "4834",
+          "subj": "Audit log export",
+          "left_h": 4.0,
+          "slag": 91,
+          "tsubj": "4834 Audit log export"
+        }
+      },
+      {
+        "title": "T-4849 Questionnaire from procurement",
+        "subtitle": "P3, Ana K.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4849",
+          "subject": "Questionnaire from procurement",
+          "level": "P3",
+          "priority": "ok",
+          "agent": "Ana K.",
+          "age": 22,
+          "sla": "ok",
+          "left": "6.4 h left",
+          "set": "tickets",
+          "tid": "4849",
+          "subj": "Security survey",
+          "left_h": 6.4,
+          "slag": 91,
+          "tsubj": "4849 Security survey"
+        }
+      },
+      {
+        "title": "T-4822 Locked out after password reset",
+        "subtitle": "P3, Chloe M.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4822",
+          "subject": "Locked out after password reset",
+          "level": "P3",
+          "priority": "ok",
+          "agent": "Chloe M.",
+          "age": 19,
+          "sla": "ok",
+          "left": "8.8 h left",
+          "set": "tickets",
+          "tid": "4822",
+          "subj": "Reset lockout",
+          "left_h": 8.8,
+          "slag": 91,
+          "tsubj": "4822 Reset lockout"
+        }
+      },
+      {
+        "title": "T-4810 Tax id missing on receipt",
+        "subtitle": "P3, Elif S.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4810",
+          "subject": "Tax id missing on receipt",
+          "level": "P3",
+          "priority": "ok",
+          "agent": "Elif S.",
+          "age": 14,
+          "sla": "ok",
+          "left": "12.8 h left",
+          "set": "tickets",
+          "tid": "4810",
+          "subj": "Receipt tax id",
+          "left_h": 12.8,
+          "slag": 91,
+          "tsubj": "4810 Receipt tax id"
+        }
+      },
+      {
+        "title": "T-4819 Suspicious sign in alert",
+        "subtitle": "P3, Dev P.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4819",
+          "subject": "Suspicious sign in alert",
+          "level": "P3",
+          "priority": "ok",
+          "agent": "Dev P.",
+          "age": 10,
+          "sla": "ok",
+          "left": "16.0 h left",
+          "set": "tickets",
+          "tid": "4819",
+          "subj": "Sign-in alert",
+          "left_h": 16.0,
+          "slag": 91,
+          "tsubj": "4819 Sign-in alert"
+        }
+      },
+      {
+        "title": "T-4885 Tax id missing on receipt",
+        "subtitle": "P3, Ben T.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4885",
+          "subject": "Tax id missing on receipt",
+          "level": "P3",
+          "priority": "ok",
+          "agent": "Ben T.",
+          "age": 5,
+          "sla": "ok",
+          "left": "20.0 h left",
+          "set": "tickets",
+          "tid": "4885",
+          "subj": "Receipt tax id",
+          "left_h": 20.0,
+          "slag": 91,
+          "tsubj": "4885 Receipt tax id"
+        }
+      },
+      {
+        "title": "T-4825 Update card on file fails",
+        "subtitle": "P3, Ana K.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4825",
+          "subject": "Update card on file fails",
+          "level": "P3",
+          "priority": "ok",
+          "agent": "Ana K.",
+          "age": 3,
+          "sla": "ok",
+          "left": "21.6 h left",
+          "set": "tickets",
+          "tid": "4825",
+          "subj": "Card update fails",
+          "left_h": 21.6,
+          "slag": 91,
+          "tsubj": "4825 Card update fails"
+        }
+      },
+      {
+        "title": "T-4831 Need SSO setup walkthrough",
+        "subtitle": "P3, Farid L.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4831",
+          "subject": "Need SSO setup walkthrough",
+          "level": "P3",
+          "priority": "ok",
+          "agent": "Farid L.",
+          "age": 2,
+          "sla": "ok",
+          "left": "22.4 h left",
+          "set": "tickets",
+          "tid": "4831",
+          "subj": "SSO setup help",
+          "left_h": 22.4,
+          "slag": 91,
+          "tsubj": "4831 SSO setup help"
+        }
+      },
+      {
+        "title": "T-4876 Import users from CSV",
+        "subtitle": "P4, Dev P.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4876",
+          "subject": "Import users from CSV",
+          "level": "P4",
+          "priority": "neutral",
+          "agent": "Dev P.",
+          "age": 28,
+          "sla": "ok",
+          "left": "20.0 h left",
+          "set": "tickets",
+          "tid": "4876",
+          "subj": "CSV user import",
+          "left_h": 20.0,
+          "slag": 91,
+          "tsubj": "4876 CSV user import"
+        }
+      },
+      {
+        "title": "T-4816 Need SSO setup walkthrough",
+        "subtitle": "P4, Farid L.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4816",
+          "subject": "Need SSO setup walkthrough",
+          "level": "P4",
+          "priority": "neutral",
+          "agent": "Farid L.",
+          "age": 15,
+          "sla": "ok",
+          "left": "33.0 h left",
+          "set": "tickets",
+          "tid": "4816",
+          "subj": "SSO setup help",
+          "left_h": 33.0,
+          "slag": 91,
+          "tsubj": "4816 SSO setup help"
+        }
+      },
+      {
+        "title": "T-4852 Two factor code not arriving",
+        "subtitle": "P4, Ana K.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4852",
+          "subject": "Two factor code not arriving",
+          "level": "P4",
+          "priority": "neutral",
+          "agent": "Ana K.",
+          "age": 14,
+          "sla": "ok",
+          "left": "34.0 h left",
+          "set": "tickets",
+          "tid": "4852",
+          "subj": "2FA code missing",
+          "left_h": 34.0,
+          "slag": 91,
+          "tsubj": "4852 2FA code missing"
+        }
+      },
+      {
+        "title": "T-4861 Workspace naming question",
+        "subtitle": "P4, Ben T.",
+        "icon": "list",
+        "extra": {
+          "ticket": "T-4861",
+          "subject": "Workspace naming question",
+          "level": "P4",
+          "priority": "neutral",
+          "agent": "Ben T.",
+          "age": 9,
+          "sla": "ok",
+          "left": "39.0 h left",
+          "set": "tickets",
+          "tid": "4861",
+          "subj": "Workspace name",
+          "left_h": 39.0,
+          "slag": 91,
+          "tsubj": "4861 Workspace name"
+        }
+      },
+      {
+        "title": "T-4840 Invoice shows wrong seat count",
+        "subtitle": "2.0 h over",
+        "icon": "shield-alert",
+        "extra": {
+          "ticket": "T-4840",
+          "subject": "Invoice shows wrong seat count",
+          "level": "P2",
+          "priority": "warn",
+          "agent": "Ben T.",
+          "age": 20,
+          "sla": "error",
+          "left": "2.0 h over",
+          "set": "risk",
+          "tid": "4840",
+          "subj": "Wrong seat count",
+          "left_h": -2.0,
+          "slag": 91,
+          "tsubj": "4840 Wrong seat count"
+        }
+      },
+      {
+        "title": "T-4870 Refund for duplicate charge",
+        "subtitle": "1.5 h over",
+        "icon": "shield-alert",
+        "extra": {
+          "ticket": "T-4870",
+          "subject": "Refund for duplicate charge",
+          "level": "P2",
+          "priority": "warn",
+          "agent": "Elif S.",
+          "age": 19,
+          "sla": "error",
+          "left": "1.5 h over",
+          "set": "risk",
+          "tid": "4870",
+          "subj": "Duplicate refund",
+          "left_h": -1.5,
+          "slag": 91,
+          "tsubj": "4870 Duplicate refund"
+        }
+      },
+      {
+        "title": "T-4813 Sync stalls at 92 percent",
+        "subtitle": "0.5 h over",
+        "icon": "shield-alert",
+        "extra": {
+          "ticket": "T-4813",
+          "subject": "Sync stalls at 92 percent",
+          "level": "P2",
+          "priority": "warn",
+          "agent": "Dev P.",
+          "age": 17,
+          "sla": "error",
+          "left": "0.5 h over",
+          "set": "risk",
+          "tid": "4813",
+          "subj": "Sync stalls 92%",
+          "left_h": -0.5,
+          "slag": 91,
+          "tsubj": "4813 Sync stalls 92%"
+        }
+      },
+      {
+        "title": "T-4873 API returns 502 intermittently",
+        "subtitle": "1.0 h left",
+        "icon": "shield-alert",
+        "extra": {
+          "ticket": "T-4873",
+          "subject": "API returns 502 intermittently",
+          "level": "P2",
+          "priority": "warn",
+          "agent": "Elif S.",
+          "age": 14,
+          "sla": "warn",
+          "left": "1.0 h left",
+          "set": "risk",
+          "tid": "4873",
+          "subj": "API 502 errors",
+          "left_h": 1.0,
+          "slag": 91,
+          "tsubj": "4873 API 502 errors"
+        }
+      },
+      {
+        "title": "T-4858 Export times out on large files",
+        "subtitle": "1.6 h left",
+        "icon": "shield-alert",
+        "extra": {
+          "ticket": "T-4858",
+          "subject": "Export times out on large files",
+          "level": "P3",
+          "priority": "ok",
+          "agent": "Elif S.",
+          "age": 28,
+          "sla": "warn",
+          "left": "1.6 h left",
+          "set": "risk",
+          "tid": "4858",
+          "subj": "Export timeouts",
+          "left_h": 1.6,
+          "slag": 91,
+          "tsubj": "4858 Export timeouts"
+        }
+      },
+      {
+        "title": "T-4867 Add a contractor seat",
+        "subtitle": "1.6 h left",
+        "icon": "shield-alert",
+        "extra": {
+          "ticket": "T-4867",
+          "subject": "Add a contractor seat",
+          "level": "P3",
+          "priority": "ok",
+          "agent": "Dev P.",
+          "age": 28,
+          "sla": "warn",
+          "left": "1.6 h left",
+          "set": "risk",
+          "tid": "4867",
+          "subj": "Add contractor",
+          "left_h": 1.6,
+          "slag": 91,
+          "tsubj": "4867 Add contractor"
+        }
+      },
+      {
+        "title": "T-4882 Locked out after password reset",
+        "subtitle": "1.6 h left",
+        "icon": "shield-alert",
+        "extra": {
+          "ticket": "T-4882",
+          "subject": "Locked out after password reset",
+          "level": "P3",
+          "priority": "ok",
+          "agent": "Chloe M.",
+          "age": 28,
+          "sla": "warn",
+          "left": "1.6 h left",
+          "set": "risk",
+          "tid": "4882",
+          "subj": "Reset lockout",
+          "left_h": 1.6,
+          "slag": 91,
+          "tsubj": "4882 Reset lockout"
+        }
+      },
+      {
+        "title": "Mon SLA met",
+        "subtitle": "percent of tickets",
+        "icon": "line-chart",
+        "extra": {
+          "d": "Mon",
+          "met": 96,
+          "set": "sladay",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Tue SLA met",
+        "subtitle": "percent of tickets",
+        "icon": "line-chart",
+        "extra": {
+          "d": "Tue",
+          "met": 94,
+          "set": "sladay",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Wed SLA met",
+        "subtitle": "percent of tickets",
+        "icon": "line-chart",
+        "extra": {
+          "d": "Wed",
+          "met": 97,
+          "set": "sladay",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Thu SLA met",
+        "subtitle": "percent of tickets",
+        "icon": "line-chart",
+        "extra": {
+          "d": "Thu",
+          "met": 89,
+          "set": "sladay",
+          "event": "Under 90",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Fri SLA met",
+        "subtitle": "percent of tickets",
+        "icon": "line-chart",
+        "extra": {
+          "d": "Fri",
+          "met": 86,
+          "set": "sladay",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Sat SLA met",
+        "subtitle": "percent of tickets",
+        "icon": "line-chart",
+        "extra": {
+          "d": "Sat",
+          "met": 93,
+          "set": "sladay",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Sun SLA met",
+        "subtitle": "percent of tickets",
+        "icon": "line-chart",
+        "extra": {
+          "d": "Sun",
+          "met": 95,
+          "set": "sladay",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Nov 1 volume",
+        "subtitle": "new tickets",
+        "icon": "line-chart",
+        "extra": {
+          "d": "Nov 1",
+          "n": 38,
+          "set": "vol",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Nov 2 volume",
+        "subtitle": "new tickets",
+        "icon": "line-chart",
+        "extra": {
+          "d": "Nov 2",
+          "n": 41,
+          "set": "vol",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Nov 3 volume",
+        "subtitle": "new tickets",
+        "icon": "line-chart",
+        "extra": {
+          "d": "Nov 3",
+          "n": 22,
+          "set": "vol",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Nov 4 volume",
+        "subtitle": "new tickets",
+        "icon": "line-chart",
+        "extra": {
+          "d": "Nov 4",
+          "n": 19,
+          "set": "vol",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Nov 5 volume",
+        "subtitle": "new tickets",
+        "icon": "line-chart",
+        "extra": {
+          "d": "Nov 5",
+          "n": 44,
+          "set": "vol",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Nov 6 volume",
+        "subtitle": "new tickets",
+        "icon": "line-chart",
+        "extra": {
+          "d": "Nov 6",
+          "n": 47,
+          "set": "vol",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Nov 7 volume",
+        "subtitle": "new tickets",
+        "icon": "line-chart",
+        "extra": {
+          "d": "Nov 7",
+          "n": 52,
+          "event": "Billing",
+          "set": "vol",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Nov 8 volume",
+        "subtitle": "new tickets",
+        "icon": "line-chart",
+        "extra": {
+          "d": "Nov 8",
+          "n": 49,
+          "set": "vol",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Nov 9 volume",
+        "subtitle": "new tickets",
+        "icon": "line-chart",
+        "extra": {
+          "d": "Nov 9",
+          "n": 43,
+          "set": "vol",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Nov 10 volume",
+        "subtitle": "new tickets",
+        "icon": "line-chart",
+        "extra": {
+          "d": "Nov 10",
+          "n": 24,
+          "set": "vol",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Nov 11 volume",
+        "subtitle": "new tickets",
+        "icon": "line-chart",
+        "extra": {
+          "d": "Nov 11",
+          "n": 21,
+          "set": "vol",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Nov 12 volume",
+        "subtitle": "new tickets",
+        "icon": "line-chart",
+        "extra": {
+          "d": "Nov 12",
+          "n": 55,
+          "set": "vol",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Nov 13 volume",
+        "subtitle": "new tickets",
+        "icon": "line-chart",
+        "extra": {
+          "d": "Nov 13",
+          "n": 61,
+          "event": "Outage",
+          "set": "vol",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Nov 14 volume",
+        "subtitle": "new tickets",
+        "icon": "line-chart",
+        "extra": {
+          "d": "Nov 14",
+          "n": 58,
+          "set": "vol",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Dev P.",
+        "subtitle": "6 open",
+        "icon": "User",
+        "tile": {
+          "label": "Dev P.",
+          "value": 6,
+          "unit": "open",
+          "note": "avg age 16.0 h",
+          "max": 10
+        },
+        "extra": {
+          "agent": "Dev P.",
+          "open": 6,
+          "avg": 16.0,
+          "load": "error",
+          "set": "agents",
+          "kpi_visual": "bullet",
+          "target": 5,
+          "slag": 91
+        }
+      },
+      {
+        "title": "Ben T.",
+        "subtitle": "5 open",
+        "icon": "User",
+        "tile": {
+          "label": "Ben T.",
+          "value": 5,
+          "unit": "open",
+          "note": "avg age 13.0 h",
+          "max": 10
+        },
+        "extra": {
+          "agent": "Ben T.",
+          "open": 5,
+          "avg": 13.0,
+          "load": "warn",
+          "set": "agents",
+          "kpi_visual": "bullet",
+          "target": 5,
+          "slag": 91
+        }
+      },
+      {
+        "title": "Elif S.",
+        "subtitle": "5 open",
+        "icon": "User",
+        "tile": {
+          "label": "Elif S.",
+          "value": 5,
+          "unit": "open",
+          "note": "avg age 15.6 h",
+          "max": 10
+        },
+        "extra": {
+          "agent": "Elif S.",
+          "open": 5,
+          "avg": 15.6,
+          "load": "warn",
+          "set": "agents",
+          "kpi_visual": "bullet",
+          "target": 5,
+          "slag": 91
+        }
+      },
+      {
+        "title": "Chloe M.",
+        "subtitle": "4 open",
+        "icon": "User",
+        "tile": {
+          "label": "Chloe M.",
+          "value": 4,
+          "unit": "open",
+          "note": "avg age 18.2 h",
+          "max": 10
+        },
+        "extra": {
+          "agent": "Chloe M.",
+          "open": 4,
+          "avg": 18.2,
+          "load": "warn",
+          "set": "agents",
+          "kpi_visual": "bullet",
+          "target": 5,
+          "slag": 91
+        }
+      },
+      {
+        "title": "Farid L.",
+        "subtitle": "3 open",
+        "icon": "User",
+        "tile": {
+          "label": "Farid L.",
+          "value": 3,
+          "unit": "open",
+          "note": "avg age 14.3 h",
+          "max": 10
+        },
+        "extra": {
+          "agent": "Farid L.",
+          "open": 3,
+          "avg": 14.3,
+          "load": "ok",
+          "set": "agents",
+          "kpi_visual": "bullet",
+          "target": 5,
+          "slag": 91
+        }
+      },
+      {
+        "title": "Ana K.",
+        "subtitle": "3 open",
+        "icon": "User",
+        "tile": {
+          "label": "Ana K.",
+          "value": 3,
+          "unit": "open",
+          "note": "avg age 13.0 h",
+          "max": 10
+        },
+        "extra": {
+          "agent": "Ana K.",
+          "open": 3,
+          "avg": 13.0,
+          "load": "ok",
+          "set": "agents",
+          "kpi_visual": "bullet",
+          "target": 5,
+          "slag": 91
+        }
+      },
+      {
+        "title": "Email",
+        "subtitle": "412 tickets",
+        "icon": "Layers",
+        "extra": {
+          "ch": "Email",
+          "tickets": 412,
+          "reply": 4.2,
+          "set": "chan",
+          "speed": "ok",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Chat",
+        "subtitle": "288 tickets",
+        "icon": "Layers",
+        "extra": {
+          "ch": "Chat",
+          "tickets": 288,
+          "reply": 1.1,
+          "set": "chan",
+          "speed": "ok",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Web form",
+        "subtitle": "164 tickets",
+        "icon": "Layers",
+        "extra": {
+          "ch": "Web form",
+          "tickets": 164,
+          "reply": 6.8,
+          "set": "chan",
+          "speed": "warn",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Phone",
+        "subtitle": "97 tickets",
+        "icon": "Layers",
+        "extra": {
+          "ch": "Phone",
+          "tickets": 97,
+          "reply": 2.6,
+          "set": "chan",
+          "speed": "ok",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Community",
+        "subtitle": "53 tickets",
+        "icon": "Layers",
+        "extra": {
+          "ch": "Community",
+          "tickets": 53,
+          "reply": 14.0,
+          "set": "chan",
+          "speed": "error",
+          "slag": 91
+        }
+      },
+      {
+        "title": "Social",
+        "subtitle": "31 tickets",
+        "icon": "Layers",
+        "extra": {
+          "ch": "Social",
+          "tickets": 31,
+          "reply": 9.5,
+          "set": "chan",
+          "speed": "warn",
+          "slag": 91
+        }
+      },
+      {
+        "title": "About this sample",
+        "subtitle": "Sample data, no network",
+        "icon": "list",
+        "view": "about",
+        "extra": {
+          "slag": 91
+        }
+      }
+    ]
+  },
+  "views": [
+    {
+      "id": "about",
+      "title": "About this sample",
+      "icon": "list",
+      "endpoint": "summary",
+      "item": {
+        "title": "About this sample",
+        "subtitle": "Sample data, no network",
+        "body": "Every number here is built-in sample data from the Bolt Apps examples. Nothing is fetched."
+      }
+    }
+  ]
+}

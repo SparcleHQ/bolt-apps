@@ -19,7 +19,16 @@
       "expense-tracker",
       "pipeline-board",
       "branch-explorer",
-      "places-list"
+      "places-list",
+      "cloud-cost",
+      "support-desk",
+      "security-posture",
+      "inventory",
+      "finance-pnl",
+      "marketing-campaigns",
+      "gym",
+      "exec-brief",
+      "sales-pipeline"
     ],
     "local file": [
       "form-template",
@@ -1044,6 +1053,274 @@
       "edit_in_script": [
         "scripts/obs__app.py: the *_read adapters, ADAPTERS, join(), service_row(), alert_row()"
       ]
+    },
+    {
+      "id": "marketing-campaigns",
+      "need": "campaigns by channel in tabs with counts and a watch list (Bolt 185 or newer)",
+      "layout": "one overview pane with four tabs",
+      "mode": "views",
+      "widgets": [
+        "cards",
+        "chart",
+        "table",
+        "stack",
+        "tabs"
+      ],
+      "techniques": [
+        "tabs pane (Bolt 185) with count_from and status",
+        "donut chart",
+        "table bars and tone marks",
+        "min_bolt_version 0.1.185"
+      ],
+      "sources": [
+        "any REST API"
+      ],
+      "edit": [
+        "scripts/marketing-campaigns__config.json",
+        "scripts/marketing-campaigns__fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/marketing-campaigns",
+      "verified": "worked in real Bolt: the Overview tiles, the spend by channel chart, the weekly spend line chart. maintainer drop test on a 0.1.185 or newer dev build, 2026-11-26; not run on the shipped 181 binary"
+    },
+    {
+      "id": "finance-pnl",
+      "need": "actual against budget by month and a variance table with marks and words",
+      "layout": "one overview pane with three tabs: Overview tiles and a line chart, Trend a gauge and two charts, Detail a variance table",
+      "mode": "views",
+      "widgets": [
+        "cards",
+        "chart",
+        "gauge",
+        "table",
+        "stack",
+        "tabs"
+      ],
+      "techniques": [
+        "tabs pane (Bolt 185)",
+        "stack pane (Bolt 184)",
+        "two-series line chart",
+        "chart limit line and marks",
+        "gauge against a floor and a plan",
+        "table variance bars and tone marks",
+        "min_bolt_version 0.1.185"
+      ],
+      "sources": [
+        "any REST API"
+      ],
+      "edit": [
+        "scripts/finance-pnl__config.json",
+        "scripts/finance-pnl__fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/finance-pnl",
+      "verified": "worked in real Bolt: the Overview tiles, the Trend tab with the operating margin gauge and the marked line chart, the Detail table with bars and marks. maintainer drop test on a 0.1.185 or newer dev build, 2026-11-26; not run on the shipped 181 binary"
+    },
+    {
+      "id": "inventory",
+      "need": "a warehouse view: bin fill by aisle and shelf, a low-stock table with bars",
+      "layout": "one overview pane with three tabs: Floor tiles and a bin fill heat map, Reorder a low-stock table, Movement a chart and a table",
+      "mode": "views",
+      "widgets": [
+        "cards",
+        "heatmap",
+        "table",
+        "stack",
+        "tabs"
+      ],
+      "techniques": [
+        "tabs pane (Bolt 185)",
+        "stack pane (Bolt 184)",
+        "heatmap from rows",
+        "table bars and tone marks",
+        "tile visuals",
+        "min_bolt_version 0.1.185"
+      ],
+      "sources": [
+        "any REST API"
+      ],
+      "edit": [
+        "scripts/inventory__config.json",
+        "scripts/inventory__fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/inventory",
+      "verified": "worked in real Bolt: the Floor tab with its six tiles and the bin fill heat map, the Reorder table with bars and marks, the Movement table. maintainer drop test on a 0.1.185 or newer dev build, 2026-11-26; not run on the shipped 181 binary"
+    },
+    {
+      "id": "security-posture",
+      "need": "a security posture view: a fix-time gauge with a target, a team by severity heatmap, findings with age bars",
+      "layout": "one overview pane with three tabs: Posture tiles, a gauge and a heat map, Findings a table, Trend a chart and a table",
+      "mode": "views",
+      "widgets": [
+        "cards",
+        "gauge",
+        "heatmap",
+        "table",
+        "stack",
+        "tabs"
+      ],
+      "techniques": [
+        "tabs pane (Bolt 185)",
+        "stack pane (Bolt 184)",
+        "gauge thresholds as a target",
+        "heatmap from rows",
+        "table age bars and severity marks",
+        "min_bolt_version 0.1.185"
+      ],
+      "sources": [
+        "any REST API"
+      ],
+      "edit": [
+        "scripts/security-posture__config.json",
+        "scripts/security-posture__fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/security-posture",
+      "verified": "worked in real Bolt: the Posture tiles and the median days to fix gauge against its 14 day target. maintainer drop test on a 0.1.185 or newer dev build, 2026-11-26; not run on the shipped 181 binary"
+    },
+    {
+      "id": "support-desk",
+      "need": "a queue, an SLA view, ticket volume and agent load as tabs in one pane (Bolt 185 or newer)",
+      "layout": "one overview pane with four tabs, each a stack",
+      "mode": "views",
+      "widgets": [
+        "cards",
+        "gauge",
+        "chart",
+        "table",
+        "stack",
+        "tabs"
+      ],
+      "techniques": [
+        "tabs pane (Bolt 185) with count_from and status",
+        "stack inside a tab",
+        "table priority and SLA tone marks",
+        "chart limit line and marks",
+        "min_bolt_version 0.1.185"
+      ],
+      "sources": [
+        "any REST API"
+      ],
+      "edit": [
+        "scripts/support-desk__config.json",
+        "scripts/support-desk__fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/support-desk",
+      "verified": "worked in real Bolt: the Queue table with age bars and SLA marks, the SLA tab with the gauge and the bar chart against the target line. maintainer drop test on a 0.1.185 or newer dev build, 2026-11-26; not run on the shipped 181 binary"
+    },
+    {
+      "id": "cloud-cost",
+      "need": "a cloud cost dashboard: tiles, a budget gauge, an area chart with a limit line, a table with bars and totals",
+      "layout": "one overview pane with four tabs: Overview tiles, a coverage gauge and a spend chart, Services a table, Teams tiles and a table, Anomalies a table",
+      "mode": "views",
+      "widgets": [
+        "cards",
+        "gauge",
+        "chart",
+        "table",
+        "stack",
+        "tabs"
+      ],
+      "techniques": [
+        "tabs pane (Bolt 185)",
+        "stack pane (Bolt 184)",
+        "tile visuals spark, bullet, ring, number",
+        "gauge coverage against a floor and a target",
+        "chart limit line and marks",
+        "table bars and tone marks",
+        "min_bolt_version 0.1.185"
+      ],
+      "sources": [
+        "any REST API"
+      ],
+      "edit": [
+        "scripts/cloud-cost__config.json",
+        "scripts/cloud-cost__fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/cloud-cost",
+      "verified": "worked in real Bolt: the Overview tiles, the savings plan coverage gauge, the monthly spend chart with its limit line and marks, the Teams table with bars and marks. maintainer drop test on a 0.1.185 or newer dev build, 2026-11-26; not run on the shipped 181 binary"
+    },
+    {
+      "id": "gym",
+      "need": "a wellness benefit: how much is left, claims against an even pace, and the claims list",
+      "layout": "one overview pane: a benefit ring, four tiles, an area chart against a pace, a claims table",
+      "mode": "views",
+      "widgets": [
+        "cards",
+        "gauge",
+        "chart",
+        "table",
+        "stack"
+      ],
+      "techniques": [
+        "stack pane (Bolt 184)",
+        "gauge ring with a threshold",
+        "tile visuals",
+        "chart limit line and marks",
+        "table bars, tone marks and totals",
+        "min_bolt_version 0.1.184"
+      ],
+      "sources": [
+        "any REST API"
+      ],
+      "edit": [
+        "scripts/gym__config.json",
+        "scripts/gym__fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/gym",
+      "verified": "not verified in real Bolt"
+    },
+    {
+      "id": "exec-brief",
+      "need": "a monthly executive brief: four tiles then revenue, cash and customer charts, each with its takeaway as the title",
+      "layout": "one overview pane: four tiles then three charts stacked, each chart titled with its takeaway",
+      "mode": "views",
+      "widgets": [
+        "cards",
+        "chart",
+        "stack"
+      ],
+      "techniques": [
+        "stack pane (Bolt 184)",
+        "chart title as a one-line takeaway",
+        "two series on one chart",
+        "tile visuals",
+        "min_bolt_version 0.1.184"
+      ],
+      "sources": [
+        "any REST API"
+      ],
+      "edit": [
+        "scripts/exec-brief__config.json",
+        "scripts/exec-brief__fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/exec-brief",
+      "verified": "not verified in real Bolt"
+    },
+    {
+      "id": "sales-pipeline",
+      "need": "pipeline health: a wide chart of open and commit, four tiles, a stage funnel and the top deals",
+      "layout": "one overview pane: a wide chart, four tiles, a stage funnel table with bars, a top deals table",
+      "mode": "views",
+      "widgets": [
+        "cards",
+        "chart",
+        "table",
+        "stack"
+      ],
+      "techniques": [
+        "stack pane (Bolt 184)",
+        "two area series on one chart",
+        "table bars, tone marks and totals",
+        "tile visuals",
+        "min_bolt_version 0.1.184"
+      ],
+      "sources": [
+        "any REST API"
+      ],
+      "edit": [
+        "scripts/sales-pipeline__config.json",
+        "scripts/sales-pipeline__fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/sales-pipeline",
+      "verified": "not verified in real Bolt"
     }
   ],
   "side_by_side": "four kit apps (acme-dash, pulse-feed, expense-tracker, unit-convert) installed side by side with no owned_by_other: maintainer drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; tested on the files before the chip change (chip now equals id), so not re-run on these files; not run on the shipped 181 binary"

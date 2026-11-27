@@ -16,7 +16,7 @@ const cell = (s) => String(s).replace(/\|/g, '\\|').replace(/\n/g, ' ');
 
 export function render() {
 	const out = ['# What a Bolt App can do', '', '_Generated from `capabilities.json` by `scripts/build-capabilities.mjs`: edit the JSON, not this file._', '',
-		'One row per capability. Status is derived from the code and `schema/bolt-rules.json`. Nothing here is verified in real Bolt yet. The sandbox is not shipped: a personal script runs as you. To start, read [QUICKSTART.md](QUICKSTART.md); the limits are in its one rules table.', '',
+		'One row per capability. Status is derived from the code and `schema/bolt-rules.json`. Most rows are lint and fixture tested only; the rows that a real Bolt dev build drew on 2026-11-26 say so in their limit. The sandbox is not shipped: a personal script runs as you. To start, read [QUICKSTART.md](QUICKSTART.md); the limits are in its one rules table.', '',
 		'| Capability | Status | Since | Older Bolt | Example | Proven by | Limit |', '|---|---|---|---|---|---|---|'];
 	for (const r of caps.rows) out.push(`| ${cell(r.name)} | ${r.status} | ${r.since} | ${cell(r.older_bolt)} | ${r.example ? `[${path.basename(r.example)}](${path.relative('kit/examples', r.example)})` : (r.example_note || 'none')} | \`${r.test}\` | ${cell(resolve(r.limit))} |`);
 	out.push('', '## Pick the version first', '', 'Use the oldest Bolt version that has what you need, and set `min_bolt_version` in `bolt-app.json` to it. A row\'s Since column is the first Bolt that reads it; Older Bolt says what happens on a Bolt before that.', '');

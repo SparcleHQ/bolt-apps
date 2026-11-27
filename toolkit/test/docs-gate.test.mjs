@@ -40,7 +40,7 @@ export function gaps(items, docs) {
 	const res = [];
 	for (const it of items) {
 		const w = new RegExp(`(^|[^A-Za-z0-9_])${esc(it.name)}($|[^A-Za-z0-9_])`);
-		const exRe = it.kind ? new RegExp(`["']kind["']?\\s*:\\s*["']${esc(it.name)}["']`) : new RegExp(`["']?${esc(it.name)}["']?\\s*:`);
+		const exRe = it.kind ? new RegExp(`["']kind["']?\\s*:\\s*["']${esc(it.name)}["']`) : new RegExp(`(?:^|[^A-Za-z0-9_])["']?${esc(it.name)}["']?\\s*:`);
 		const miss = [];
 		if (!w.test(docs.capabilities)) miss.push('CAPABILITIES row');
 		// A key whose capability row says sample_due (the list contract-evolution.test.mjs pins) is excused the example only; every other check still applies.
@@ -102,5 +102,5 @@ test('docs gate: dueSnippets takes only rows that say sample_due', () => {
 	assert.deepEqual(dueSnippets(c), ['"visual": 1', '']);
 	assert.ok(dueSnippets(caps).length >= 2, 'the real rows still carry sample_due');
 	const real = gaps(collect(rulesFile()), { ...realDocs(), dueSnippets: [] }).filter((g) => /cards\.visual/.test(g.id));
-	assert.equal(real.length, 2, 'without the filter the two sample_due keys show as missing an example');
+	assert.equal(real.length, 1, 'without the filter the one sample_due key that still has no example shows as missing one');
 });

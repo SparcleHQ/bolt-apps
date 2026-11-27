@@ -30,7 +30,7 @@ test('a pane or kind row has a sample, or says so and names the release that add
 		else assert.ok(r.example_note && /^\d+\.\d+$/.test(r.sample_due || ''), `${r.id}: no example and no sample_due`);
 	}
 	const due = caps.rows.filter((r) => r.sample_due).map((r) => r.id).sort();
-	assert.deepEqual(due, ['pane.graph_184', 'pane.tile_visual_from', 'pane.tile_visuals'], 'a new missing sample must be fixed, not added to the list');
+	assert.deepEqual(due, ['pane.graph_184', 'pane.tile_visuals'], 'a new missing sample must be fixed, not added to the list');
 });
 
 test('a kind row carries the version the rules file gives the kind, and every kind has a row', () => {

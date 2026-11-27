@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "support-desk",
+  "title": "Support Desk",
+  "role": "A support lead",
+  "saves": "Stitching a queue, an SLA view and agent load together",
+  "summary": "Type =support-desk for the queue, SLA, volume and agents in four tabs with counts and an at-risk status. Needs Bolt 0.1.185 or newer. Runs on sample data.",
+  "author": {
+    "name": "Bolt Apps examples",
+    "link": "https://github.com/SparcleHQ/bolt-apps"
+  },
+  "tier": 3,
+  "permissions": [
+    "runs_commands",
+    "network",
+    "files"
+  ],
+  "platforms": [
+    "macos",
+    "linux"
+  ],
+  "requires": [
+    {
+      "interpreter": "python",
+      "min_version": "3.9"
+    }
+  ],
+  "tests": [],
+  "min_bolt_version": "0.1.185"
+}

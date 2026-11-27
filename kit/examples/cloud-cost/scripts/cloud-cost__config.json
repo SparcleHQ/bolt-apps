@@ -1,0 +1,1186 @@
+{
+  "app": {
+    "id": "cloud-cost",
+    "chip": "cloud-cost",
+    "title": "Cloud Cost",
+    "icon": "line-chart",
+    "description": "Cloud spend: tiles, a savings plan coverage gauge, an area chart with a limit line and marks, team tiles and tables with bars. Needs Bolt 0.1.185 or newer. Sample data.",
+    "service": "Cloud Cost"
+  },
+  "api": {
+    "base_url": "https://api.example.com",
+    "key_env": "SHOWCASE_API_KEY",
+    "fixture_default": false,
+    "on_missing_key": "sample",
+    "fixture_file": "fixtures.json",
+    "fixture_banner": false
+  },
+  "cache": {
+    "ttl": 45,
+    "stale_max": 86400
+  },
+  "endpoints": {
+    "summary": {
+      "path": "/v1/summary"
+    }
+  },
+  "stats": {},
+  "overview": {
+    "widget": {
+      "kind": "tabs",
+      "mode": "list_data",
+      "bind": {
+        "tabs": [
+          {
+            "label": "Overview",
+            "widget": {
+              "kind": "stack",
+              "mode": "list_data",
+              "bind": {
+                "children": [
+                  {
+                    "kind": "cards",
+                    "bind": {
+                      "layout": "tiles",
+                      "visual_from": "kpi_visual",
+                      "title": "{{row.kpi_label}}",
+                      "value": "{{row.kpi_value}}",
+                      "unit": "{{row.kpi_unit}}",
+                      "max": "{{row.kpi_max}}",
+                      "target": "{{row.target}}",
+                      "limit": "{{row.limit}}",
+                      "trend": "{{row.trend}}",
+                      "delta": "{{row.delta}}",
+                      "delta_label": "{{row.since}}",
+                      "subtitle": "{{row.kpi_note}}",
+                      "from": {
+                        "set": "tiles"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "gauge",
+                    "mode": "selected_row",
+                    "bind": {
+                      "value": "{{row.cover}}",
+                      "min": 0,
+                      "max": 100,
+                      "label": "Savings plan coverage",
+                      "unit": "%",
+                      "shape": "half",
+                      "thresholds": [
+                        {
+                          "at": 60,
+                          "label": "floor 60%",
+                          "tone": "warn"
+                        },
+                        {
+                          "at": 80,
+                          "label": "target 80%",
+                          "tone": "ok"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "kind": "chart",
+                    "bind": {
+                      "type": "area",
+                      "x": "m",
+                      "series": [
+                        {
+                          "y": "ec2",
+                          "label": "EC2"
+                        },
+                        {
+                          "y": "rds",
+                          "label": "RDS"
+                        },
+                        {
+                          "y": "s3",
+                          "label": "S3"
+                        },
+                        {
+                          "y": "sagemaker",
+                          "label": "SageMaker"
+                        }
+                      ],
+                      "unit": "K",
+                      "label": "Monthly spend by service, $K",
+                      "limit": 240,
+                      "limit_label": "cap",
+                      "marker": {
+                        "field": "event"
+                      },
+                      "from": {
+                        "set": "spend"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "label": "Services",
+            "widget": {
+              "kind": "stack",
+              "mode": "list_data",
+              "bind": {
+                "children": [
+                  {
+                    "kind": "table",
+                    "bind": {
+                      "columns": [
+                        {
+                          "field": "service",
+                          "label": "Service"
+                        },
+                        {
+                          "field": "spend",
+                          "label": "Spend $",
+                          "align": "right",
+                          "format": "compact",
+                          "total": "sum",
+                          "bars": true,
+                          "digits": 1
+                        },
+                        {
+                          "field": "mom",
+                          "label": "MoM",
+                          "align": "right",
+                          "format": "number",
+                          "unit": "%",
+                          "total": "none"
+                        },
+                        {
+                          "field": "status",
+                          "label": "Trend",
+                          "mark": "tone"
+                        }
+                      ],
+                      "from": {
+                        "set": "services"
+                      },
+                      "totals_label": "Total"
+                    }
+                  }
+                ]
+              }
+            },
+            "count_from": {
+              "set": "services"
+            }
+          },
+          {
+            "label": "Teams",
+            "widget": {
+              "kind": "stack",
+              "mode": "list_data",
+              "bind": {
+                "children": [
+                  {
+                    "kind": "cards",
+                    "bind": {
+                      "layout": "tiles",
+                      "visual_from": "kpi_visual",
+                      "title": "{{row.kpi_label}}",
+                      "value": "{{row.kpi_value}}",
+                      "unit": "{{row.kpi_unit}}",
+                      "max": "{{row.kpi_max}}",
+                      "target": "{{row.target}}",
+                      "limit": "{{row.limit}}",
+                      "trend": "{{row.trend}}",
+                      "delta": "{{row.delta}}",
+                      "delta_label": "{{row.since}}",
+                      "subtitle": "{{row.kpi_note}}",
+                      "from": {
+                        "set": "team"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "table",
+                    "bind": {
+                      "columns": [
+                        {
+                          "field": "team",
+                          "label": "Team"
+                        },
+                        {
+                          "field": "spend",
+                          "label": "Spend $",
+                          "align": "right",
+                          "format": "compact",
+                          "total": "sum",
+                          "bars": true,
+                          "digits": 1
+                        },
+                        {
+                          "field": "used",
+                          "label": "Used",
+                          "align": "right",
+                          "format": "number",
+                          "unit": "%",
+                          "total": "none"
+                        },
+                        {
+                          "field": "status",
+                          "label": "Flag",
+                          "mark": "tone"
+                        }
+                      ],
+                      "from": {
+                        "set": "team"
+                      },
+                      "totals_label": "Teams"
+                    }
+                  }
+                ]
+              }
+            },
+            "count_from": {
+              "set": "team"
+            }
+          },
+          {
+            "label": "Anomalies",
+            "widget": {
+              "kind": "stack",
+              "mode": "list_data",
+              "bind": {
+                "children": [
+                  {
+                    "kind": "table",
+                    "bind": {
+                      "columns": [
+                        {
+                          "field": "sd",
+                          "label": "Service, day"
+                        },
+                        {
+                          "field": "delta",
+                          "label": "Extra $",
+                          "align": "right",
+                          "format": "compact",
+                          "total": "sum",
+                          "bars": true,
+                          "digits": 1
+                        },
+                        {
+                          "field": "pct",
+                          "label": "vs usual",
+                          "align": "right",
+                          "format": "number",
+                          "unit": "%",
+                          "total": "none",
+                          "digits": 0
+                        },
+                        {
+                          "field": "status",
+                          "label": "Flag",
+                          "mark": "tone"
+                        }
+                      ],
+                      "from": {
+                        "set": "anom"
+                      },
+                      "totals_label": "Anomalies"
+                    }
+                  }
+                ]
+              }
+            },
+            "count_from": {
+              "set": "anom"
+            },
+            "status": "warning"
+          }
+        ]
+      }
+    },
+    "rows": [
+      {
+        "title": "Cloud cost: all accounts",
+        "subtitle": "Sample data, 12 months, 14 services",
+        "icon": "activity",
+        "extra": {
+          "cover": 71
+        }
+      },
+      {
+        "title": "Spend in range, USD",
+        "subtitle": "12 months, 14 services",
+        "icon": "activity",
+        "tile": {
+          "label": "Spend in range, USD",
+          "value": 12.05,
+          "unit": "M",
+          "note": "12 months, 14 services"
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "spark",
+          "delta": 2.0,
+          "since": "vs prev month",
+          "cover": 71
+        },
+        "trend": [
+          520.1,
+          545.3,
+          544.0,
+          566.8,
+          581.0,
+          612.3,
+          614.6,
+          620.6,
+          633.7,
+          646.8,
+          681.5,
+          696.7
+        ]
+      },
+      {
+        "title": "Forecast, Nov, USD",
+        "subtitle": "budget $1.35M",
+        "icon": "activity",
+        "tile": {
+          "label": "Forecast, Nov, USD",
+          "value": 1190,
+          "unit": "K",
+          "note": "budget $1.35M",
+          "max": 1350
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "bullet",
+          "target": 1250,
+          "cover": 71
+        }
+      },
+      {
+        "title": "Budget used",
+        "subtitle": "alert at 80%",
+        "icon": "activity",
+        "tile": {
+          "label": "Budget used",
+          "value": 88,
+          "unit": "%",
+          "note": "alert at 80%",
+          "max": 100
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "ring",
+          "cover": 71
+        }
+      },
+      {
+        "title": "Savings found, USD",
+        "subtitle": "rightsizing, idle disks",
+        "icon": "activity",
+        "tile": {
+          "label": "Savings found, USD",
+          "value": 84,
+          "unit": "K",
+          "note": "rightsizing, idle disks"
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "number",
+          "cover": 71
+        }
+      },
+      {
+        "title": "Anomalies",
+        "subtitle": "this month, 12 flagged",
+        "icon": "activity",
+        "tile": {
+          "label": "Anomalies",
+          "value": 12,
+          "unit": "",
+          "note": "this month, 12 flagged",
+          "max": 20
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "bullet",
+          "target": 5,
+          "cover": 71
+        }
+      },
+      {
+        "title": "Cost per order",
+        "subtitle": "unit cost, cents",
+        "icon": "activity",
+        "tile": {
+          "label": "Cost per order",
+          "value": 84,
+          "unit": "c",
+          "note": "unit cost, cents"
+        },
+        "extra": {
+          "set": "tiles",
+          "kpi_visual": "spark",
+          "limit": 90,
+          "delta": 3.1,
+          "since": "vs last month",
+          "cover": 71
+        },
+        "trend": [
+          71,
+          74,
+          73,
+          78,
+          80,
+          82,
+          84
+        ]
+      },
+      {
+        "title": "Dec spend",
+        "subtitle": "Top 4 services, $K",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Dec",
+          "ec2": 184.3,
+          "rds": 120.7,
+          "s3": 120.3,
+          "sagemaker": 94.8,
+          "set": "spend",
+          "cover": 71
+        }
+      },
+      {
+        "title": "Jan spend",
+        "subtitle": "Top 4 services, $K",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Jan",
+          "ec2": 192,
+          "rds": 127.4,
+          "s3": 124.3,
+          "sagemaker": 101.6,
+          "set": "spend",
+          "cover": 71
+        }
+      },
+      {
+        "title": "Feb spend",
+        "subtitle": "Top 4 services, $K",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Feb",
+          "ec2": 191.4,
+          "rds": 127.5,
+          "s3": 118.7,
+          "sagemaker": 106.4,
+          "set": "spend",
+          "cover": 71
+        }
+      },
+      {
+        "title": "Mar spend",
+        "subtitle": "Top 4 services, $K",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Mar",
+          "ec2": 207.4,
+          "rds": 124.1,
+          "s3": 124.8,
+          "sagemaker": 110.5,
+          "set": "spend",
+          "cover": 71
+        }
+      },
+      {
+        "title": "Apr spend",
+        "subtitle": "Top 4 services, $K",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Apr",
+          "ec2": 197.5,
+          "rds": 132.4,
+          "s3": 133,
+          "sagemaker": 118.1,
+          "set": "spend",
+          "cover": 71
+        }
+      },
+      {
+        "title": "May spend",
+        "subtitle": "Top 4 services, $K",
+        "icon": "line-chart",
+        "extra": {
+          "m": "May",
+          "ec2": 218.7,
+          "rds": 133.8,
+          "s3": 137,
+          "sagemaker": 122.8,
+          "set": "spend",
+          "cover": 71
+        }
+      },
+      {
+        "title": "Jun spend",
+        "subtitle": "Top 4 services, $K",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Jun",
+          "ec2": 221.7,
+          "rds": 138.4,
+          "s3": 134.3,
+          "sagemaker": 120.2,
+          "set": "spend",
+          "cover": 71
+        }
+      },
+      {
+        "title": "Jul spend",
+        "subtitle": "Top 4 services, $K",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Jul",
+          "ec2": 215.6,
+          "rds": 138.6,
+          "s3": 132.2,
+          "sagemaker": 134.2,
+          "event": "Launch",
+          "set": "spend",
+          "cover": 71
+        }
+      },
+      {
+        "title": "Aug spend",
+        "subtitle": "Top 4 services, $K",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Aug",
+          "ec2": 225.3,
+          "rds": 143.2,
+          "s3": 139.5,
+          "sagemaker": 125.7,
+          "set": "spend",
+          "cover": 71
+        }
+      },
+      {
+        "title": "Sep spend",
+        "subtitle": "Top 4 services, $K",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Sep",
+          "ec2": 233.3,
+          "rds": 142.8,
+          "s3": 140.1,
+          "sagemaker": 130.6,
+          "set": "spend",
+          "cover": 71
+        }
+      },
+      {
+        "title": "Oct spend",
+        "subtitle": "Top 4 services, $K",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Oct",
+          "ec2": 243.6,
+          "rds": 149.3,
+          "s3": 142.4,
+          "sagemaker": 146.2,
+          "event": "Plan",
+          "set": "spend",
+          "cover": 71
+        }
+      },
+      {
+        "title": "Nov spend",
+        "subtitle": "Top 4 services, $K",
+        "icon": "line-chart",
+        "extra": {
+          "m": "Nov",
+          "ec2": 246.9,
+          "rds": 149.2,
+          "s3": 145.8,
+          "sagemaker": 154.8,
+          "set": "spend",
+          "cover": 71
+        }
+      },
+      {
+        "title": "EC2",
+        "subtitle": "team:platform",
+        "icon": "list",
+        "extra": {
+          "service": "EC2",
+          "tag": "team:platform",
+          "spend": 2580000,
+          "share": 21.4,
+          "mom": 1.4,
+          "status": "ok",
+          "set": "services",
+          "cover": 71
+        }
+      },
+      {
+        "title": "RDS",
+        "subtitle": "team:data",
+        "icon": "list",
+        "extra": {
+          "service": "RDS",
+          "tag": "team:data",
+          "spend": 1630000,
+          "share": 13.5,
+          "mom": -0.1,
+          "status": "ok",
+          "set": "services",
+          "cover": 71
+        }
+      },
+      {
+        "title": "S3",
+        "subtitle": "team:data",
+        "icon": "list",
+        "extra": {
+          "service": "S3",
+          "tag": "team:data",
+          "spend": 1590000,
+          "share": 13.2,
+          "mom": 2.4,
+          "status": "ok",
+          "set": "services",
+          "cover": 71
+        }
+      },
+      {
+        "title": "SageMaker",
+        "subtitle": "team:ml",
+        "icon": "list",
+        "extra": {
+          "service": "SageMaker",
+          "tag": "team:ml",
+          "spend": 1470000,
+          "share": 12.2,
+          "mom": 5.9,
+          "status": "error",
+          "set": "services",
+          "cover": 71
+        }
+      },
+      {
+        "title": "Redshift",
+        "subtitle": "team:data",
+        "icon": "list",
+        "extra": {
+          "service": "Redshift",
+          "tag": "team:data",
+          "spend": 1330000,
+          "share": 11,
+          "mom": 3.2,
+          "status": "warn",
+          "set": "services",
+          "cover": 71
+        }
+      },
+      {
+        "title": "EKS",
+        "subtitle": "team:platform",
+        "icon": "list",
+        "extra": {
+          "service": "EKS",
+          "tag": "team:platform",
+          "spend": 1280000,
+          "share": 10.6,
+          "mom": 1.8,
+          "status": "ok",
+          "set": "services",
+          "cover": 71
+        }
+      },
+      {
+        "title": "Data Transfer",
+        "subtitle": "team:platform",
+        "icon": "list",
+        "extra": {
+          "service": "Data Transfer",
+          "tag": "team:platform",
+          "spend": 754500,
+          "share": 6.3,
+          "mom": -1.2,
+          "status": "ok",
+          "set": "services",
+          "cover": 71
+        }
+      },
+      {
+        "title": "DynamoDB",
+        "subtitle": "team:storefront",
+        "icon": "list",
+        "extra": {
+          "service": "DynamoDB",
+          "tag": "team:storefront",
+          "spend": 465200,
+          "share": 3.9,
+          "mom": 3.5,
+          "status": "warn",
+          "set": "services",
+          "cover": 71
+        }
+      },
+      {
+        "title": "Lambda",
+        "subtitle": "team:storefront",
+        "icon": "list",
+        "extra": {
+          "service": "Lambda",
+          "tag": "team:storefront",
+          "spend": 240000,
+          "share": 2.0,
+          "mom": 4.1,
+          "status": "ok",
+          "set": "services",
+          "cover": 71
+        }
+      },
+      {
+        "title": "CloudFront",
+        "subtitle": "team:storefront",
+        "icon": "list",
+        "extra": {
+          "service": "CloudFront",
+          "tag": "team:storefront",
+          "spend": 210000,
+          "share": 1.7,
+          "mom": 0.6,
+          "status": "ok",
+          "set": "services",
+          "cover": 71
+        }
+      },
+      {
+        "title": "ElastiCache",
+        "subtitle": "team:platform",
+        "icon": "list",
+        "extra": {
+          "service": "ElastiCache",
+          "tag": "team:platform",
+          "spend": 180000,
+          "share": 1.5,
+          "mom": 2.2,
+          "status": "ok",
+          "set": "services",
+          "cover": 71
+        }
+      },
+      {
+        "title": "OpenSearch",
+        "subtitle": "team:data",
+        "icon": "list",
+        "extra": {
+          "service": "OpenSearch",
+          "tag": "team:data",
+          "spend": 150000,
+          "share": 1.2,
+          "mom": 7.4,
+          "status": "error",
+          "set": "services",
+          "cover": 71
+        }
+      },
+      {
+        "title": "Support plan",
+        "subtitle": "team:finops",
+        "icon": "list",
+        "extra": {
+          "service": "Support plan",
+          "tag": "team:finops",
+          "spend": 110000,
+          "share": 0.9,
+          "mom": 0.0,
+          "status": "ok",
+          "set": "services",
+          "cover": 71
+        }
+      },
+      {
+        "title": "Other",
+        "subtitle": "team:mixed",
+        "icon": "list",
+        "extra": {
+          "service": "Other",
+          "tag": "team:mixed",
+          "spend": 60000,
+          "share": 0.5,
+          "mom": -0.4,
+          "status": "ok",
+          "set": "services",
+          "cover": 71
+        }
+      },
+      {
+        "title": "Platform",
+        "subtitle": "$4.52M of $4.6M budget",
+        "icon": "Layers",
+        "extra": {
+          "team": "Platform",
+          "spend": 4520000,
+          "budget": 4600000,
+          "used": 98,
+          "status": "warn",
+          "set": "team",
+          "cover": 71,
+          "kpi_visual": "bullet",
+          "target": 100
+        },
+        "tile": {
+          "label": "Platform",
+          "value": 98,
+          "unit": "%",
+          "note": "$4.52M of $4.6M",
+          "max": 130
+        }
+      },
+      {
+        "title": "Data",
+        "subtitle": "$4.07M of $3.9M budget",
+        "icon": "Layers",
+        "extra": {
+          "team": "Data",
+          "spend": 4070000,
+          "budget": 3900000,
+          "used": 104,
+          "status": "error",
+          "set": "team",
+          "cover": 71,
+          "kpi_visual": "bullet",
+          "target": 100
+        },
+        "tile": {
+          "label": "Data",
+          "value": 104,
+          "unit": "%",
+          "note": "$4.07M of $3.9M",
+          "max": 130
+        }
+      },
+      {
+        "title": "Storefront",
+        "subtitle": "$1.14M of $1.4M budget",
+        "icon": "Layers",
+        "extra": {
+          "team": "Storefront",
+          "spend": 1140000,
+          "budget": 1400000,
+          "used": 81,
+          "status": "ok",
+          "set": "team",
+          "cover": 71,
+          "kpi_visual": "bullet",
+          "target": 100
+        },
+        "tile": {
+          "label": "Storefront",
+          "value": 81,
+          "unit": "%",
+          "note": "$1.14M of $1.4M",
+          "max": 130
+        }
+      },
+      {
+        "title": "ML",
+        "subtitle": "$1.47M of $1.2M budget",
+        "icon": "Layers",
+        "extra": {
+          "team": "ML",
+          "spend": 1470000,
+          "budget": 1200000,
+          "used": 123,
+          "status": "error",
+          "set": "team",
+          "cover": 71,
+          "kpi_visual": "bullet",
+          "target": 100
+        },
+        "tile": {
+          "label": "ML",
+          "value": 123,
+          "unit": "%",
+          "note": "$1.47M of $1.2M",
+          "max": 130
+        }
+      },
+      {
+        "title": "Finops",
+        "subtitle": "$0.11M of $0.2M budget",
+        "icon": "Layers",
+        "extra": {
+          "team": "Finops",
+          "spend": 110000,
+          "budget": 200000,
+          "used": 55,
+          "status": "ok",
+          "set": "team",
+          "cover": 71,
+          "kpi_visual": "bullet",
+          "target": 100
+        },
+        "tile": {
+          "label": "Finops",
+          "value": 55,
+          "unit": "%",
+          "note": "$0.11M of $0.2M",
+          "max": 130
+        }
+      },
+      {
+        "title": "Shared",
+        "subtitle": "$0.74M of $0.8M budget",
+        "icon": "Layers",
+        "extra": {
+          "team": "Shared",
+          "spend": 740000,
+          "budget": 800000,
+          "used": 92,
+          "status": "warn",
+          "set": "team",
+          "cover": 71,
+          "kpi_visual": "bullet",
+          "target": 100
+        },
+        "tile": {
+          "label": "Shared",
+          "value": 92,
+          "unit": "%",
+          "note": "$0.74M of $0.8M",
+          "max": 130
+        }
+      },
+      {
+        "title": "SageMaker on Nov 24",
+        "subtitle": "Training job left running",
+        "icon": "shield-alert",
+        "extra": {
+          "day": "Nov 24",
+          "service": "SageMaker",
+          "tag": "team:ml",
+          "delta": 38200,
+          "pct": 31.0,
+          "status": "error",
+          "note": "Training job left running",
+          "set": "anom",
+          "cover": 71,
+          "sd": "SageMaker Nov 24"
+        }
+      },
+      {
+        "title": "OpenSearch on Nov 21",
+        "subtitle": "Snapshot storm",
+        "icon": "shield-alert",
+        "extra": {
+          "day": "Nov 21",
+          "service": "OpenSearch",
+          "tag": "team:data",
+          "delta": 14100,
+          "pct": 22.0,
+          "status": "error",
+          "note": "Snapshot storm",
+          "set": "anom",
+          "cover": 71,
+          "sd": "OpenSearch Nov 21"
+        }
+      },
+      {
+        "title": "Data Transfer on Nov 19",
+        "subtitle": "New NAT route",
+        "icon": "shield-alert",
+        "extra": {
+          "day": "Nov 19",
+          "service": "Data Transfer",
+          "tag": "team:platform",
+          "delta": 9800,
+          "pct": 18.5,
+          "status": "warn",
+          "note": "New NAT route",
+          "set": "anom",
+          "cover": 71,
+          "sd": "Data Transfer Nov 19"
+        }
+      },
+      {
+        "title": "EC2 on Nov 15",
+        "subtitle": "Autoscale overshoot",
+        "icon": "shield-alert",
+        "extra": {
+          "day": "Nov 15",
+          "service": "EC2",
+          "tag": "team:platform",
+          "delta": 12600,
+          "pct": 6.2,
+          "status": "warn",
+          "note": "Autoscale overshoot",
+          "set": "anom",
+          "cover": 71,
+          "sd": "EC2 Nov 15"
+        }
+      },
+      {
+        "title": "S3 on Nov 12",
+        "subtitle": "Lifecycle rule off",
+        "icon": "shield-alert",
+        "extra": {
+          "day": "Nov 12",
+          "service": "S3",
+          "tag": "team:data",
+          "delta": 7300,
+          "pct": 9.0,
+          "status": "warn",
+          "note": "Lifecycle rule off",
+          "set": "anom",
+          "cover": 71,
+          "sd": "S3 Nov 12"
+        }
+      },
+      {
+        "title": "Redshift on Nov 09",
+        "subtitle": "Concurrency scaling",
+        "icon": "shield-alert",
+        "extra": {
+          "day": "Nov 09",
+          "service": "Redshift",
+          "tag": "team:data",
+          "delta": 6100,
+          "pct": 8.1,
+          "status": "warn",
+          "note": "Concurrency scaling",
+          "set": "anom",
+          "cover": 71,
+          "sd": "Redshift Nov 09"
+        }
+      },
+      {
+        "title": "Lambda on Nov 07",
+        "subtitle": "Retry loop",
+        "icon": "shield-alert",
+        "extra": {
+          "day": "Nov 07",
+          "service": "Lambda",
+          "tag": "team:storefront",
+          "delta": 4900,
+          "pct": 14.0,
+          "status": "warn",
+          "note": "Retry loop",
+          "set": "anom",
+          "cover": 71,
+          "sd": "Lambda Nov 07"
+        }
+      },
+      {
+        "title": "CloudFront on Nov 05",
+        "subtitle": "Sale traffic",
+        "icon": "shield-alert",
+        "extra": {
+          "day": "Nov 05",
+          "service": "CloudFront",
+          "tag": "team:storefront",
+          "delta": 2200,
+          "pct": 3.0,
+          "status": "ok",
+          "note": "Sale traffic",
+          "set": "anom",
+          "cover": 71,
+          "sd": "CloudFront Nov 05"
+        }
+      },
+      {
+        "title": "EKS on Nov 03",
+        "subtitle": "Node pool resize",
+        "icon": "shield-alert",
+        "extra": {
+          "day": "Nov 03",
+          "service": "EKS",
+          "tag": "team:platform",
+          "delta": 3400,
+          "pct": 2.9,
+          "status": "ok",
+          "note": "Node pool resize",
+          "set": "anom",
+          "cover": 71,
+          "sd": "EKS Nov 03"
+        }
+      },
+      {
+        "title": "DynamoDB on Oct 30",
+        "subtitle": "Hot partition",
+        "icon": "shield-alert",
+        "extra": {
+          "day": "Oct 30",
+          "service": "DynamoDB",
+          "tag": "team:storefront",
+          "delta": 2800,
+          "pct": 5.1,
+          "status": "warn",
+          "note": "Hot partition",
+          "set": "anom",
+          "cover": 71,
+          "sd": "DynamoDB Oct 30"
+        }
+      },
+      {
+        "title": "ElastiCache on Oct 27",
+        "subtitle": "Cluster upgrade",
+        "icon": "shield-alert",
+        "extra": {
+          "day": "Oct 27",
+          "service": "ElastiCache",
+          "tag": "team:platform",
+          "delta": 1500,
+          "pct": 2.4,
+          "status": "ok",
+          "note": "Cluster upgrade",
+          "set": "anom",
+          "cover": 71,
+          "sd": "ElastiCache Oct 27"
+        }
+      },
+      {
+        "title": "RDS on Oct 24",
+        "subtitle": "Read replica added",
+        "icon": "shield-alert",
+        "extra": {
+          "day": "Oct 24",
+          "service": "RDS",
+          "tag": "team:data",
+          "delta": 2100,
+          "pct": 1.9,
+          "status": "ok",
+          "note": "Read replica added",
+          "set": "anom",
+          "cover": 71,
+          "sd": "RDS Oct 24"
+        }
+      },
+      {
+        "title": "About this sample",
+        "subtitle": "Sample data, no network",
+        "icon": "list",
+        "view": "about",
+        "extra": {
+          "cover": 71
+        }
+      }
+    ]
+  },
+  "views": [
+    {
+      "id": "about",
+      "title": "About this sample",
+      "icon": "list",
+      "endpoint": "summary",
+      "item": {
+        "title": "About this sample",
+        "subtitle": "Sample data, no network",
+        "body": "Every number here is built-in sample data from the Bolt Apps examples. Nothing is fetched."
+      }
+    }
+  ]
+}

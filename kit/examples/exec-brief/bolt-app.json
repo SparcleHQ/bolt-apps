@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "exec-brief",
+  "title": "Executive brief",
+  "role": "A chief executive reading the month in two minutes",
+  "saves": "Waiting for the monthly board pack",
+  "summary": "Type =exec-brief for a story stack: four tiles, then three charts each with its takeaway as the title. Needs Bolt 0.1.184 or newer. Runs on sample data.",
+  "author": {
+    "name": "Bolt Apps examples",
+    "link": "https://github.com/SparcleHQ/bolt-apps"
+  },
+  "tier": 3,
+  "permissions": [
+    "runs_commands",
+    "network",
+    "files"
+  ],
+  "platforms": [
+    "macos",
+    "linux"
+  ],
+  "requires": [
+    {
+      "interpreter": "python",
+      "min_version": "3.9"
+    }
+  ],
+  "tests": [],
+  "min_bolt_version": "0.1.184"
+}

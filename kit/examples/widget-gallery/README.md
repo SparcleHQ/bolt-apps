@@ -26,7 +26,7 @@ A chart or table plots every row, so those views carry no Back or refresh rows.
 ## Needs Bolt 0.1.184
 The chart view draws a dashed `limit` line labelled "capacity" and two `marker` marks (a release and a hotfix), and the table view draws `bars` on Commits and a `mark: tone` glyph on Health. These keys are newer than Bolt 0.1.183, so `bolt-app.json` says `min_bolt_version` 0.1.184 and the gallery needs that Bolt or newer. A chart or table pane that uses them is drawn by Bolt with its own accent and grey tokens, by shape and pattern, never red or green.
 
-verified: not verified in real Bolt. The sample runs and the check goldens pass against stubbed commands; no Bolt 0.1.184 has drawn these two views, and light and dark have not been looked at.
+verified: not verified in real Bolt for this example. The sample runs and the check goldens pass against stubbed commands, and this app was not dropped into Bolt. The same widgets were drawn by a real Bolt dev build (0.1.185 or newer) on 2026-11-26 in the =finance-pnl and =support-desk examples, in the gallery pictures. Light and dark have not been looked at.
 
 ## Not available to a personal app
 Bolt shows a plain message instead of the pane for these kinds, because they read their own state and ignore the app's data:

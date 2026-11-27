@@ -490,6 +490,7 @@ export async function ship(args) {
 	const step = (name, r) => { if (r.status === 0 && /^(lint|pack)/.test(name)) { const ws = `${r.stdout}`.split('\n').filter((l) => /^\s*warning /.test(l)); const fresh = ws.filter((l) => !seenWarn.has(l.trim())); console.log(`ok ${name}${ws.length && !fresh.length ? ' (same warnings as above)' : ''}`); for (const l of fresh) { seenWarn.add(l.trim()); console.log(`   ${l.trim()}`); } if (fresh.some((l) => /description_todo/.test(l))) console.log('   WARNING your app description still says TODO: it is shipped in the pack and shown in the launcher. Fix it before you share the pack.'); return; } if (r.status !== 0) { console.error(`${r.stdout}${r.stderr}`.trim().split('\n').slice(-25).join('\n')); die(`${name} failed. Fix the lines above (each says what to change), then run ship again`); } console.log(`ok ${name}`); };
 	step('lint --personal', bolt(['lint', dir, '--personal']));
 	if (fs.existsSync(path.join(dir, 'check.json'))) step('check', bolt(['check', dir]));
+	else console.log('skip check: no check.json in the app folder. For a snippet, search engine or transform, Bolt runs the tests in bolt-app.json when you add the app');
 	notLink(STATE); notLink(path.join(STATE, 'key.pem')); notLink(path.join(STATE, 'ship.json')); notLink(path.join(STATE, 'packs'));
 	const key = path.join(STATE, 'key.pem');
 	if (!fs.existsSync(key)) { const k = bolt(['keygen']); if (k.status !== 0) die(`could not make your signing key: ${k.stderr || k.stdout}`); console.log('ok made your signing key in ~/.bolt-apps/key.pem (keep it private, never share it)'); }
@@ -509,15 +510,18 @@ export async function ship(args) {
 	step('verify', bolt(['verify', out]));
 	state[app.id] = version; if (chipNow) state['#chips'] = { ...(state['#chips'] && typeof state['#chips'] === 'object' ? state['#chips'] : {}), [app.id]: chipNow }; fs.mkdirSync(STATE, { recursive: true, mode: 0o700 }); fs.writeFileSync(path.join(STATE, 'ship.json'), JSON.stringify(Object.fromEntries(Object.entries(state)), null, 2) + '\n');
 	const chip = (() => { try { const y = fs.readdirSync(path.join(dir, 'utilities')).find((f) => /\.ya?ml$/.test(f)); return str(get(parseYaml(fs.readFileSync(path.join(dir, 'utilities', y), 'utf8')), 'chip')?.value) || app.id; } catch { return app.id; } })();
+	// The pack just made and verified above records the risk it computed; its leading bundle.json is enough (no second full read). Only a pack rated low or medium
+	// (no command, no script) gets the milder text; anything else, unreadable included, keeps the script warning.
+	const risk = (await readPackMetadata(out))?.risk?.level, runsCode = risk !== 'low' && risk !== 'medium';
+	const card = runsCode ? 'Expect it to rate the app HIGH risk: it runs a script on your computer, and that is normal for a personal script app.' : `It rates the app ${risk.toUpperCase()} risk: it runs no command and no script.`;
+	const start = startMode(dir) || (runsCode ? 'Start mode: this app has no engine config, so it starts as its script says.' : '');
 	console.log(`\nShipped ${app.id} ${version}: ${out}\n\nInstall it:
   1. Drop ${q(out)} on the Bolt launcher (or on Bolt Apps; not Admin settings).
-  2. Bolt shows the review card. It says the pack is self-signed: that is expected, install it. Expect it to rate the app HIGH risk: it runs a script on your computer, and that is normal for a personal script app. It lists what the app can do; read it. Click Install.
+  2. Bolt shows the review card. It says the pack is self-signed: that is expected, install it. ${card} It lists what the app can do; read it. Click Install.
   3. Bolt's own "Install an unverified Bolt pack?" dialog follows, on every OS, for a pack you signed yourself. Click Install.
   4. Then open Bolt ${USER_APPS_PATH}, expand the app, click Review and accept. ${USER_APPS_HIDDEN_NOTE} Every reship changes the files, so you do this each time. An empty list when you press Enter means the app is not approved yet.
-  5. Open the launcher and type =${chip}.
-  ${startMode(dir) || 'Start mode: this app has no engine config, so it starts as its script says.'}
-To change the app: edit it, run bolt-apps ship again, drop the new file. The version rises by itself and replaces the old one; your other apps are not touched.
-This app runs as you: only install code you have read.
+  5. Open the launcher and type =${chip}.${start ? `\n  ${start}` : ''}
+To change the app: edit it, run bolt-apps ship again, drop the new file. The version rises by itself and replaces the old one; your other apps are not touched.${runsCode ? '\nThis app runs as you: only install code you have read.' : ''}
 
 If Bolt refuses it, the usual reasons:
 ${formatBoltSays(['same_or_older_version', 'owned_by_other', 'file_exists', 'org_policy'])}

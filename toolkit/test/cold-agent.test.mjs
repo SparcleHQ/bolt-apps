@@ -173,3 +173,15 @@ test('the repo-root bolt-apps launcher runs the toolkit from any folder, through
 	const nonode = run1('/bin/sh', [launcher, '--version'], { PATH: '/nonexistent' });
 	assert.equal(nonode.status, 127); assert.match(nonode.stderr, /Node 18 or newer is needed/);
 });
+
+test('workflow: ship of a transform app says it skipped check and does not call it a script', () => {
+	const root = tmp(), home = path.join(root, 'home'); fs.mkdirSync(home);
+	const env = { ...process.env, HOME: home, USERPROFILE: home };
+	const sh = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: root, encoding: 'utf8', env });
+	assert.equal(sh('new', 'flip', '--type', 'transform').status, 0);
+	const s = sh('ship', path.join('apps', 'flip')); assert.equal(s.status, 0, s.stdout + s.stderr);
+	assert.match(s.stdout, /skip check: no check\.json/);
+	assert.match(s.stdout, /rates the app MEDIUM risk: it runs no command and no script/);
+	assert.doesNotMatch(s.stdout, /HIGH risk|runs a script on your computer|as its script says|This app runs as you/);
+	assert.match(s.stdout, /type =flip/);
+});

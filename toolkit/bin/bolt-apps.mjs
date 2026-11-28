@@ -22,6 +22,7 @@ import { versionProblem, layoutProblems, namespaceProblems } from '../lib/boltru
 import { cmdMigrate } from '../lib/migrate.mjs';
 import { newList, newFromTemplate, listTemplates, hasTemplate, runApp, regen, upgradeKit, ship, doctor, staleCloneNote, bump } from '../lib/workflow.mjs';
 import { exportShared } from '../lib/shared.mjs';
+import { versionText } from '../lib/version.mjs';
 import { thinEngineName, thinAppDir, readScript, ENGINE_SRC } from '../lib/engine.mjs';
 import { checkApp, formatReport, reportOk, platformFindings, vendorKit, OSES } from '../lib/check.mjs';
 
@@ -454,7 +455,7 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(file
 	};
 	const cmds = { check: cmdCheck, kit: cmdKit, new: cmdNew, lint: cmdLint, keygen: cmdKeygen, pack: cmdPack, verify: cmdVerify, run: (a) => runApp(a), regen: (a) => regen(a), 'upgrade-kit': (a) => upgradeKit(a), migrate: (a) => cmdMigrate(a, die), ship: (a) => ship(a), doctor: (a) => doctor(a) };
 	if (cmds[cmd]) await cmds[cmd](rest);
-	else if (cmd === '--version' || cmd === 'version') console.log(JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8')).version);
+	else if (cmd === '--version' || cmd === 'version') console.log(versionText());
 	else if (!cmd || cmd === 'help' || cmd === '--help') console.log(HELP);
 	else die(`unknown command "${cmd}"\n\n${HELP}`);
 }
